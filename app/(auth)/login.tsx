@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform } from 'react-native'
+import { Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
 
 export default function LoginScreen() {
@@ -52,6 +53,10 @@ export default function LoginScreen() {
           <Text className="text-white font-bold text-base">
             {loading ? 'Logging in...' : 'Log In'}
           </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity className="mt-4 items-center" onPress={() => router.back()}>
+          <Text className="text-muted">← Back</Text>
         </TouchableOpacity>
       </KeyboardAvoidingView>
     </SafeAreaView>
