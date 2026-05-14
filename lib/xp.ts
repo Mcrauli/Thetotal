@@ -23,5 +23,7 @@ export function getXPToNextRank(xp: number): number {
 }
 
 export function getRankData(rankName: RankName) {
-  return RANKS.find(r => r.name === rankName)!
+  const rank = RANKS.find(r => r.name === rankName)
+  if (!rank) throw new Error(`Unknown rank: ${rankName}`)
+  return rank
 }

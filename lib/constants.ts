@@ -12,7 +12,7 @@ export const COLORS = {
 export type RankName = 'Iron' | 'Bronze' | 'Silver' | 'Gold' | 'Elite' | 'Titan'
 
 export const RANKS: { name: RankName; xpRequired: number; color: string; icon: string }[] = [
-  { name: 'Iron',   xpRequired: 0,      color: '#cd7f32', icon: '⚔' },
+  { name: 'Iron',   xpRequired: 0,      color: '#708090', icon: '⚔' },
   { name: 'Bronze', xpRequired: 1000,   color: '#cd7f32', icon: '🥉' },
   { name: 'Silver', xpRequired: 3000,   color: '#c0c0c0', icon: '🥈' },
   { name: 'Gold',   xpRequired: 7000,   color: '#ffd700', icon: '🥇' },
