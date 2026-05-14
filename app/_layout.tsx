@@ -1,0 +1,33 @@
+import '../global.css'
+import { useEffect } from 'react'
+import { Slot, router, useSegments } from 'expo-router'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
+import { supabase } from '../lib/supabase'
+import { useUserStore } from '../store/userStore'
+
+function useAuthGuard() {
+  const segments = useSegments()
+  const { fetchProfile } = useUserStore()
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      const inAuth = segments[0] === '(auth)'
+      if (session) {
+        await fetchProfile()
+        if (inAuth) router.replace('/(tabs)/')
+      } else {
+        if (!inAuth) router.replace('/(auth)/welcome')
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [segments])
+}
+
+export default function RootLayout() {
+  useAuthGuard()
+  return (
+    <SafeAreaProvider>
+      <Slot />
+    </SafeAreaProvider>
+  )
+}
