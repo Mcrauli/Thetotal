@@ -13,6 +13,19 @@ function useAuthGuard() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       const inAuth = segments[0] === '(auth)'
       if (session) {
+        const { data: existingProfile } = await supabase
+          .from('users')
+          .select('id')
+          .eq('id', session.user.id)
+          .single()
+
+        if (!existingProfile) {
+          const fallbackUsername = session.user.email?.split('@')[0] ?? `user_${Date.now()}`
+          await supabase.from('users').insert({
+            id: session.user.id,
+            username: fallbackUsername,
+          })
+        }
         await fetchProfile()
         if (inAuth) router.replace('/(tabs)/')
       } else {

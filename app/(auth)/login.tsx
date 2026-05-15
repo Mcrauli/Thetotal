@@ -2,7 +2,11 @@ import { useState } from 'react'
 import { Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
+import * as WebBrowser from 'expo-web-browser'
+import { makeRedirectUri } from 'expo-auth-session'
 import { supabase } from '../../lib/supabase'
+
+WebBrowser.maybeCompleteAuthSession()
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('')
@@ -14,6 +18,27 @@ export default function LoginScreen() {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) Alert.alert('Login failed', error.message)
     setLoading(false)
+  }
+
+  async function handleGoogleLogin() {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: makeRedirectUri({ scheme: 'thetotal' }),
+        skipBrowserRedirect: true,
+      },
+    })
+    if (error || !data.url) { Alert.alert('Error', error?.message ?? 'Could not start sign-in'); return }
+    const result = await WebBrowser.openAuthSessionAsync(data.url, makeRedirectUri({ scheme: 'thetotal' }))
+    if (result.type === 'success') {
+      const url = result.url
+      const params = new URLSearchParams(url.split('#')[1] ?? url.split('?')[1] ?? '')
+      const accessToken = params.get('access_token')
+      const refreshToken = params.get('refresh_token')
+      if (accessToken) {
+        await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken ?? '' })
+      }
+    }
   }
 
   return (
@@ -53,6 +78,13 @@ export default function LoginScreen() {
           <Text className="text-white font-bold text-base">
             {loading ? 'Logging in...' : 'Log In'}
           </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          className="w-full border border-card2 rounded-xl py-4 items-center mt-3"
+          onPress={handleGoogleLogin}
+        >
+          <Text className="text-white font-semibold">Continue with Google</Text>
         </TouchableOpacity>
 
         <TouchableOpacity className="mt-4 items-center" onPress={() => router.back()}>
