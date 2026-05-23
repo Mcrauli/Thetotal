@@ -276,7 +276,7 @@ export default function ProfileScreen() {
             TheTotal on ilmainen. Jos haluat tukea kehitystä, voit ostaa kahvin.
           </Text>
           <TouchableOpacity
-            onPress={() => Linking.openURL('https://ko-fi.com/mcrauli')}
+            onPress={() => Linking.openURL('https://ko-fi.com/thetotal')}
             style={{ backgroundColor: '#FF5E5B', borderRadius: 12, paddingVertical: 12, paddingHorizontal: 28 }}
           >
             <Text style={{ color: '#fff', fontWeight: '900', fontSize: 14 }}>☕ Osta kahvi Ko-fi:ssa</Text>
