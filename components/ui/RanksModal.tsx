@@ -13,14 +13,14 @@ interface RanksModalProps {
 
 const RANK_DESC: Record<RankName, string> = {
   Aloittelija:    'Kaikki alkaa täältä. Perusliikeradat kuntoon.',
-  Harrastaja:     'Perusvoima alkaa kehittyä. Säännöllinen harjoittelu näkyy.',
-  Kilpailija:     'Olet vahvempi kuin useimmat. Valmis ensimmäisiin kisoihin.',
-  Alueellinen:    'Aluetason kilpailija. Vakava harrastaja.',
-  Kansallinen:    'SM-tason voimataso. Top 15% suomalaisista nostajista.',
-  Kansainvälinen: 'Kansainvälinen taso. Harvinainen voimataso.',
-  Eliitti:        'IPF eliittiluokka. Top 1% maailman nostajista.',
-  Mestari:        'Huipputason kilpailija. Vuosien kurinalaisuus.',
-  Maailmaluokka:  'Poikkeuksellinen voimaurheilija. Maailman kärki.',
+  Harrastaja:     'Perusvoima alkaa kehittyä. Säännöllinen harjoittelu näkyy tuloksissa.',
+  Kilpailija:     'Selkeästi yli keskivertotason. Vahva harjoittelija.',
+  Alueellinen:    'Huomattava voimataso. Kuulut vahvimpaan 20 %:iin harjoittelijoista.',
+  Kansallinen:    'Poikkeuksellinen voima. Top 10 % harjoittelijoista.',
+  Kansainvälinen: 'Harvinainen voimataso. Vain harva yltää tähän.',
+  Eliitti:        'Äärimmäinen voimataso. Top 1 % harjoittelijoista.',
+  Mestari:        'Vuosien kurinalaisuuden tulos. Poikkeuksellinen suoritus.',
+  Maailmaluokka:  'Maailman kärkeä lähestyvä voimataso.',
   Legenda:        'Maailman huippu. Harva koskaan saavuttaa tämän.',
 }
 
