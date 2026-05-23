@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, Modal, Switch, FlatList } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, Modal, Switch, FlatList, Linking } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect } from 'expo-router'
@@ -269,9 +269,32 @@ export default function ProfileScreen() {
           ))}
         </View>
 
+        <View style={{ marginTop: 24, backgroundColor: COLORS.card, borderRadius: 16, padding: 20, alignItems: 'center', marginBottom: 12 }}>
+          <Text style={{ fontSize: 24, marginBottom: 6 }}>☕</Text>
+          <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16, marginBottom: 4 }}>Tykkäsitkö sovelluksesta?</Text>
+          <Text style={{ color: COLORS.muted, fontSize: 13, textAlign: 'center', marginBottom: 14 }}>
+            TheTotal on ilmainen. Jos haluat tukea kehitystä, voit ostaa kahvin.
+          </Text>
+          <TouchableOpacity
+            onPress={() => Linking.openURL('https://ko-fi.com/mcrauli')}
+            style={{ backgroundColor: '#FF5E5B', borderRadius: 12, paddingVertical: 12, paddingHorizontal: 28 }}
+          >
+            <Text style={{ color: '#fff', fontWeight: '900', fontSize: 14 }}>☕ Osta kahvi Ko-fi:ssa</Text>
+          </TouchableOpacity>
+        </View>
+
         <TouchableOpacity className="mt-4 items-center py-3" onPress={signOut}>
           <Text className="text-muted text-sm">Kirjaudu ulos</Text>
         </TouchableOpacity>
+
+        <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 20, marginBottom: 8 }}>
+          <TouchableOpacity onPress={() => Linking.openURL('https://mcrauli.github.io/Thetotal/terms.html')}>
+            <Text style={{ color: COLORS.muted, fontSize: 12 }}>Käyttöehdot</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => Linking.openURL('https://mcrauli.github.io/Thetotal/privacy.html')}>
+            <Text style={{ color: COLORS.muted, fontSize: 12 }}>Tietosuoja</Text>
+          </TouchableOpacity>
+        </View>
 
         <TouchableOpacity
           className="mb-8 items-center py-3"
