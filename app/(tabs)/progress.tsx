@@ -5,7 +5,7 @@ import { useFocusEffect, router } from 'expo-router'
 import { LineChart } from 'react-native-gifted-charts'
 import { supabase } from '../../lib/supabase'
 import { useUserStore } from '../../store/userStore'
-import { getRankData } from '../../lib/xp'
+import { getRankData, getLevel } from '../../lib/xp'
 import { COLORS } from '../../lib/constants'
 import type { RankName } from '../../lib/constants'
 import { ScreenBackground } from '../../components/ui/ScreenBackground'
@@ -327,7 +327,7 @@ export default function ProgressScreen() {
             </View>
 
             <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 12 }}>
-              {lbFilter === 'sbd' ? 'RANKING — SBD / PAINO-SUHDE' : 'RANKING — XP-PISTEET'}
+              {lbFilter === 'sbd' ? 'RANKING — SBD / PAINO-SUHDE' : 'RANKING — TASO'}
             </Text>
 
             {loadingLB ? (
@@ -357,7 +357,7 @@ export default function ProgressScreen() {
                   ? entry.bodyweight_kg && entry.sbd_total > 0
                     ? `${(entry.sbd_total / entry.bodyweight_kg).toFixed(2)}×`
                     : entry.sbd_total > 0 ? `${entry.sbd_total} kg` : '—'
-                  : `${entry.xp ?? 0} XP`
+                  : `Taso ${getLevel(entry.xp ?? 0)}`
                 const rightSub = lbFilter === 'sbd' && entry.bodyweight_kg && entry.sbd_total > 0
                   ? `${entry.sbd_total} kg`
                   : null
