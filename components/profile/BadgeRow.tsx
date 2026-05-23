@@ -42,9 +42,13 @@ export function BadgeRow(props: BadgeRowProps) {
         {ALL_BADGES.map(b => (
           <View
             key={b.id}
-            className={`rounded-xl p-3 items-center ${unlocked.has(b.id) ? 'bg-card2' : 'bg-bg opacity-30'}`}
+            className={`rounded-xl px-3 py-2 items-center ${unlocked.has(b.id) ? 'bg-card2' : 'bg-bg opacity-30'}`}
+            style={{ minWidth: 72 }}
           >
             <Text style={{ fontSize: 20 }}>{b.icon}</Text>
+            <Text className="text-xs mt-1" style={{ color: unlocked.has(b.id) ? '#aaa' : '#555', textAlign: 'center' }}>
+              {b.label}
+            </Text>
           </View>
         ))}
       </View>

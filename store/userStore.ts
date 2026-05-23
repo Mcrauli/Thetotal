@@ -10,8 +10,15 @@ export interface UserProfile {
   avatar_url: string
   xp: number
   rank: RankName
+  sbd_rank: RankName
   streak: number
   last_workout_date: string | null
+  onboarded: boolean
+  bodyweight_kg: number | null
+  height_cm: number | null
+  gender: 'male' | 'female' | null
+  hide_sbd: boolean
+  hide_weight: boolean
 }
 
 interface UserState {
@@ -29,7 +36,7 @@ export const useUserStore = create<UserState>((set, get) => ({
   fetchProfile: async () => {
     set({ loading: true })
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { set({ loading: false }); return }
+    if (!user) { set({ loading: false }); return null }
 
     const { data } = await supabase
       .from('users')
@@ -38,6 +45,7 @@ export const useUserStore = create<UserState>((set, get) => ({
       .single()
 
     set({ profile: data ?? null, loading: false })
+    return data ?? null
   },
 
   updateXPAndRank: async (newXP: number) => {

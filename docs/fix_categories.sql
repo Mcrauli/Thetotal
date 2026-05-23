@@ -1,0 +1,10 @@
+UPDATE exercises SET muscle_group = 'Rinta'      WHERE muscle_group IN ('Chest', 'chest', 'Upper Chest');
+UPDATE exercises SET muscle_group = 'Selkä'      WHERE muscle_group IN ('Back', 'back', 'Upper Back', 'Lats');
+UPDATE exercises SET muscle_group = 'Jalat'      WHERE muscle_group IN ('Legs', 'legs', 'Quads', 'quads', 'Quadriceps');
+UPDATE exercises SET muscle_group = 'Hartiat'    WHERE muscle_group IN ('Shoulders', 'shoulders', 'Delts');
+UPDATE exercises SET muscle_group = 'Hauikset'   WHERE muscle_group IN ('Biceps', 'biceps', 'Bicep');
+UPDATE exercises SET muscle_group = 'Ojentajat'  WHERE muscle_group IN ('Triceps', 'triceps', 'Tricep');
+UPDATE exercises SET muscle_group = 'Takareidet' WHERE muscle_group IN ('Hamstrings', 'hamstrings', 'Glutes', 'Hips');
+UPDATE exercises SET muscle_group = 'Vatsa'      WHERE muscle_group IN ('Core', 'core', 'Abs', 'abs', 'Abdominals');
+UPDATE exercises SET muscle_group = 'Kardio'     WHERE muscle_group IN ('Cardio', 'cardio');
+UPDATE exercises SET muscle_group = 'Muut'       WHERE muscle_group IS NULL OR muscle_group = '';

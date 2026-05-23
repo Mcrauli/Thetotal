@@ -2,8 +2,24 @@ import '../global.css'
 import { useEffect } from 'react'
 import { Slot, router, useSegments } from 'expo-router'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
+import * as Notifications from 'expo-notifications'
 import { supabase } from '../lib/supabase'
 import { useUserStore } from '../store/userStore'
+
+async function registerPushToken() {
+  try {
+    const { status } = await Notifications.requestPermissionsAsync()
+    if (status !== 'granted') return
+    const token = (await Notifications.getExpoPushTokenAsync({
+      projectId: '1e036675-e8c7-4700-895f-6d5f9de84d16',
+    })).data
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) {
+      await supabase.from('users').update({ push_token: token }).eq('id', session.user.id)
+    }
+  } catch {
+  }
+}
 
 function useAuthGuard() {
   const segments = useSegments()
@@ -26,8 +42,12 @@ function useAuthGuard() {
             username: fallbackUsername,
           })
         }
-        await fetchProfile()
-        if (inAuth) router.replace('/(tabs)/')
+        const profile = await fetchProfile()
+        registerPushToken()
+        if (inAuth) {
+          if (profile?.onboarded) router.replace('/(tabs)/')
+          else router.replace('/(auth)/onboarding')
+        }
       } else {
         if (!inAuth) router.replace('/(auth)/welcome')
       }
