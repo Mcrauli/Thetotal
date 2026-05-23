@@ -172,6 +172,26 @@ export default function UserProfileScreen() {
 
         {!user.hide_sbd && <SBDRow squat={sbd.squat} bench={sbd.bench} deadlift={sbd.deadlift} />}
 
+        {!user.hide_sbd && (sbd.squat > 0 || sbd.bench > 0 || sbd.deadlift > 0) && (
+          <View style={{ marginBottom: 16, backgroundColor: COLORS.card, borderRadius: 16, padding: 16 }}>
+            <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 12 }}>ENNÄTYKSET</Text>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {[
+                { label: 'Squat', value: sbd.squat },
+                { label: 'Bench Press', value: sbd.bench },
+                { label: 'Deadlift', value: sbd.deadlift },
+              ].filter(pr => pr.value > 0).map(pr => (
+                <View key={pr.label} style={{ flex: 1, backgroundColor: COLORS.card2, borderRadius: 12, padding: 12, alignItems: 'center' }}>
+                  <Text style={{ color: COLORS.gold, fontWeight: '900', fontSize: 22 }}>
+                    {pr.value}<Text style={{ fontSize: 13, fontWeight: '400' }}>kg</Text>
+                  </Text>
+                  <Text style={{ color: '#fff', fontSize: 11, marginTop: 2, textAlign: 'center' }} numberOfLines={1}>{pr.label}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
         {templates.length > 0 && (
           <TouchableOpacity
             onPress={() => setProgramsVisible(true)}

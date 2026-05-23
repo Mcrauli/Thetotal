@@ -1,12 +1,12 @@
 import { View, Text } from 'react-native'
 
-const ALL_BADGES = [
+export const ALL_BADGES = [
   { id: 'first_workout', icon: '🏋️', label: 'First Workout' },
   { id: 'streak_7',      icon: '🔥', label: '7 Day Streak' },
   { id: 'streak_30',     icon: '⚡', label: '30 Day Streak' },
   { id: 'pr_bench',      icon: '💪', label: 'Bench PR' },
   { id: 'pr_squat',      icon: '🦵', label: 'Squat PR' },
-  { id: 'pr_deadlift',   icon: '⚔', label: 'Deadlift PR' },
+  { id: 'pr_deadlift',   icon: '⚔',  label: 'Deadlift PR' },
   { id: 'rank_bronze',   icon: '🥉', label: 'Bronze Rank' },
   { id: 'rank_gold',     icon: '🥇', label: 'Gold Rank' },
 ]
@@ -18,9 +18,10 @@ interface BadgeRowProps {
   hasSquatPR: boolean
   hasDeadliftPR: boolean
   totalWorkouts: number
+  featured?: string[]
 }
 
-function getUnlockedBadges(props: BadgeRowProps): string[] {
+export function getUnlockedBadgeIds(props: BadgeRowProps): string[] {
   const badges: string[] = []
   if (props.totalWorkouts >= 1) badges.push('first_workout')
   if (props.streak >= 7)        badges.push('streak_7')
@@ -34,21 +35,21 @@ function getUnlockedBadges(props: BadgeRowProps): string[] {
 }
 
 export function BadgeRow(props: BadgeRowProps) {
-  const unlocked = new Set(getUnlockedBadges(props))
+  const unlockedSet = new Set(getUnlockedBadgeIds(props))
+  const toShow = props.featured && props.featured.length > 0
+    ? ALL_BADGES.filter(b => props.featured!.includes(b.id) && unlockedSet.has(b.id))
+    : ALL_BADGES.filter(b => unlockedSet.has(b.id))
+
+  if (toShow.length === 0) return null
+
   return (
-    <View className="bg-card rounded-2xl p-4">
+    <View className="bg-card rounded-2xl p-4 mb-4">
       <Text className="text-muted text-xs tracking-widest mb-3">BADGES</Text>
       <View className="flex-row flex-wrap gap-2">
-        {ALL_BADGES.map(b => (
-          <View
-            key={b.id}
-            className={`rounded-xl px-3 py-2 items-center ${unlocked.has(b.id) ? 'bg-card2' : 'bg-bg opacity-30'}`}
-            style={{ minWidth: 72 }}
-          >
+        {toShow.map(b => (
+          <View key={b.id} className="bg-card2 rounded-xl px-3 py-2 items-center" style={{ minWidth: 72 }}>
             <Text style={{ fontSize: 20 }}>{b.icon}</Text>
-            <Text className="text-xs mt-1" style={{ color: unlocked.has(b.id) ? '#aaa' : '#555', textAlign: 'center' }}>
-              {b.label}
-            </Text>
+            <Text className="text-xs mt-1" style={{ color: '#aaa', textAlign: 'center' }}>{b.label}</Text>
           </View>
         ))}
       </View>

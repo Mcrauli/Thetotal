@@ -6,7 +6,7 @@ import { useFocusEffect } from 'expo-router'
 import { useUserStore } from '../../store/userStore'
 import { RankBanner } from '../../components/profile/RankBanner'
 import { SBDRow } from '../../components/profile/SBDRow'
-import { BadgeRow } from '../../components/profile/BadgeRow'
+import { BadgeRow, ALL_BADGES, getUnlockedBadgeIds } from '../../components/profile/BadgeRow'
 import { RanksModal } from '../../components/ui/RanksModal'
 import { ScreenBackground } from '../../components/ui/ScreenBackground'
 import { ChallengesSection } from '../../components/profile/ChallengesSection'
@@ -39,6 +39,8 @@ export default function ProfileScreen() {
   const [saving, setSaving] = useState(false)
   const [pinnedPRs, setPinnedPRs] = useState<string[]>([])
   const [pinModalVisible, setPinModalVisible] = useState(false)
+  const [pinnedBadges, setPinnedBadges] = useState<string[]>([])
+  const [badgeModalVisible, setBadgeModalVisible] = useState(false)
 
   useFocusEffect(useCallback(() => {
     if (!profile) return
@@ -46,12 +48,21 @@ export default function ProfileScreen() {
     AsyncStorage.getItem(`pinned_prs_${profile.id}`).then(val => {
       if (val) setPinnedPRs(JSON.parse(val))
     })
+    AsyncStorage.getItem(`pinned_badges_${profile.id}`).then(val => {
+      if (val) setPinnedBadges(JSON.parse(val))
+    })
   }, [profile?.id]))
 
   async function savePinnedPRs(names: string[]) {
     if (!profile) return
     setPinnedPRs(names)
     await AsyncStorage.setItem(`pinned_prs_${profile.id}`, JSON.stringify(names))
+  }
+
+  async function savePinnedBadges(ids: string[]) {
+    if (!profile) return
+    setPinnedBadges(ids)
+    await AsyncStorage.setItem(`pinned_badges_${profile.id}`, JSON.stringify(ids))
   }
 
   async function fetchData(userId: string) {
@@ -219,14 +230,23 @@ export default function ProfileScreen() {
 
         <ChallengesSection completedIds={completedChallenges} />
 
-        <BadgeRow
-          xp={profile.xp}
-          streak={profile.streak}
-          hasBenchPR={sbd.bench > 0}
-          hasSquatPR={sbd.squat > 0}
-          hasDeadliftPR={sbd.deadlift > 0}
-          totalWorkouts={totalWorkouts}
-        />
+        <View style={{ marginBottom: 16 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: -12, paddingHorizontal: 4, zIndex: 1 }}>
+            <View />
+            <TouchableOpacity onPress={() => setBadgeModalVisible(true)}>
+              <Text style={{ color: COLORS.accent, fontSize: 12 }}>Muokkaa ✎</Text>
+            </TouchableOpacity>
+          </View>
+          <BadgeRow
+            xp={profile.xp}
+            streak={profile.streak}
+            hasBenchPR={sbd.bench > 0}
+            hasSquatPR={sbd.squat > 0}
+            hasDeadliftPR={sbd.deadlift > 0}
+            totalWorkouts={totalWorkouts}
+            featured={pinnedBadges}
+          />
+        </View>
 
         <View style={{ marginTop: 24, backgroundColor: COLORS.card, borderRadius: 16, overflow: 'hidden' }}>
           <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, padding: 16, paddingBottom: 8 }}>YKSITYISYYS</Text>
@@ -367,6 +387,61 @@ export default function ProfileScreen() {
             >
               <Text style={{ color: '#fff', fontWeight: '700' }}>Valmis</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={badgeModalVisible} transparent animationType="fade" onRequestClose={() => setBadgeModalVisible(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'center', paddingHorizontal: 24 }}>
+          <View style={{ backgroundColor: COLORS.card, borderRadius: 20, padding: 20 }}>
+            <Text style={{ color: '#fff', fontWeight: '900', fontSize: 18, marginBottom: 4 }}>Valitse badget</Text>
+            <Text style={{ color: COLORS.muted, fontSize: 12, marginBottom: 16 }}>
+              {pinnedBadges.length === 0 ? 'Näytetään kaikki avoimet' : `Valittuna ${pinnedBadges.length} kpl`}
+            </Text>
+            {(() => {
+              const unlockedIds = new Set(getUnlockedBadgeIds({
+                xp: profile.xp, streak: profile.streak,
+                hasBenchPR: sbd.bench > 0, hasSquatPR: sbd.squat > 0, hasDeadliftPR: sbd.deadlift > 0,
+                totalWorkouts,
+              }))
+              return ALL_BADGES.map(b => {
+                const unlocked = unlockedIds.has(b.id)
+                const selected = pinnedBadges.includes(b.id)
+                return (
+                  <TouchableOpacity
+                    key={b.id}
+                    onPress={() => {
+                      if (!unlocked) return
+                      if (selected) savePinnedBadges(pinnedBadges.filter(id => id !== b.id))
+                      else savePinnedBadges([...pinnedBadges, b.id])
+                    }}
+                    style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: COLORS.card2, opacity: unlocked ? 1 : 0.3 }}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                      <Text style={{ fontSize: 22 }}>{b.icon}</Text>
+                      <Text style={{ color: selected ? COLORS.gold : '#fff', fontSize: 14 }}>{b.label}</Text>
+                    </View>
+                    <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: selected ? COLORS.gold : COLORS.muted, backgroundColor: selected ? COLORS.gold : 'transparent', justifyContent: 'center', alignItems: 'center' }}>
+                      {selected && <Text style={{ color: COLORS.bg, fontSize: 12, fontWeight: '900' }}>✓</Text>}
+                    </View>
+                  </TouchableOpacity>
+                )
+              })
+            })()}
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
+              <TouchableOpacity
+                onPress={() => { savePinnedBadges([]); setBadgeModalVisible(false) }}
+                style={{ flex: 1, backgroundColor: COLORS.card2, borderRadius: 12, paddingVertical: 12, alignItems: 'center' }}
+              >
+                <Text style={{ color: COLORS.muted, fontWeight: '700' }}>Näytä kaikki</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setBadgeModalVisible(false)}
+                style={{ flex: 1, backgroundColor: COLORS.accent, borderRadius: 12, paddingVertical: 12, alignItems: 'center' }}
+              >
+                <Text style={{ color: '#fff', fontWeight: '700' }}>Valmis</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
