@@ -12,6 +12,7 @@ import { ScreenBackground } from '../../components/ui/ScreenBackground'
 import { ChallengesSection } from '../../components/profile/ChallengesSection'
 import { SBDEditModal } from '../../components/profile/SBDEditModal'
 import { getSBDSubRank, getSBDRank } from '../../lib/xp'
+import { estimateOneRepMax } from '../../lib/pr'
 import { supabase } from '../../lib/supabase'
 import { COLORS } from '../../lib/constants'
 
@@ -218,7 +219,12 @@ export default function ProfileScreen() {
                   {pinned.map(pr => (
                     <View key={pr.exercises?.name} style={{ flex: 1, backgroundColor: COLORS.card2, borderRadius: 12, padding: 12, alignItems: 'center' }}>
                       <Text style={{ color: COLORS.gold, fontWeight: '900', fontSize: 22 }}>{pr.weight_kg}<Text style={{ fontSize: 13, fontWeight: '400' }}>kg</Text></Text>
-                      {pr.reps > 1 && <Text style={{ color: COLORS.muted, fontSize: 10 }}>{pr.reps} toistoa</Text>}
+                      {pr.reps > 1 && (
+                        <>
+                          <Text style={{ color: COLORS.muted, fontSize: 10 }}>{pr.reps} toistoa</Text>
+                          <Text style={{ color: COLORS.muted, fontSize: 10, marginTop: 1 }}>≈ {estimateOneRepMax(pr.weight_kg, pr.reps)}kg 1RM</Text>
+                        </>
+                      )}
                       <Text style={{ color: '#fff', fontSize: 11, marginTop: 2, textAlign: 'center' }} numberOfLines={1}>{pr.exercises?.name}</Text>
                     </View>
                   ))}

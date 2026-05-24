@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useLocalSearchParams, router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
 import { getSBDSubRank } from '../../lib/xp'
+import { estimateOneRepMax } from '../../lib/pr'
 import { useUserStore } from '../../store/userStore'
 import { RankBanner } from '../../components/profile/RankBanner'
 import { SBDRow } from '../../components/profile/SBDRow'
@@ -17,6 +18,7 @@ interface PublicProfile {
   hide_sbd: boolean; hide_weight: boolean
 }
 interface SBDMap { squat: number; bench: number; deadlift: number }
+interface SBDReps { squat: number; bench: number; deadlift: number }
 interface Template {
   id: string; name: string
   exercises: { id: string; name: string }[]
@@ -27,6 +29,7 @@ export default function UserProfileScreen() {
   const { profile: me } = useUserStore()
   const [user, setUser] = useState<PublicProfile | null>(null)
   const [sbd, setSBD] = useState<SBDMap>({ squat: 0, bench: 0, deadlift: 0 })
+  const [sbdReps, setSbdReps] = useState<SBDReps>({ squat: 0, bench: 0, deadlift: 0 })
   const [totalWorkouts, setTotalWorkouts] = useState(0)
   const [templates, setTemplates] = useState<Template[]>([])
   const [loading, setLoading] = useState(true)
@@ -44,21 +47,23 @@ export default function UserProfileScreen() {
     if (!id) return
     Promise.all([
       supabase.from('users').select('id, username, sbd_rank, xp, streak, bodyweight_kg, gender, hide_sbd, hide_weight').eq('id', id).single(),
-      supabase.from('personal_records').select('weight_kg, exercises(name, is_sbd)').eq('user_id', id),
+      supabase.from('personal_records').select('weight_kg, reps, exercises(name, is_sbd)').eq('user_id', id),
       supabase.from('workouts').select('id', { count: 'exact', head: true }).eq('user_id', id),
       supabase.from('workout_templates').select('id, name, template_exercises(exercise_id, order_index, exercises(name))').eq('user_id', id).order('created_at'),
     ]).then(([{ data: u }, { data: prData }, { count }, { data: tmplData }]) => {
       if (u) setUser(u as PublicProfile)
       if (prData) {
         const totals = { squat: 0, bench: 0, deadlift: 0 }
+        const reps = { squat: 0, bench: 0, deadlift: 0 }
         for (const pr of prData as any[]) {
           if (!pr.exercises?.is_sbd) continue
           const name: string = pr.exercises.name.toLowerCase()
-          if (name.includes('squat')) totals.squat = pr.weight_kg
-          else if (name.includes('bench')) totals.bench = pr.weight_kg
-          else if (name.includes('deadlift')) totals.deadlift = pr.weight_kg
+          if (name.includes('squat'))    { totals.squat = pr.weight_kg;    reps.squat = pr.reps }
+          else if (name.includes('bench')) { totals.bench = pr.weight_kg;    reps.bench = pr.reps }
+          else if (name.includes('deadlift')) { totals.deadlift = pr.weight_kg; reps.deadlift = pr.reps }
         }
         setSBD(totals)
+        setSbdReps(reps)
       }
       setTotalWorkouts(count ?? 0)
       setTemplates((tmplData ?? []).map((t: any) => ({
@@ -177,14 +182,20 @@ export default function UserProfileScreen() {
             <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 12 }}>ENNÄTYKSET</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {[
-                { label: 'Squat', value: sbd.squat },
-                { label: 'Bench Press', value: sbd.bench },
-                { label: 'Deadlift', value: sbd.deadlift },
+                { label: 'Squat', value: sbd.squat, reps: sbdReps.squat },
+                { label: 'Bench Press', value: sbd.bench, reps: sbdReps.bench },
+                { label: 'Deadlift', value: sbd.deadlift, reps: sbdReps.deadlift },
               ].filter(pr => pr.value > 0).map(pr => (
                 <View key={pr.label} style={{ flex: 1, backgroundColor: COLORS.card2, borderRadius: 12, padding: 12, alignItems: 'center' }}>
                   <Text style={{ color: COLORS.gold, fontWeight: '900', fontSize: 22 }}>
                     {pr.value}<Text style={{ fontSize: 13, fontWeight: '400' }}>kg</Text>
                   </Text>
+                  {pr.reps > 1 && (
+                    <>
+                      <Text style={{ color: COLORS.muted, fontSize: 10 }}>{pr.reps} toistoa</Text>
+                      <Text style={{ color: COLORS.muted, fontSize: 10, marginTop: 1 }}>≈ {estimateOneRepMax(pr.value, pr.reps)}kg 1RM</Text>
+                    </>
+                  )}
                   <Text style={{ color: '#fff', fontSize: 11, marginTop: 2, textAlign: 'center' }} numberOfLines={1}>{pr.label}</Text>
                 </View>
               ))}

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { View, Text, Modal, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
 import { supabase } from '../../lib/supabase'
 import { COLORS } from '../../lib/constants'
+import { estimateOneRepMax } from '../../lib/pr'
 
 interface SetRow { set_number: number; weight_kg: number; reps: number }
 interface ExerciseGroup { name: string; muscleGroup: string; sets: SetRow[] }
@@ -73,6 +74,11 @@ export function WorkoutDetailModal({ workoutId, workoutName, startedAt, totalVol
                       <Text style={{ color: COLORS.muted, fontSize: 14, marginLeft: 6 }}>
                         {isCardio ? `${s.reps} km` : `× ${s.reps}`}
                       </Text>
+                      {!isCardio && s.reps > 1 && (
+                        <Text style={{ color: COLORS.muted, fontSize: 11, marginLeft: 'auto' }}>
+                          ≈ {estimateOneRepMax(s.weight_kg, s.reps)}kg 1RM
+                        </Text>
+                      )}
                     </View>
                   ))}
                 </View>
