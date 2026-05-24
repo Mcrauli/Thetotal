@@ -11,8 +11,10 @@ import { supabase } from '../../lib/supabase'
 import { detectPRs } from '../../lib/pr'
 import { calculateXPGain, getRankForXP, getSBDRank } from '../../lib/xp'
 import { getNewlyCompleted } from '../../lib/challenges'
+import { useT } from '../../lib/i18n'
 
 export default function ActiveWorkoutScreen() {
+  const t = useT()
   const { exercises, workoutName, startedAt, setWorkoutName, addExercise, clearWorkout } = useWorkoutStore()
   const { profile, fetchProfile } = useUserStore()
   const [pickerVisible, setPickerVisible] = useState(false)
@@ -65,7 +67,7 @@ export default function ActiveWorkoutScreen() {
 
   async function handleFinish() {
     if (savingRef.current) return
-    if (exercises.length === 0) { Alert.alert('Lisää ensin liike'); return }
+    if (exercises.length === 0) { Alert.alert(t('active.addExerciseFirst')); return }
     if (!profile) return
     savingRef.current = true
     setSaving(true)
@@ -91,7 +93,7 @@ export default function ActiveWorkoutScreen() {
       .single()
 
     if (workoutError || !workout) {
-      Alert.alert('Virhe', workoutError?.message)
+      Alert.alert(t('common.error'), workoutError?.message)
       setSaving(false)
       savingRef.current = false
       return
@@ -118,7 +120,7 @@ export default function ActiveWorkoutScreen() {
       ])
 
     if (setsError) {
-      Alert.alert('Sarjojen tallennus epäonnistui', setsError.message)
+      Alert.alert(t('active.setsError'), setsError.message)
       setSaving(false)
       savingRef.current = false
       return
@@ -334,7 +336,7 @@ export default function ActiveWorkoutScreen() {
     try { await fetchProfile() } catch {}
     setResults({ xpGain: displayXPGain, xpBreakdown: { base: xpBase, prBonus, streakBonus, challengeBonus }, improvements, challenges: challengeResults })
     } catch (e: any) {
-      Alert.alert('Tallennusvirhe', (e?.message ?? 'Tuntematon virhe') + '. Treeni saattoi silti tallentua. Tarkista historiasta.')
+      Alert.alert(t('active.savingError'), e?.message ?? '')
     } finally {
       setSaving(false)
       savingRef.current = false
@@ -360,12 +362,12 @@ export default function ActiveWorkoutScreen() {
           style={{ color: '#fff' }}
         />
         <TouchableOpacity
-          onPress={() => Alert.alert('Lopeta treeni', 'Haluatko lopettaa treenin? Kaikki sarjat menetetään.', [
-            { text: 'Peruuta', style: 'cancel' },
-            { text: 'Lopeta', style: 'destructive', onPress: () => { clearWorkout(); router.replace('/(tabs)/') } },
+          onPress={() => Alert.alert(t('active.stopTitle'), t('active.stopBody'), [
+            { text: t('common.cancel'), style: 'cancel' },
+            { text: t('active.stopTitle'), style: 'destructive', onPress: () => { clearWorkout(); router.replace('/(tabs)/') } },
           ])}
         >
-          <Text style={{ color: '#ef4444', fontSize: 13, fontWeight: '700' }}>✕ Lopeta</Text>
+          <Text style={{ color: '#ef4444', fontSize: 13, fontWeight: '700' }}>{t('active.stop')}</Text>
         </TouchableOpacity>
       </View>
       <View className="items-center pb-1">
@@ -388,7 +390,7 @@ export default function ActiveWorkoutScreen() {
           className="border border-dashed border-card2 rounded-2xl py-4 items-center mt-2"
           onPress={() => setPickerVisible(true)}
         >
-          <Text className="text-muted">+ Add Exercise</Text>
+          <Text className="text-muted">{t('active.addExercise')}</Text>
         </TouchableOpacity>
       </ScrollView>
 
@@ -399,7 +401,7 @@ export default function ActiveWorkoutScreen() {
           disabled={saving}
         >
           <Text className="text-white font-black tracking-wider">
-            {saving ? 'SAVING...' : 'FINISH WORKOUT'}
+            {saving ? t('common.saving').toUpperCase() : t('active.finishWorkout')}
           </Text>
         </TouchableOpacity>
       </View>

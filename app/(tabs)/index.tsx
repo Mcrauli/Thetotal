@@ -11,6 +11,7 @@ import { RankBarbellIcon } from '../../components/ui/RankBarbellIcon'
 import { WorkoutDetailModal } from '../../components/workout/WorkoutDetailModal'
 import { PRCommentsModal } from '../../components/ui/PRCommentsModal'
 import { sendPushToUsers } from '../../lib/notifications'
+import { useT } from '../../lib/i18n'
 import { getRankData, getSBDSubRank } from '../../lib/xp'
 import { SBD_RANK_THRESHOLDS, COLORS } from '../../lib/constants'
 import { supabase } from '../../lib/supabase'
@@ -42,6 +43,7 @@ type ReactionMap = Record<string, Partial<Record<ReactionEmoji, ReactionCount>>>
 
 export default function HomeScreen() {
   const { profile, loading, fetchProfile } = useUserStore()
+  const t = useT()
   const [sbd, setSBD] = useState<SBDTotals>({ squat: 0, bench: 0, deadlift: 0 })
   const [lastWorkout, setLastWorkout] = useState<LastWorkout | null>(null)
   const [ranksVisible, setRanksVisible] = useState(false)
@@ -278,20 +280,20 @@ export default function HomeScreen() {
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <View>
-                <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 8 }}>SBD RANK</Text>
+                <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 8 }}>{t('home.sbdRank')}</Text>
                 <RankBarbellIcon rank={profile.sbd_rank} width={80} height={80} />
                 <Text style={{ color: sbdRankData.color, fontSize: 24, fontWeight: '900', letterSpacing: 1, marginTop: 8 }}>
-                  {profile.sbd_rank.toUpperCase()}
+                  {t(`rank.${profile.sbd_rank}` as any).toUpperCase()}
                 </Text>
                 {total > 0 && (
                   <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 4 }}>
-                    {subRank.ratio.toFixed(2)}× kehonpaino
+                    {subRank.ratio.toFixed(2)}{t('home.bodyweightRatio')}
                   </Text>
                 )}
               </View>
               <View style={{ alignItems: 'flex-end' }}>
                 <Text style={{ color: COLORS.accent, fontSize: 28, fontWeight: '900' }}>🔥{profile.streak}</Text>
-                <Text style={{ color: COLORS.muted, fontSize: 11, marginTop: 2 }}>päivän putki</Text>
+                <Text style={{ color: COLORS.muted, fontSize: 11, marginTop: 2 }}>{t('home.streak')}</Text>
               </View>
             </View>
           </LinearGradient>
@@ -316,7 +318,7 @@ export default function HomeScreen() {
                 style={{ backgroundColor: COLORS.card, borderRadius: 20, padding: 16 }}
               >
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                  <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2 }}>SEURAAVA RANK</Text>
+                  <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2 }}>{t('home.nextRank')}</Text>
                   <Text style={{ color: COLORS.muted, fontSize: 12 }}>
                     {subRank.ratio.toFixed(2)}× / {nextRank!.bwMultiple}× BW  ›
                   </Text>
@@ -331,10 +333,10 @@ export default function HomeScreen() {
                 </View>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={{ color: sbdRankData.color, fontSize: 13, fontWeight: '700' }}>
-                    {profile.sbd_rank}
+                    {t(`rank.${profile.sbd_rank}` as any)}
                   </Text>
                   <Text style={{ color: nextRankData!.color, fontSize: 13, fontWeight: '700' }}>
-                    {nextRank!.name} →
+                    {t(`rank.${nextRank!.name}` as any)} →
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -344,7 +346,7 @@ export default function HomeScreen() {
           {/* SBD quick-start */}
           <Animated.View style={[card(3), { marginBottom: 12 }]}>
             <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 10 }}>
-              NOSTA • KIRJAA • KASVA
+              {t('home.liftLogGrow')}
             </Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {([
@@ -387,16 +389,16 @@ export default function HomeScreen() {
                 style={{ backgroundColor: COLORS.card, borderRadius: 20, padding: 16 }}
               >
                 <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 8 }}>
-                  VIIMEISIN TREENI  ›
+                  {t('home.lastWorkout')}  ›
                 </Text>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>{lastWorkout.name}</Text>
                   <Text style={{ color: COLORS.muted, fontSize: 12 }}>
-                    {new Date(lastWorkout.started_at).toLocaleDateString('fi-FI', { day: 'numeric', month: 'short' })}
+                    {new Date(lastWorkout.started_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
                   </Text>
                 </View>
                 <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 4 }}>
-                  {Math.round(lastWorkout.total_volume_kg).toLocaleString()} kg volyymi
+                  {Math.round(lastWorkout.total_volume_kg).toLocaleString()} kg {t('home.volume')}
                 </Text>
               </TouchableOpacity>
             </Animated.View>
@@ -406,13 +408,13 @@ export default function HomeScreen() {
           {friendPRs.length > 0 && (
             <Animated.View style={[card(5)]}>
               <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 10 }}>
-                KAVERIEN ENNÄTYKSET
+                {t('home.friendPRs')}
               </Text>
               {friendPRs.map(pr => {
                 const rd = getRankData(pr.sbd_rank)
                 const d = new Date(pr.recorded_at)
                 const days = Math.floor((Date.now() - d.getTime()) / 86400000)
-                const dateLabel = days === 0 ? 'Tänään' : days === 1 ? 'Eilen' : days < 7 ? `${days} pv` : d.toLocaleDateString('fi-FI', { day: 'numeric', month: 'short' })
+                const dateLabel = days === 0 ? t('common.today') : days === 1 ? t('common.yesterday') : days < 7 ? `${days} ${t('common.days')}` : d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
                 return (
                   <View
                     key={pr.id}

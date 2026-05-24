@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, Animated, Dimensions, Modal }
 import { Ionicons } from '@expo/vector-icons'
 import { COLORS } from '../../lib/constants'
 import { estimateOneRepMax, shouldShowEstimatedOneRepMax } from '../../lib/pr'
+import { useT } from '../../lib/i18n'
 
 export interface ImprovementResult {
   exerciseName: string
@@ -45,6 +46,7 @@ function XPChip({ label, accent }: { label: string; accent?: boolean }) {
 }
 
 export function WorkoutResults({ visible, xpGain, xpBreakdown, improvements, challenges, onDismiss }: Props) {
+  const t = useT()
   const translateY = useRef(new Animated.Value(80)).current
 
   useEffect(() => {
@@ -80,7 +82,7 @@ export function WorkoutResults({ visible, xpGain, xpBreakdown, improvements, cha
           <View style={{ alignItems: 'center', marginBottom: 24 }}>
             <Text style={{ fontSize: 40, marginBottom: 6 }}>💪</Text>
             <Text style={{ color: '#fff', fontSize: 22, fontWeight: '900', letterSpacing: 1 }}>
-              TREENI VALMIS
+              {t('results.complete')}
             </Text>
           </View>
 
@@ -93,13 +95,13 @@ export function WorkoutResults({ visible, xpGain, xpBreakdown, improvements, cha
             borderWidth: 1,
             borderColor: COLORS.gold,
           }}>
-            <Text style={{ color: COLORS.muted, fontSize: 11, letterSpacing: 2, marginBottom: 6 }}>XP ANSAITTU</Text>
+            <Text style={{ color: COLORS.muted, fontSize: 11, letterSpacing: 2, marginBottom: 6 }}>{t('results.xpEarned')}</Text>
             <Text style={{ color: COLORS.gold, fontSize: 44, fontWeight: '900', lineHeight: 48 }}>+{xpGain}</Text>
             <View style={{ flexDirection: 'row', gap: 6, marginTop: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
-              <XPChip label={`${xpBreakdown.base} treeni`} />
-              {xpBreakdown.prBonus > 0 && <XPChip label={`+${xpBreakdown.prBonus} PR`} accent />}
-              {xpBreakdown.streakBonus > 0 && <XPChip label={`+${xpBreakdown.streakBonus} putki`} accent />}
-              {xpBreakdown.challengeBonus > 0 && <XPChip label={`+${xpBreakdown.challengeBonus} haasteet`} accent />}
+              <XPChip label={`${xpBreakdown.base} ${t('results.workout')}`} />
+              {xpBreakdown.prBonus > 0 && <XPChip label={`+${xpBreakdown.prBonus} ${t('results.pr')}`} accent />}
+              {xpBreakdown.streakBonus > 0 && <XPChip label={`+${xpBreakdown.streakBonus} ${t('results.streak')}`} accent />}
+              {xpBreakdown.challengeBonus > 0 && <XPChip label={`+${xpBreakdown.challengeBonus} ${t('results.challenges')}`} accent />}
             </View>
           </View>
 
@@ -107,7 +109,7 @@ export function WorkoutResults({ visible, xpGain, xpBreakdown, improvements, cha
             <View style={{ marginBottom: challenges.length > 0 ? 20 : 0 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                 <Ionicons name="trending-up" size={16} color={COLORS.accent} />
-                <Text style={{ color: COLORS.accent, fontSize: 11, letterSpacing: 2, fontWeight: '700' }}>KEHITYSTÄ</Text>
+                <Text style={{ color: COLORS.accent, fontSize: 11, letterSpacing: 2, fontWeight: '700' }}>{t('results.improvements')}</Text>
               </View>
               {improvements.map(item => (
                 <View key={item.exerciseName} style={{
@@ -163,7 +165,7 @@ export function WorkoutResults({ visible, xpGain, xpBreakdown, improvements, cha
             <View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                 <Ionicons name="medal" size={16} color={COLORS.accent} />
-                <Text style={{ color: COLORS.accent, fontSize: 11, letterSpacing: 2, fontWeight: '700' }}>HAASTEET SUORITETTU</Text>
+                <Text style={{ color: COLORS.accent, fontSize: 11, letterSpacing: 2, fontWeight: '700' }}>{t('results.challengesDone')}</Text>
               </View>
               {challenges.map(c => (
                 <View key={c.name} style={{

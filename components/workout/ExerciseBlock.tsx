@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { View, Text, TouchableOpacity, Alert } from 'react-native'
 import { useWorkoutStore, type WorkoutExercise } from '../../store/workoutStore'
 import { SetRow } from './SetRow'
+import { useT } from '../../lib/i18n'
 
 interface ExerciseBlockProps {
   exercise: WorkoutExercise
@@ -13,13 +14,14 @@ interface ExerciseBlockProps {
 
 export function ExerciseBlock({ exercise, lastBest, defaultWeight, defaultReps, onMount }: ExerciseBlockProps) {
   useEffect(() => { onMount?.() }, [])
+  const t = useT()
   const { addSet, copyLastSet, removeExercise } = useWorkoutStore()
   const isCardio = exercise.muscleGroup === 'Kardio'
 
   function handleRemove() {
-    Alert.alert('Poista liike', `Poistetaanko ${exercise.exerciseName}?`, [
-      { text: 'Peruuta', style: 'cancel' },
-      { text: 'Poista', style: 'destructive', onPress: () => removeExercise(exercise.exerciseId) },
+    Alert.alert(t('active.removeExercise'), t('active.removeExerciseBody', { name: exercise.exerciseName }), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: () => removeExercise(exercise.exerciseId) },
     ])
   }
 
@@ -64,14 +66,14 @@ export function ExerciseBlock({ exercise, lastBest, defaultWeight, defaultReps, 
           className="flex-1 bg-card2 rounded-lg py-2 items-center"
           onPress={handleAddSet}
         >
-          <Text className="text-white text-sm">+ {isCardio ? 'Lisää erä' : 'Lisää sarja'}</Text>
+          <Text className="text-white text-sm">{isCardio ? t('active.addInterval') : t('active.addSet')}</Text>
         </TouchableOpacity>
         {exercise.sets.length > 0 && (
           <TouchableOpacity
             className="flex-1 bg-card2 rounded-lg py-2 items-center"
             onPress={() => copyLastSet(exercise.exerciseId)}
           >
-            <Text className="text-muted text-sm">Kopioi edellinen</Text>
+            <Text className="text-muted text-sm">{t('active.copyLast')}</Text>
           </TouchableOpacity>
         )}
       </View>

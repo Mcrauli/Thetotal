@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { View, Text, TextInput, TouchableOpacity, Modal } from 'react-native'
 import { useWorkoutStore, type WorkoutSet } from '../../store/workoutStore'
 import { COLORS } from '../../lib/constants'
+import { useT } from '../../lib/i18n'
 
 interface SetRowProps {
   set: WorkoutSet
@@ -16,6 +17,7 @@ function rpeColor(rpe: number) {
 }
 
 export function SetRow({ set, exerciseId, isCardio }: SetRowProps) {
+  const t = useT()
   const { updateSet, removeSet } = useWorkoutStore()
   const [rpePickerOpen, setRpePickerOpen] = useState(false)
   const weightStep = isCardio ? 5 : 0.5
@@ -103,9 +105,9 @@ export function SetRow({ set, exerciseId, isCardio }: SetRowProps) {
           onPress={() => setRpePickerOpen(false)}
         >
           <View style={{ backgroundColor: COLORS.card, borderRadius: 16, padding: 20, width: '85%', maxWidth: 360 }}>
-            <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16, marginBottom: 4, textAlign: 'center' }}>RPE — Rasitusaste</Text>
+            <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16, marginBottom: 4, textAlign: 'center' }}>{t('rpe.title')}</Text>
             <Text style={{ color: COLORS.muted, fontSize: 11, marginBottom: 16, textAlign: 'center' }}>
-              Kuinka raskas sarja oli? 10 = max
+              {t('rpe.subtitle')}
             </Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'center' }}>
               {[5, 6, 7, 7.5, 8, 8.5, 9, 9.5, 10].map(n => {
@@ -133,7 +135,7 @@ export function SetRow({ set, exerciseId, isCardio }: SetRowProps) {
                 onPress={() => setRpe(undefined)}
                 style={{ marginTop: 16, alignItems: 'center' }}
               >
-                <Text style={{ color: COLORS.muted, fontSize: 13 }}>Poista RPE</Text>
+                <Text style={{ color: COLORS.muted, fontSize: 13 }}>{t('rpe.remove')}</Text>
               </TouchableOpacity>
             )}
           </View>
