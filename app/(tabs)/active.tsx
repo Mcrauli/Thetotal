@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { View, Text, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
@@ -17,6 +17,7 @@ export default function ActiveWorkoutScreen() {
   const { profile, fetchProfile } = useUserStore()
   const [pickerVisible, setPickerVisible] = useState(false)
   const [saving, setSaving] = useState(false)
+  const savingRef = useRef(false)
   const [elapsed, setElapsed] = useState(0)
   const [results, setResults] = useState<{ xpGain: number; xpBreakdown: { base: number; prBonus: number; streakBonus: number; challengeBonus: number }; improvements: ImprovementResult[]; challenges: ChallengeResult[] } | null>(null)
   const [lastSets, setLastSets] = useState<Record<string, { text: string; weight: number; reps: number } | null>>({})
@@ -63,8 +64,10 @@ export default function ActiveWorkoutScreen() {
   }
 
   async function handleFinish() {
+    if (savingRef.current) return
     if (exercises.length === 0) { Alert.alert('Lisää ensin liike'); return }
     if (!profile) return
+    savingRef.current = true
     setSaving(true)
 
     const finishedAt = new Date()
@@ -89,6 +92,7 @@ export default function ActiveWorkoutScreen() {
     if (workoutError || !workout) {
       Alert.alert('Virhe', workoutError?.message)
       setSaving(false)
+      savingRef.current = false
       return
     }
 
@@ -115,6 +119,7 @@ export default function ActiveWorkoutScreen() {
     if (setsError) {
       Alert.alert('Sarjojen tallennus epäonnistui', setsError.message)
       setSaving(false)
+      savingRef.current = false
       return
     }
 
@@ -321,6 +326,7 @@ export default function ActiveWorkoutScreen() {
     const challengeBonus = challengeXP
     await fetchProfile()
     setSaving(false)
+    savingRef.current = false
     setResults({ xpGain: displayXPGain, xpBreakdown: { base: xpBase, prBonus, streakBonus, challengeBonus }, improvements, challenges: challengeResults })
   }
 
