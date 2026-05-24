@@ -38,10 +38,11 @@ export default function ActiveWorkoutScreen() {
     const best = recent.reduce((b: any, s: any) =>
       s.weight_kg > b.weight_kg || (s.weight_kg === b.weight_kg && s.reps > b.reps) ? s : b
     , recent[0])
+    const isCardio = exercises.find(e => e.exerciseId === exerciseId)?.muscleGroup === 'Kardio'
     setLastSets(prev => ({
       ...prev,
       [exerciseId]: {
-        text: 'Viimeksi: ' + recent.map((s: any) => `${s.weight_kg}×${s.reps}`).join('  '),
+        text: 'Viimeksi: ' + recent.map((s: any) => isCardio ? `${s.weight_kg}min ${s.reps}km` : `${s.weight_kg}×${s.reps}`).join('  '),
         weight: best.weight_kg,
         reps: best.reps,
       },
@@ -68,7 +69,10 @@ export default function ActiveWorkoutScreen() {
 
     const finishedAt = new Date()
     const startedAtISO = startedAt ? new Date(startedAt).toISOString() : finishedAt.toISOString()
-    const totalVolume = exercises.flatMap(e => e.sets).reduce((sum, s) => sum + s.weightKg * s.reps, 0)
+    const totalVolume = exercises
+      .filter(e => e.muscleGroup !== 'Kardio')
+      .flatMap(e => e.sets)
+      .reduce((sum, s) => sum + s.weightKg * s.reps, 0)
 
     const { data: workout, error: workoutError } = await supabase
       .from('workouts')
@@ -111,7 +115,9 @@ export default function ActiveWorkoutScreen() {
       exerciseId: r.exercise_id, weight: r.weight_kg, reps: r.reps,
     }))
     const prs = detectPRs(
-      exercises.flatMap(ex => ex.sets.map(s => ({ exerciseId: s.exerciseId, weight: s.weightKg, reps: s.reps }))),
+      exercises
+        .filter(ex => ex.muscleGroup !== 'Kardio')
+        .flatMap(ex => ex.sets.map(s => ({ exerciseId: s.exerciseId, weight: s.weightKg, reps: s.reps }))),
       existingPRs
     )
 
@@ -235,6 +241,7 @@ export default function ActiveWorkoutScreen() {
 
     for (const ex of exercises) {
       if (ex.sets.length === 0) continue
+      if (ex.muscleGroup === 'Kardio') continue
       const last = lastSets[ex.exerciseId]
       if (!last) continue
       const bestSet = ex.sets.reduce((b, s) =>
@@ -366,7 +373,7 @@ export default function ActiveWorkoutScreen() {
 
       <ExercisePicker
         visible={pickerVisible}
-        onSelect={(id, name) => addExercise(id, name)}
+        onSelect={(id, name, mg) => addExercise(id, name, mg)}
         onClose={() => setPickerVisible(false)}
       />
     </SafeAreaView>

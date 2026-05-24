@@ -15,6 +15,7 @@ export interface WorkoutSet {
 export interface WorkoutExercise {
   exerciseId: string
   exerciseName: string
+  muscleGroup?: string
   sets: WorkoutSet[]
   defaultWeight?: number
   defaultReps?: number
@@ -27,9 +28,9 @@ interface WorkoutState {
   isActive: boolean
 
   startWorkout: () => void
-  startFromTemplate: (name: string, exercises: { exerciseId: string; exerciseName: string }[], lastWeights?: Record<string, { weight: number; reps: number }>) => void
+  startFromTemplate: (name: string, exercises: { exerciseId: string; exerciseName: string; muscleGroup?: string }[], lastWeights?: Record<string, { weight: number; reps: number }>) => void
   setWorkoutName: (name: string) => void
-  addExercise: (exerciseId: string, exerciseName: string) => void
+  addExercise: (exerciseId: string, exerciseName: string, muscleGroup?: string) => void
   addSet: (exerciseId: string, weightKg: number, reps: number) => void
   copyLastSet: (exerciseId: string) => void
   removeExercise: (exerciseId: string) => void
@@ -57,6 +58,7 @@ export const useWorkoutStore = create<WorkoutState>()(
         exercises: exs.map(ex => ({
           exerciseId: ex.exerciseId,
           exerciseName: ex.exerciseName,
+          muscleGroup: ex.muscleGroup,
           sets: [],
           defaultWeight: lastWeights?.[ex.exerciseId]?.weight,
           defaultReps: lastWeights?.[ex.exerciseId]?.reps,
@@ -65,8 +67,8 @@ export const useWorkoutStore = create<WorkoutState>()(
 
       setWorkoutName: (name) => set({ workoutName: name }),
 
-      addExercise: (exerciseId, exerciseName) => set(state => ({
-        exercises: [...state.exercises, { exerciseId, exerciseName, sets: [] }],
+      addExercise: (exerciseId, exerciseName, muscleGroup) => set(state => ({
+        exercises: [...state.exercises, { exerciseId, exerciseName, muscleGroup, sets: [] }],
       })),
 
       addSet: (exerciseId, weightKg, reps) => set(state => ({

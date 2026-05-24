@@ -11,7 +11,7 @@ import { COLORS } from '../../lib/constants'
 interface Template {
   id: string
   name: string
-  exercises: { exerciseId: string; exerciseName: string }[]
+  exercises: { exerciseId: string; exerciseName: string; muscleGroup?: string }[]
 }
 
 export default function StartWorkoutScreen() {
@@ -23,7 +23,7 @@ export default function StartWorkoutScreen() {
     if (!profile) return
     supabase
       .from('workout_templates')
-      .select('id, name, template_exercises(exercise_id, order_index, exercises(name))')
+      .select('id, name, template_exercises(exercise_id, order_index, exercises(name, muscle_group))')
       .eq('user_id', profile.id)
       .order('created_at')
       .then(({ data }) => {
@@ -32,7 +32,7 @@ export default function StartWorkoutScreen() {
           name: t.name,
           exercises: (t.template_exercises ?? [])
             .sort((a: any, b: any) => a.order_index - b.order_index)
-            .map((te: any) => ({ exerciseId: te.exercise_id, exerciseName: te.exercises?.name ?? '' })),
+            .map((te: any) => ({ exerciseId: te.exercise_id, exerciseName: te.exercises?.name ?? '', muscleGroup: te.exercises?.muscle_group })),
         })))
       })
   }, [profile?.id])

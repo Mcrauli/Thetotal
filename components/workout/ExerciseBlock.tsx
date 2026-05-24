@@ -14,6 +14,7 @@ interface ExerciseBlockProps {
 export function ExerciseBlock({ exercise, lastBest, defaultWeight, defaultReps, onMount }: ExerciseBlockProps) {
   useEffect(() => { onMount?.() }, [])
   const { addSet, copyLastSet, removeExercise } = useWorkoutStore()
+  const isCardio = exercise.muscleGroup === 'Kardio'
 
   function handleRemove() {
     Alert.alert('Poista liike', `Poistetaanko ${exercise.exerciseName}?`, [
@@ -24,10 +25,12 @@ export function ExerciseBlock({ exercise, lastBest, defaultWeight, defaultReps, 
 
   function handleAddSet() {
     const lastSet = exercise.sets[exercise.sets.length - 1]
+    const fallbackWeight = isCardio ? 30 : 20
+    const fallbackReps = isCardio ? 5 : 5
     addSet(
       exercise.exerciseId,
-      lastSet?.weightKg ?? defaultWeight ?? 20,
-      lastSet?.reps ?? defaultReps ?? 5
+      lastSet?.weightKg ?? defaultWeight ?? fallbackWeight,
+      lastSet?.reps ?? defaultReps ?? fallbackReps
     )
   }
 
@@ -46,14 +49,14 @@ export function ExerciseBlock({ exercise, lastBest, defaultWeight, defaultReps, 
       {exercise.sets.length > 0 && (
         <View className="flex-row mb-1 px-1">
           <Text className="text-muted text-xs w-6" />
-          <Text className="flex-1 text-muted text-xs text-center">kg</Text>
-          <Text className="flex-1 text-muted text-xs text-center">reps</Text>
+          <Text className="flex-1 text-muted text-xs text-center">{isCardio ? 'min' : 'kg'}</Text>
+          <Text className="flex-1 text-muted text-xs text-center">{isCardio ? 'km' : 'reps'}</Text>
           <View className="w-16" />
         </View>
       )}
 
       {exercise.sets.map(set => (
-        <SetRow key={set.id} set={set} exerciseId={exercise.exerciseId} />
+        <SetRow key={set.id} set={set} exerciseId={exercise.exerciseId} isCardio={isCardio} />
       ))}
 
       <View className="flex-row gap-2 mt-2">
@@ -61,7 +64,7 @@ export function ExerciseBlock({ exercise, lastBest, defaultWeight, defaultReps, 
           className="flex-1 bg-card2 rounded-lg py-2 items-center"
           onPress={handleAddSet}
         >
-          <Text className="text-white text-sm">+ Lisää sarja</Text>
+          <Text className="text-white text-sm">+ {isCardio ? 'Lisää erä' : 'Lisää sarja'}</Text>
         </TouchableOpacity>
         {exercise.sets.length > 0 && (
           <TouchableOpacity

@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { COLORS } from '../../lib/constants'
 
 interface SetRow { set_number: number; weight_kg: number; reps: number }
-interface ExerciseGroup { name: string; sets: SetRow[] }
+interface ExerciseGroup { name: string; muscleGroup: string; sets: SetRow[] }
 
 interface Props {
   workoutId: string | null
@@ -23,14 +23,15 @@ export function WorkoutDetailModal({ workoutId, workoutName, startedAt, totalVol
     setLoading(true)
     supabase
       .from('workout_sets')
-      .select('set_number, weight_kg, reps, exercises(name)')
+      .select('set_number, weight_kg, reps, exercises(name, muscle_group)')
       .eq('workout_id', workoutId)
       .order('set_number')
       .then(({ data }) => {
         const map: Record<string, ExerciseGroup> = {}
         for (const row of (data ?? []) as any[]) {
           const name: string = row.exercises?.name ?? '?'
-          if (!map[name]) map[name] = { name, sets: [] }
+          const mg: string = row.exercises?.muscle_group ?? ''
+          if (!map[name]) map[name] = { name, muscleGroup: mg, sets: [] }
           map[name].sets.push({ set_number: row.set_number, weight_kg: row.weight_kg, reps: row.reps })
         }
         setGroups(Object.values(map))
@@ -58,22 +59,25 @@ export function WorkoutDetailModal({ workoutId, workoutName, startedAt, totalVol
           <ActivityIndicator color={COLORS.accent} style={{ marginTop: 40 }} />
         ) : (
           <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-            {groups.map(group => (
-              <View key={group.name} style={{ backgroundColor: COLORS.card, borderRadius: 16, padding: 16, marginBottom: 12 }}>
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15, marginBottom: 12 }}>{group.name}</Text>
-                {group.sets.map((s, i) => (
-                  <View key={i} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-                    <Text style={{ color: COLORS.muted, fontSize: 12, width: 28 }}>S{s.set_number}</Text>
-                    <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>
-                      {s.weight_kg} kg
-                    </Text>
-                    <Text style={{ color: COLORS.muted, fontSize: 14, marginLeft: 6 }}>
-                      × {s.reps}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            ))}
+            {groups.map(group => {
+              const isCardio = group.muscleGroup === 'Kardio'
+              return (
+                <View key={group.name} style={{ backgroundColor: COLORS.card, borderRadius: 16, padding: 16, marginBottom: 12 }}>
+                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15, marginBottom: 12 }}>{group.name}</Text>
+                  {group.sets.map((s, i) => (
+                    <View key={i} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+                      <Text style={{ color: COLORS.muted, fontSize: 12, width: 28 }}>S{s.set_number}</Text>
+                      <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>
+                        {s.weight_kg} {isCardio ? 'min' : 'kg'}
+                      </Text>
+                      <Text style={{ color: COLORS.muted, fontSize: 14, marginLeft: 6 }}>
+                        {isCardio ? `${s.reps} km` : `× ${s.reps}`}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )
+            })}
           </ScrollView>
         )}
       </View>

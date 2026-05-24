@@ -12,7 +12,7 @@ interface Exercise {
 
 interface ExercisePickerProps {
   visible: boolean
-  onSelect: (id: string, name: string) => void
+  onSelect: (id: string, name: string, muscleGroup: string) => void
   onClose: () => void
 }
 
@@ -75,7 +75,7 @@ export function ExercisePicker({ visible, onSelect, onClose }: ExercisePickerPro
           renderItem={({ item }) => (
             <TouchableOpacity
               className="px-4 py-3 border-b border-card flex-row items-center justify-between"
-              onPress={() => { onSelect(item.id, item.name); onClose(); setSearch('') }}
+              onPress={() => { onSelect(item.id, item.name, item.muscle_group); onClose(); setSearch('') }}
             >
               <Text className="text-white font-medium">{item.name}</Text>
               {item.is_sbd && <Text className="text-gold text-xs">SBD</Text>}

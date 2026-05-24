@@ -5,10 +5,13 @@ import { COLORS } from '../../lib/constants'
 interface SetRowProps {
   set: WorkoutSet
   exerciseId: string
+  isCardio?: boolean
 }
 
-export function SetRow({ set, exerciseId }: SetRowProps) {
+export function SetRow({ set, exerciseId, isCardio }: SetRowProps) {
   const { updateSet, removeSet } = useWorkoutStore()
+  const weightStep = isCardio ? 5 : 0.5
+  const repsStep = 1
 
   function stepWeight(delta: number) {
     const next = Math.round((set.weightKg + delta) * 10) / 10
@@ -17,7 +20,7 @@ export function SetRow({ set, exerciseId }: SetRowProps) {
 
   function stepReps(delta: number) {
     const next = set.reps + delta
-    if (next >= 1) updateSet(exerciseId, set.id, 'reps', next)
+    if (next >= 0) updateSet(exerciseId, set.id, 'reps', next)
   }
 
   return (
@@ -25,7 +28,7 @@ export function SetRow({ set, exerciseId }: SetRowProps) {
       <Text style={{ color: COLORS.muted, width: 22, textAlign: 'center', fontSize: 12 }}>{set.setNumber}</Text>
 
       <View style={{ flex: 1.2, flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.bg, borderRadius: 10 }}>
-        <TouchableOpacity onPress={() => stepWeight(-0.5)} style={{ paddingHorizontal: 8, paddingVertical: 8 }}>
+        <TouchableOpacity onPress={() => stepWeight(-weightStep)} style={{ paddingHorizontal: 8, paddingVertical: 8 }}>
           <Text style={{ color: COLORS.muted, fontSize: 16, lineHeight: 18 }}>−</Text>
         </TouchableOpacity>
         <TextInput
@@ -35,23 +38,23 @@ export function SetRow({ set, exerciseId }: SetRowProps) {
           keyboardType="decimal-pad"
           selectTextOnFocus
         />
-        <TouchableOpacity onPress={() => stepWeight(0.5)} style={{ paddingHorizontal: 8, paddingVertical: 8 }}>
+        <TouchableOpacity onPress={() => stepWeight(weightStep)} style={{ paddingHorizontal: 8, paddingVertical: 8 }}>
           <Text style={{ color: COLORS.muted, fontSize: 16, lineHeight: 18 }}>+</Text>
         </TouchableOpacity>
       </View>
 
       <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.bg, borderRadius: 10 }}>
-        <TouchableOpacity onPress={() => stepReps(-1)} style={{ paddingHorizontal: 8, paddingVertical: 8 }}>
+        <TouchableOpacity onPress={() => stepReps(-repsStep)} style={{ paddingHorizontal: 8, paddingVertical: 8 }}>
           <Text style={{ color: COLORS.muted, fontSize: 16, lineHeight: 18 }}>−</Text>
         </TouchableOpacity>
         <TextInput
           style={{ flex: 1, color: '#fff', textAlign: 'center', paddingVertical: 6, fontSize: 15 }}
           value={String(set.reps)}
-          onChangeText={v => updateSet(exerciseId, set.id, 'reps', parseInt(v) || 0)}
-          keyboardType="number-pad"
+          onChangeText={v => updateSet(exerciseId, set.id, 'reps', isCardio ? (parseFloat(v) || 0) : (parseInt(v) || 0))}
+          keyboardType={isCardio ? 'decimal-pad' : 'number-pad'}
           selectTextOnFocus
         />
-        <TouchableOpacity onPress={() => stepReps(1)} style={{ paddingHorizontal: 8, paddingVertical: 8 }}>
+        <TouchableOpacity onPress={() => stepReps(repsStep)} style={{ paddingHorizontal: 8, paddingVertical: 8 }}>
           <Text style={{ color: COLORS.muted, fontSize: 16, lineHeight: 18 }}>+</Text>
         </TouchableOpacity>
       </View>
