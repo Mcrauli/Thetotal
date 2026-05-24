@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, Modal, ScrollView, KeyboardAvo
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
 import { useUserStore } from '../../store/userStore'
+import { sendPushToUsers } from '../../lib/notifications'
 import { COLORS } from '../../lib/constants'
 
 interface Comment {
@@ -17,10 +18,11 @@ interface Props {
   visible: boolean
   prId: string | null
   prLabel?: string
+  prOwnerId?: string
   onClose: () => void
 }
 
-export function PRCommentsModal({ visible, prId, prLabel, onClose }: Props) {
+export function PRCommentsModal({ visible, prId, prLabel, prOwnerId, onClose }: Props) {
   const { profile } = useUserStore()
   const [comments, setComments] = useState<Comment[]>([])
   const [loading, setLoading] = useState(false)
@@ -66,6 +68,19 @@ export function PRCommentsModal({ visible, prId, prLabel, onClose }: Props) {
       body, created_at: data.created_at,
     }])
     setText('')
+
+    const notifyIds = new Set<string>()
+    if (prOwnerId && prOwnerId !== profile.id) notifyIds.add(prOwnerId)
+    for (const c of comments) {
+      if (c.user_id !== profile.id) notifyIds.add(c.user_id)
+    }
+    if (notifyIds.size > 0) {
+      await sendPushToUsers({
+        toUserIds: [...notifyIds],
+        title: `💬 ${profile.username}`,
+        body: prLabel ? `${prLabel}: ${body}` : body,
+      })
+    }
   }
 
   async function deleteComment(id: string) {

@@ -10,6 +10,7 @@ import { RanksModal } from '../../components/ui/RanksModal'
 import { RankBarbellIcon } from '../../components/ui/RankBarbellIcon'
 import { WorkoutDetailModal } from '../../components/workout/WorkoutDetailModal'
 import { PRCommentsModal } from '../../components/ui/PRCommentsModal'
+import { sendPushToUsers } from '../../lib/notifications'
 import { getRankData, getSBDSubRank } from '../../lib/xp'
 import { SBD_RANK_THRESHOLDS, COLORS } from '../../lib/constants'
 import { supabase } from '../../lib/supabase'
@@ -138,6 +139,14 @@ export default function HomeScreen() {
 
     if (isAdding) {
       await supabase.from('pr_reactions').insert({ pr_id: prId, user_id: profile.id, emoji })
+      const pr = friendPRs.find(p => p.id === prId)
+      if (pr && pr.user_id !== profile.id) {
+        await sendPushToUsers({
+          toUserIds: [pr.user_id],
+          title: `${EMOJI_LABELS[emoji]} ${profile.username}`,
+          body: `Reagoi ${pr.exerciseName} ${pr.weight_kg}kg PR:ääsi`,
+        })
+      }
     } else {
       await supabase.from('pr_reactions').delete().eq('pr_id', prId).eq('user_id', profile.id).eq('emoji', emoji)
     }
@@ -472,6 +481,7 @@ export default function HomeScreen() {
       <PRCommentsModal
         visible={!!commentPR}
         prId={commentPR?.id ?? null}
+        prOwnerId={commentPR?.user_id}
         prLabel={commentPR ? `${commentPR.username} · ${commentPR.exerciseName} ${commentPR.weight_kg}kg` : undefined}
         onClose={() => {
           const closingPRId = commentPR?.id
