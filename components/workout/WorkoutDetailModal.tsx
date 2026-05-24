@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { COLORS } from '../../lib/constants'
 import { estimateOneRepMax } from '../../lib/pr'
 
-interface SetRow { set_number: number; weight_kg: number; reps: number }
+interface SetRow { set_number: number; weight_kg: number; reps: number; rpe: number | null }
 interface ExerciseGroup { name: string; muscleGroup: string; sets: SetRow[] }
 
 interface Props {
@@ -24,7 +24,7 @@ export function WorkoutDetailModal({ workoutId, workoutName, startedAt, totalVol
     setLoading(true)
     supabase
       .from('workout_sets')
-      .select('set_number, weight_kg, reps, exercises(name, muscle_group)')
+      .select('set_number, weight_kg, reps, rpe, exercises(name, muscle_group)')
       .eq('workout_id', workoutId)
       .order('set_number')
       .then(({ data }) => {
@@ -33,7 +33,7 @@ export function WorkoutDetailModal({ workoutId, workoutName, startedAt, totalVol
           const name: string = row.exercises?.name ?? '?'
           const mg: string = row.exercises?.muscle_group ?? ''
           if (!map[name]) map[name] = { name, muscleGroup: mg, sets: [] }
-          map[name].sets.push({ set_number: row.set_number, weight_kg: row.weight_kg, reps: row.reps })
+          map[name].sets.push({ set_number: row.set_number, weight_kg: row.weight_kg, reps: row.reps, rpe: row.rpe ?? null })
         }
         setGroups(Object.values(map))
         setLoading(false)
@@ -74,6 +74,16 @@ export function WorkoutDetailModal({ workoutId, workoutName, startedAt, totalVol
                       <Text style={{ color: COLORS.muted, fontSize: 14, marginLeft: 6 }}>
                         {isCardio ? `${s.reps} km` : `× ${s.reps}`}
                       </Text>
+                      {s.rpe !== null && (
+                        <Text style={{
+                          color: s.rpe <= 6 ? '#4ade80' : s.rpe <= 8 ? '#fb923c' : '#ef4444',
+                          fontSize: 11,
+                          fontWeight: '700',
+                          marginLeft: 8,
+                        }}>
+                          RPE {s.rpe}
+                        </Text>
+                      )}
                       {!isCardio && s.reps > 1 && (
                         <Text style={{ color: COLORS.muted, fontSize: 11, marginLeft: 'auto' }}>
                           ≈ {estimateOneRepMax(s.weight_kg, s.reps)}kg 1RM

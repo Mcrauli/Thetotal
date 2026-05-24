@@ -99,6 +99,7 @@ export default function ActiveWorkoutScreen() {
         set_number: s.setNumber,
         weight_kg: s.weightKg,
         reps: s.reps,
+        rpe: s.rpe ?? null,
         is_pr: false,
       }))
     )

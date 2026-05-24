@@ -9,6 +9,7 @@ export interface WorkoutSet {
   setNumber: number
   weightKg: number
   reps: number
+  rpe?: number
   isPR: boolean
 }
 
@@ -35,7 +36,7 @@ interface WorkoutState {
   copyLastSet: (exerciseId: string) => void
   removeExercise: (exerciseId: string) => void
   removeSet: (exerciseId: string, setId: string) => void
-  updateSet: (exerciseId: string, setId: string, field: 'weightKg' | 'reps', value: number) => void
+  updateSet: (exerciseId: string, setId: string, field: 'weightKg' | 'reps' | 'rpe', value: number | undefined) => void
   clearWorkout: () => void
 }
 
