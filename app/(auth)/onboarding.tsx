@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native'
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Linking, Alert } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
@@ -26,6 +26,7 @@ export default function OnboardingScreen() {
   const [bodyweight, setBodyweight] = useState('')
   const [height, setHeight] = useState('')
   const [gender, setGender] = useState<'male' | 'female'>('male')
+  const [accepted, setAccepted] = useState(false)
   const [loading, setLoading] = useState(false)
 
   const sq = parseFloat(squat) || 0
@@ -42,6 +43,7 @@ export default function OnboardingScreen() {
 
   async function handleFinish() {
     if (!profile) return
+    if (!accepted) { Alert.alert('Hyväksy käyttöehdot', 'Sinun on hyväksyttävä käyttöehdot ja tietosuojaseloste jatkaaksesi.'); return }
     setLoading(true)
 
     const { data: exercises } = await supabase
@@ -80,6 +82,7 @@ export default function OnboardingScreen() {
 
   async function handleSkip() {
     if (!profile) return
+    if (!accepted) { Alert.alert('Hyväksy käyttöehdot', 'Sinun on hyväksyttävä käyttöehdot ja tietosuojaseloste jatkaaksesi.'); return }
     await supabase.from('users').update({ onboarded: true }).eq('id', profile.id)
     await fetchProfile()
     router.replace('/(auth)/tutorial')
@@ -165,18 +168,55 @@ export default function OnboardingScreen() {
           </View>
         )}
 
+        <View style={{ backgroundColor: '#1a1a2e', borderRadius: 12, padding: 14, marginBottom: 16, marginTop: 8 }}>
+          <Text style={{ color: '#ffa726', fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 6 }}>⚠ TÄRKEÄÄ TERVEYDESTÄ</Text>
+          <Text style={{ color: '#aaa', fontSize: 12, lineHeight: 17 }}>
+            Voimaharjoittelu on omalla vastuulla. Konsultoi lääkäriä jos sinulla on terveydellisiä rajoitteita. Sovellus ei korvaa ammattilaisvalmennusta. Lopeta harjoittelu välittömästi jos koet kipua.
+          </Text>
+        </View>
+
         <TouchableOpacity
-          className={`bg-accent rounded-xl py-4 items-center mb-3 ${loading ? 'opacity-50' : ''}`}
+          onPress={() => setAccepted(v => !v)}
+          activeOpacity={0.7}
+          style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 16, paddingVertical: 4 }}
+        >
+          <View
+            style={{
+              width: 22, height: 22, borderRadius: 5,
+              borderWidth: 2,
+              borderColor: accepted ? '#e63946' : '#666',
+              backgroundColor: accepted ? '#e63946' : 'transparent',
+              alignItems: 'center', justifyContent: 'center',
+              marginRight: 10, marginTop: 1,
+            }}
+          >
+            {accepted && <Text style={{ color: '#fff', fontSize: 14, fontWeight: '900', lineHeight: 16 }}>✓</Text>}
+          </View>
+          <Text style={{ color: '#ccc', fontSize: 13, flex: 1, lineHeight: 18 }}>
+            Olen yli 13-vuotias ja hyväksyn{' '}
+            <Text style={{ color: '#e63946', textDecorationLine: 'underline' }} onPress={() => Linking.openURL('https://mcrauli.github.io/Thetotal/terms.html')}>
+              käyttöehdot
+            </Text>
+            {' '}ja{' '}
+            <Text style={{ color: '#e63946', textDecorationLine: 'underline' }} onPress={() => Linking.openURL('https://mcrauli.github.io/Thetotal/privacy.html')}>
+              tietosuojaselosteen
+            </Text>
+            , mukaan lukien suostumus terveystietojen käsittelyyn.
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          className={`bg-accent rounded-xl py-4 items-center mb-3 ${(loading || !accepted) ? 'opacity-50' : ''}`}
           onPress={handleFinish}
-          disabled={loading}
+          disabled={loading || !accepted}
         >
           <Text className="text-white font-bold text-base">
             {total > 0 ? `Aloita rankkina ${startingSBDRank}` : 'Aloita (Aloittelija)'}
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity className="items-center py-2" onPress={handleSkip}>
-          <Text className="text-muted text-sm">Ohita toistaiseksi</Text>
+        <TouchableOpacity className="items-center py-2" onPress={handleSkip} disabled={!accepted}>
+          <Text className="text-muted text-sm" style={{ opacity: accepted ? 1 : 0.5 }}>Ohita toistaiseksi</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
