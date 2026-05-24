@@ -104,13 +104,19 @@ export default function ActiveWorkoutScreen() {
       }))
     )
 
-    const [, { data: existingPRData }, { count: workoutCount }, { data: doneData }] =
+    const [{ error: setsError }, { data: existingPRData }, { count: workoutCount }, { data: doneData }] =
       await Promise.all([
         supabase.from('workout_sets').insert(allSets),
         supabase.from('personal_records').select('exercise_id, weight_kg, reps, exercises(name, is_sbd)').eq('user_id', profile.id),
         supabase.from('workouts').select('id', { count: 'exact', head: true }).eq('user_id', profile.id),
         supabase.from('user_challenges').select('challenge_id').eq('user_id', profile.id),
       ])
+
+    if (setsError) {
+      Alert.alert('Sarjojen tallennus epäonnistui', setsError.message)
+      setSaving(false)
+      return
+    }
 
     const existingPRs = (existingPRData ?? []).map((r: any) => ({
       exerciseId: r.exercise_id, weight: r.weight_kg, reps: r.reps,
