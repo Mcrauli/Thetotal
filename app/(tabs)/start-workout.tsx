@@ -42,8 +42,29 @@ export default function StartWorkoutScreen() {
     router.replace('/(tabs)/active')
   }
 
-  function handleTemplate(t: Template) {
-    startFromTemplate(t.name, t.exercises)
+  async function handleTemplate(t: Template) {
+    const ids = t.exercises.map(e => e.exerciseId)
+    const lastWeights: Record<string, { weight: number; reps: number }> = {}
+
+    if (ids.length > 0 && profile) {
+      const { data } = await supabase
+        .from('workout_sets')
+        .select('weight_kg, reps, exercise_id, workout_id, workouts!inner(started_at, user_id)')
+        .in('exercise_id', ids)
+        .eq('workouts.user_id', profile.id)
+        .order('workouts.started_at', { ascending: false })
+        .limit(ids.length * 10)
+
+      const seen = new Set<string>()
+      for (const s of (data ?? []) as any[]) {
+        if (!seen.has(s.exercise_id)) {
+          seen.add(s.exercise_id)
+          lastWeights[s.exercise_id] = { weight: s.weight_kg, reps: s.reps }
+        }
+      }
+    }
+
+    startFromTemplate(t.name, t.exercises, lastWeights)
     router.replace('/(tabs)/active')
   }
 

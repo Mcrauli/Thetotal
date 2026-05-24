@@ -15,6 +15,7 @@ interface Workout {
   started_at: string
   finished_at: string
   total_volume_kg: number
+  exerciseNames?: string[]
 }
 
 interface Template {
@@ -42,7 +43,27 @@ export default function LogScreen() {
         .eq('user_id', userId)
         .order('created_at'),
     ])
-    setWorkouts(wData ?? [])
+
+    const workoutsList = (wData ?? []) as Workout[]
+    if (workoutsList.length > 0) {
+      const wIds = workoutsList.map(w => w.id)
+      const { data: setRows } = await supabase
+        .from('workout_sets')
+        .select('workout_id, set_number, exercises(name)')
+        .in('workout_id', wIds)
+        .order('set_number')
+      const namesByWorkout: Record<string, string[]> = {}
+      for (const row of (setRows ?? []) as any[]) {
+        const name = row.exercises?.name
+        if (!name) continue
+        if (!namesByWorkout[row.workout_id]) namesByWorkout[row.workout_id] = []
+        if (!namesByWorkout[row.workout_id].includes(name)) namesByWorkout[row.workout_id].push(name)
+      }
+      for (const w of workoutsList) {
+        w.exerciseNames = namesByWorkout[w.id] ?? []
+      }
+    }
+    setWorkouts(workoutsList)
     setTemplates((tData ?? []).map((t: any) => ({
       id: t.id,
       name: t.name,
@@ -172,6 +193,11 @@ export default function LogScreen() {
                     <Text className="text-muted text-xs mt-0.5">
                       {durationMinutes(item.started_at, item.finished_at)} min · {Math.round(item.total_volume_kg).toLocaleString()} kg
                     </Text>
+                    {item.exerciseNames && item.exerciseNames.length > 0 && (
+                      <Text className="text-muted text-xs mt-0.5" numberOfLines={1}>
+                        {item.exerciseNames.join(' · ')}
+                      </Text>
+                    )}
                   </View>
                 </TouchableOpacity>
               ))}
