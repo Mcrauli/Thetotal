@@ -6,6 +6,7 @@ import { useUserStore } from '../../store/userStore'
 import { sendPushToUsers } from '../../lib/notifications'
 import { reportContent, promptReport } from '../../lib/moderation'
 import { COLORS } from '../../lib/constants'
+import { useT } from '../../lib/i18n'
 
 interface Comment {
   id: string
@@ -24,6 +25,7 @@ interface Props {
 }
 
 export function PRCommentsModal({ visible, prId, prLabel, prOwnerId, onClose }: Props) {
+  const t = useT()
   const { profile } = useUserStore()
   const [comments, setComments] = useState<Comment[]>([])
   const [loading, setLoading] = useState(false)
@@ -55,7 +57,7 @@ export function PRCommentsModal({ visible, prId, prLabel, prOwnerId, onClose }: 
     if (!profile || !prId) return
     const body = text.trim()
     if (!body) return
-    if (body.length > 500) { Alert.alert('Liian pitkä', 'Maksimi 500 merkkiä'); return }
+    if (body.length > 500) { Alert.alert(t('comments.tooLong'), t('comments.maxChars')); return }
     setPosting(true)
     const { data, error } = await supabase
       .from('pr_comments')
@@ -63,7 +65,7 @@ export function PRCommentsModal({ visible, prId, prLabel, prOwnerId, onClose }: 
       .select('id, created_at')
       .single()
     setPosting(false)
-    if (error) { Alert.alert('Virhe', error.message); return }
+    if (error) { Alert.alert(t('common.error'), error.message); return }
     setComments(prev => [...prev, {
       id: data.id, user_id: profile.id, username: profile.username,
       body, created_at: data.created_at,
@@ -85,10 +87,10 @@ export function PRCommentsModal({ visible, prId, prLabel, prOwnerId, onClose }: 
   }
 
   async function deleteComment(id: string) {
-    Alert.alert('Poista kommentti', 'Oletko varma?', [
-      { text: 'Peruuta', style: 'cancel' },
+    Alert.alert(t('comments.deleteTitle'), t('comments.deleteBody'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Poista', style: 'destructive', onPress: async () => {
+        text: t('common.delete'), style: 'destructive', onPress: async () => {
           await supabase.from('pr_comments').delete().eq('id', id)
           setComments(prev => prev.filter(c => c.id !== id))
         },
@@ -105,20 +107,20 @@ export function PRCommentsModal({ visible, prId, prLabel, prOwnerId, onClose }: 
         targetId: commentId,
         reason,
       })
-      if (ok) Alert.alert('Kiitos', 'Ilmianto vastaanotettu. Käsittelemme sen 24 tunnin sisällä.')
+      if (ok) Alert.alert(t('mod.thanks'), t('mod.thanksBody'))
     })
   }
 
   function timeAgo(iso: string) {
     const diff = Date.now() - new Date(iso).getTime()
     const mins = Math.floor(diff / 60000)
-    if (mins < 1) return 'nyt'
-    if (mins < 60) return `${mins} min`
+    if (mins < 1) return t('common.now')
+    if (mins < 60) return `${mins} ${t('common.minutes')}`
     const hrs = Math.floor(mins / 60)
-    if (hrs < 24) return `${hrs} h`
+    if (hrs < 24) return `${hrs} ${t('common.hours')}`
     const days = Math.floor(hrs / 24)
-    if (days < 7) return `${days} pv`
-    return new Date(iso).toLocaleDateString('fi-FI', { day: 'numeric', month: 'short' })
+    if (days < 7) return `${days} ${t('common.days')}`
+    return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
   }
 
   return (
@@ -130,11 +132,11 @@ export function PRCommentsModal({ visible, prId, prLabel, prOwnerId, onClose }: 
         >
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 12, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: COLORS.card }}>
             <View>
-              <Text style={{ color: '#fff', fontSize: 17, fontWeight: '900' }}>Kommentit</Text>
+              <Text style={{ color: '#fff', fontSize: 17, fontWeight: '900' }}>{t('comments.title')}</Text>
               {prLabel && <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 2 }}>{prLabel}</Text>}
             </View>
             <TouchableOpacity onPress={onClose}>
-              <Text style={{ color: COLORS.muted, fontSize: 15 }}>Sulje</Text>
+              <Text style={{ color: COLORS.muted, fontSize: 15 }}>{t('common.close')}</Text>
             </TouchableOpacity>
           </View>
 
@@ -144,7 +146,7 @@ export function PRCommentsModal({ visible, prId, prLabel, prOwnerId, onClose }: 
             <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 24 }}>
               {comments.length === 0 ? (
                 <Text style={{ color: COLORS.muted, textAlign: 'center', marginTop: 40 }}>
-                  Ole ensimmäinen kommentoija 💬
+                  {t('comments.empty')}
                 </Text>
               ) : (
                 comments.map(c => (
@@ -174,7 +176,7 @@ export function PRCommentsModal({ visible, prId, prLabel, prOwnerId, onClose }: 
           <View style={{ flexDirection: 'row', gap: 8, padding: 12, borderTopWidth: 1, borderTopColor: COLORS.card }}>
             <TextInput
               style={{ flex: 1, backgroundColor: COLORS.card, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, color: '#fff', maxHeight: 100 }}
-              placeholder="Kirjoita kommentti..."
+              placeholder={t('comments.placeholder')}
               placeholderTextColor="#666"
               value={text}
               onChangeText={setText}
@@ -192,7 +194,7 @@ export function PRCommentsModal({ visible, prId, prLabel, prOwnerId, onClose }: 
                 opacity: posting ? 0.5 : 1,
               }}
             >
-              <Text style={{ color: '#fff', fontWeight: '700' }}>Lähetä</Text>
+              <Text style={{ color: '#fff', fontWeight: '700' }}>{t('common.send')}</Text>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>

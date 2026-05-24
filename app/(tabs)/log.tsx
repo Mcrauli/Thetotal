@@ -6,6 +6,7 @@ import { router, useFocusEffect } from 'expo-router'
 import { supabase } from '../../lib/supabase'
 import { useUserStore } from '../../store/userStore'
 import { ScreenBackground } from '../../components/ui/ScreenBackground'
+import { useT } from '../../lib/i18n'
 import { WorkoutDetailModal } from '../../components/workout/WorkoutDetailModal'
 import { COLORS } from '../../lib/constants'
 
@@ -25,6 +26,7 @@ interface Template {
 }
 
 export default function LogScreen() {
+  const t = useT()
   const { profile } = useUserStore()
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [templates, setTemplates] = useState<Template[]>([])
@@ -82,9 +84,9 @@ export default function LogScreen() {
     const d = new Date(iso)
     const today = new Date()
     const diffDays = Math.floor((today.getTime() - d.getTime()) / 86400000)
-    if (diffDays === 0) return 'Tänään'
-    if (diffDays === 1) return 'Eilen'
-    return d.toLocaleDateString('fi-FI', { day: 'numeric', month: 'short' })
+    if (diffDays === 0) return t('common.today')
+    if (diffDays === 1) return t('common.yesterday')
+    return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
   }
 
   function durationMinutes(start: string, end: string) {
@@ -98,7 +100,7 @@ export default function LogScreen() {
 
           {/* Ohjelmat */}
           <View className="px-4 pt-6 pb-3 flex-row justify-between items-center">
-            <Text className="text-white text-xl font-black">Ohjelmat</Text>
+            <Text className="text-white text-xl font-black">{t('workouts.programs')}</Text>
             <TouchableOpacity
               className="flex-row items-center gap-1.5"
               onPress={() => router.push('/(tabs)/create-template')}
@@ -110,7 +112,7 @@ export default function LogScreen() {
               }}>
                 <Ionicons name="add" size={16} color={COLORS.accent} />
               </View>
-              <Text className="text-accent text-sm font-bold">Luo</Text>
+              <Text className="text-accent text-sm font-bold">{t('workouts.create')}</Text>
             </TouchableOpacity>
           </View>
 
@@ -121,7 +123,7 @@ export default function LogScreen() {
               onPress={() => router.push('/(tabs)/create-template')}
             >
               <Ionicons name="barbell-outline" size={28} color={COLORS.muted} />
-              <Text className="text-muted text-sm mt-2">Luo ensimmäinen ohjelmasi</Text>
+              <Text className="text-muted text-sm mt-2">{t('workouts.noPrograms')}</Text>
             </TouchableOpacity>
           ) : (
             <View className="px-4 mb-6" style={{ gap: 10 }}>
@@ -147,7 +149,7 @@ export default function LogScreen() {
                     </View>
 
                     {t.exercises.length === 0 ? (
-                      <Text className="text-muted text-xs">Ei liikkeitä</Text>
+                      <Text className="text-muted text-xs">{t('workouts.noExercises')}</Text>
                     ) : (
                       <Text className="text-muted text-xs" numberOfLines={2}>
                         {t.exercises.map(e => e.exerciseName).join(' · ')}
@@ -161,13 +163,13 @@ export default function LogScreen() {
 
           {/* Historia */}
           <View className="px-4 mb-3">
-            <Text className="text-white text-xl font-black">Viimeisimmät treenit</Text>
+            <Text className="text-white text-xl font-black">{t('workouts.recent')}</Text>
           </View>
 
           {workouts.length === 0 ? (
             <View className="mx-4 items-center py-10">
               <Ionicons name="calendar-outline" size={32} color={COLORS.muted} />
-              <Text className="text-muted text-sm mt-2">Ei vielä treenejä.</Text>
+              <Text className="text-muted text-sm mt-2">{t('workouts.noWorkouts')}</Text>
             </View>
           ) : (
             <View className="px-4">

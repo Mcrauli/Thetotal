@@ -8,6 +8,7 @@ import { useUserStore } from '../../store/userStore'
 import { useWorkoutStore } from '../../store/workoutStore'
 import { PRESET_TEMPLATES, type PresetTemplate } from '../../lib/preset-templates'
 import { COLORS } from '../../lib/constants'
+import { useT } from '../../lib/i18n'
 
 interface Template {
   id: string
@@ -16,6 +17,7 @@ interface Template {
 }
 
 export default function StartWorkoutScreen() {
+  const t = useT()
   const { profile } = useUserStore()
   const { startWorkout, startFromTemplate } = useWorkoutStore()
   const [templates, setTemplates] = useState<Template[]>([])
@@ -91,32 +93,32 @@ export default function StartWorkoutScreen() {
   }
 
   async function handlePresetStart(p: PresetTemplate) {
-    const t = await resolvePresetToTemplate(p)
-    if (t) handleTemplate(t)
+    const tmpl = await resolvePresetToTemplate(p)
+    if (tmpl) handleTemplate(tmpl)
   }
 
   async function handlePresetSave(p: PresetTemplate) {
     if (!profile) return
-    const t = await resolvePresetToTemplate(p)
-    if (!t || t.exercises.length === 0) return
+    const tmpl = await resolvePresetToTemplate(p)
+    if (!tmpl || tmpl.exercises.length === 0) return
     const { data: newTmpl, error } = await supabase
       .from('workout_templates')
-      .insert({ user_id: profile.id, name: t.name })
+      .insert({ user_id: profile.id, name: tmpl.name })
       .select('id')
       .single()
-    if (error || !newTmpl) { Alert.alert('Virhe', 'Tallennus epäonnistui'); return }
+    if (error || !newTmpl) { Alert.alert(t('common.error'), ''); return }
     await supabase.from('template_exercises').insert(
-      t.exercises.map((ex, i) => ({ template_id: newTmpl.id, exercise_id: ex.exerciseId, order_index: i }))
+      tmpl.exercises.map((ex, i) => ({ template_id: newTmpl.id, exercise_id: ex.exerciseId, order_index: i }))
     )
-    setTemplates(prev => [...prev, { id: newTmpl.id, name: t.name, exercises: t.exercises }])
-    Alert.alert('Tallennettu', `"${t.name}" lisätty omiin ohjelmiisi.`)
+    setTemplates(prev => [...prev, { id: newTmpl.id, name: tmpl.name, exercises: tmpl.exercises }])
+    Alert.alert(t('start.saved'), t('start.savedBody', { name: tmpl.name }))
   }
 
   return (
     <SafeAreaView className="flex-1 bg-bg">
       <View className="flex-row items-center justify-between px-4 pt-3 pb-4"
         style={{ borderBottomWidth: 1, borderBottomColor: COLORS.card }}>
-        <Text className="text-white text-lg font-black">Aloita treeni</Text>
+        <Text className="text-white text-lg font-black">{t('start.title')}</Text>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="close" size={24} color={COLORS.muted} />
         </TouchableOpacity>
@@ -147,15 +149,15 @@ export default function StartWorkoutScreen() {
             <Ionicons name="flash" size={22} color={COLORS.accent} />
           </View>
           <View>
-            <Text className="text-white font-black text-base">Tyhjä treeni</Text>
-            <Text className="text-muted text-xs mt-0.5">Lisää liikkeet itse</Text>
+            <Text className="text-white font-black text-base">{t('start.blank')}</Text>
+            <Text className="text-muted text-xs mt-0.5">{t('start.blankDesc')}</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color={COLORS.muted} style={{ marginLeft: 'auto' }} />
         </TouchableOpacity>
 
         {templates.length > 0 && (
           <>
-            <Text className="text-muted text-xs tracking-widest mb-3">OMAT OHJELMAT</Text>
+            <Text className="text-muted text-xs tracking-widest mb-3">{t('start.myPrograms')}</Text>
             {templates.map(t => (
               <TouchableOpacity
                 key={t.id}
@@ -203,7 +205,7 @@ export default function StartWorkoutScreen() {
         )}
 
         <Text className="text-muted text-xs tracking-widest mb-3" style={{ marginTop: templates.length > 0 ? 24 : 0 }}>
-          ESIMERKKIOHJELMAT
+          {t('start.presets')}
         </Text>
         {PRESET_TEMPLATES.map(p => (
           <View
@@ -231,7 +233,7 @@ export default function StartWorkoutScreen() {
                   alignItems: 'center',
                 }}
               >
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>▶ Aloita</Text>
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>{t('start.startProgram')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => handlePresetSave(p)}
@@ -243,7 +245,7 @@ export default function StartWorkoutScreen() {
                   alignItems: 'center',
                 }}
               >
-                <Text style={{ color: COLORS.muted, fontWeight: '700', fontSize: 13 }}>+ Tallenna omaksi</Text>
+                <Text style={{ color: COLORS.muted, fontWeight: '700', fontSize: 13 }}>{t('start.saveAsOwn')}</Text>
               </TouchableOpacity>
             </View>
           </View>
