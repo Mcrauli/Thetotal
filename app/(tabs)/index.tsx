@@ -78,6 +78,7 @@ export default function HomeScreen() {
       .select('id, user_id, weight_kg, reps, recorded_at, verified, exercises!inner(name, is_sbd), users!inner(username, sbd_rank, hide_sbd)')
       .in('user_id', friendIds)
       .eq('exercises.is_sbd', true)
+      .eq('verified', true)
       .order('recorded_at', { ascending: false })
       .limit(10)
     const baseFiltered = (data ?? [])
@@ -430,17 +431,7 @@ export default function HomeScreen() {
                           <Text style={{ color: COLORS.muted, fontSize: 12 }}>× {pr.reps}</Text>
                         )}
                         <Text style={{ color: '#fff', fontSize: 13, marginLeft: 4 }}>{pr.exerciseName}</Text>
-                        {pr.verified ? (
-                          <Text style={{ color: '#4ade80', fontSize: 11, marginLeft: 4 }}>✓</Text>
-                        ) : (
-                          <Text style={{ color: COLORS.muted, fontSize: 11, marginLeft: 4 }}>*</Text>
-                        )}
                       </View>
-                      {!pr.verified && (
-                        <Text style={{ color: COLORS.muted, fontSize: 10, marginTop: 4, fontStyle: 'italic' }}>
-                          Itse ilmoitettu — kaverit voivat vahvistaa
-                        </Text>
-                      )}
                     </TouchableOpacity>
                     <View style={{ flexDirection: 'row', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
                       {(Object.keys(EMOJI_LABELS) as ReactionEmoji[]).map(emoji => {
@@ -471,26 +462,6 @@ export default function HomeScreen() {
                           </TouchableOpacity>
                         )
                       })}
-                      {!pr.verified && !pr.verifiedByMe && (
-                        <TouchableOpacity
-                          onPress={() => verifyPR(pr)}
-                          activeOpacity={0.7}
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            gap: 4,
-                            backgroundColor: '#4ade8025',
-                            borderRadius: 14,
-                            paddingHorizontal: 10,
-                            paddingVertical: 5,
-                            borderWidth: 1,
-                            borderColor: '#4ade80',
-                          }}
-                        >
-                          <Text style={{ fontSize: 13 }}>🤝</Text>
-                          <Text style={{ color: '#4ade80', fontSize: 11, fontWeight: '700' }}>Vahvista</Text>
-                        </TouchableOpacity>
-                      )}
                       <TouchableOpacity
                         onPress={() => setCommentPR(pr)}
                         activeOpacity={0.7}
