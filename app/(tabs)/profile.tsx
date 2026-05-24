@@ -13,6 +13,7 @@ import { ChallengesSection } from '../../components/profile/ChallengesSection'
 import { SBDEditModal } from '../../components/profile/SBDEditModal'
 import { getSBDSubRank, getSBDRank } from '../../lib/xp'
 import { estimateOneRepMax, shouldShowEstimatedOneRepMax } from '../../lib/pr'
+import { useT } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
 import { COLORS } from '../../lib/constants'
 
@@ -27,6 +28,7 @@ interface PRRecord {
 }
 
 export default function ProfileScreen() {
+  const t = useT()
   const { profile, signOut, loading, fetchProfile } = useUserStore()
   const [sbd, setSBD] = useState<PRMap>({ squat: 0, bench: 0, deadlift: 0 })
   const [totalWorkouts, setTotalWorkouts] = useState(0)
@@ -93,10 +95,10 @@ export default function ProfileScreen() {
   async function saveUsername() {
     if (!profile) return
     const u = usernameInput.trim()
-    if (!u || u.length < 3) { Alert.alert('Käyttäjänimi on liian lyhyt (min. 3 merkkiä)'); return }
+    if (!u || u.length < 3) { Alert.alert(t('profile.usernameShort')); return }
     setSaving(true)
     const { error } = await supabase.from('users').update({ username: u }).eq('id', profile.id)
-    if (error) { Alert.alert('Virhe', error.message.includes('unique') ? 'Nimi on jo käytössä' : error.message); setSaving(false); return }
+    if (error) { Alert.alert(t('common.error'), error.message.includes('unique') ? t('profile.usernameTaken') : error.message); setSaving(false); return }
     await fetchProfile()
     setSaving(false)
     setUsernameVisible(false)
@@ -110,14 +112,14 @@ export default function ProfileScreen() {
       })
       await supabase.auth.signOut()
     } catch {
-      Alert.alert('Virhe', 'Tilin poistaminen epäonnistui. Yritä uudelleen.')
+      Alert.alert(t('common.error'), t('profile.deleteFailed'))
     }
   }
 
   async function saveBodyweight() {
     if (!profile) return
     const bw = parseFloat(bwInput)
-    if (!bw || bw <= 0) { Alert.alert('Syötä kelvollinen paino'); return }
+    if (!bw || bw <= 0) { Alert.alert(t('profile.enterValidWeight')); return }
     setSaving(true)
     const total = sbd.squat + sbd.bench + sbd.deadlift
     const isMale = profile.gender !== 'female'
@@ -213,9 +215,9 @@ export default function ProfileScreen() {
           return (
             <View style={{ marginBottom: 16, backgroundColor: COLORS.card, borderRadius: 16, padding: 16 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2 }}>ENNÄTYKSET</Text>
+                <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2 }}>{t('profile.records')}</Text>
                 <TouchableOpacity onPress={() => setPinModalVisible(true)}>
-                  <Text style={{ color: COLORS.accent, fontSize: 12 }}>Muokkaa ✎</Text>
+                  <Text style={{ color: COLORS.accent, fontSize: 12 }}>{t('profile.editPin')}</Text>
                 </TouchableOpacity>
               </View>
               {pinned.length > 0 && (
@@ -224,7 +226,7 @@ export default function ProfileScreen() {
                     <View key={pr.exercises?.name} style={{ flex: 1, backgroundColor: COLORS.card2, borderRadius: 12, padding: 12, alignItems: 'center' }}>
                       <Text style={{ color: COLORS.gold, fontWeight: '900', fontSize: 22 }}>{pr.weight_kg}<Text style={{ fontSize: 13, fontWeight: '400' }}>kg</Text></Text>
                       {pr.reps > 1 && (
-                        <Text style={{ color: COLORS.muted, fontSize: 10 }}>{pr.reps} toistoa</Text>
+                        <Text style={{ color: COLORS.muted, fontSize: 10 }}>{pr.reps} {t('profile.repsLabel')}</Text>
                       )}
                       {shouldShowEstimatedOneRepMax(pr.reps) && (
                         <Text style={{ color: COLORS.muted, fontSize: 10, marginTop: 1 }}>≈ {estimateOneRepMax(pr.weight_kg, pr.reps)}kg 1RM</Text>
@@ -232,8 +234,8 @@ export default function ProfileScreen() {
                       <Text style={{ color: '#fff', fontSize: 11, marginTop: 2, textAlign: 'center' }} numberOfLines={1}>{pr.exercises?.name}</Text>
                       {pr.exercises?.is_sbd && (
                         pr.verified
-                          ? <Text style={{ color: '#4ade80', fontSize: 9, marginTop: 3, fontWeight: '700' }}>✓ Vahvistettu</Text>
-                          : <Text style={{ color: COLORS.muted, fontSize: 9, marginTop: 3, fontStyle: 'italic' }}>Pyydä kaverin vahvistus</Text>
+                          ? <Text style={{ color: '#4ade80', fontSize: 9, marginTop: 3, fontWeight: '700' }}>{t('profile.verified')}</Text>
+                          : <Text style={{ color: COLORS.muted, fontSize: 9, marginTop: 3, fontStyle: 'italic' }}>{t('profile.askVerification')}</Text>
                       )}
                     </View>
                   ))}
@@ -249,7 +251,7 @@ export default function ProfileScreen() {
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: -12, paddingHorizontal: 4, zIndex: 1 }}>
             <View />
             <TouchableOpacity onPress={() => setBadgeModalVisible(true)}>
-              <Text style={{ color: COLORS.accent, fontSize: 12 }}>Muokkaa ✎</Text>
+              <Text style={{ color: COLORS.accent, fontSize: 12 }}>{t('profile.editPin')}</Text>
             </TouchableOpacity>
           </View>
           <BadgeRow
@@ -264,10 +266,10 @@ export default function ProfileScreen() {
         </View>
 
         <View style={{ marginTop: 24, backgroundColor: COLORS.card, borderRadius: 16, overflow: 'hidden' }}>
-          <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, padding: 16, paddingBottom: 8 }}>YKSITYISYYS</Text>
+          <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, padding: 16, paddingBottom: 8 }}>{t('profile.privacySection')}</Text>
           {([
-            { key: 'hide_sbd', label: 'Piilota SBD-tulokset kavereilta' },
-            { key: 'hide_weight', label: 'Piilota kehonpaino kavereilta' },
+            { key: 'hide_sbd', label: t('profile.hideSBD') },
+            { key: 'hide_weight', label: t('profile.hideWeight') },
           ] as const).map(({ key, label }, i) => (
             <View key={key} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderTopWidth: i > 0 ? 1 : 0, borderTopColor: COLORS.card2 }}>
               <Text style={{ color: '#fff', fontSize: 14 }}>{label}</Text>
@@ -286,43 +288,43 @@ export default function ProfileScreen() {
 
         <View style={{ marginTop: 24, backgroundColor: COLORS.card, borderRadius: 16, padding: 20, alignItems: 'center', marginBottom: 12 }}>
           <Text style={{ fontSize: 24, marginBottom: 6 }}>☕</Text>
-          <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16, marginBottom: 4 }}>Tykkäsitkö sovelluksesta?</Text>
+          <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16, marginBottom: 4 }}>{t('profile.supportTitle')}</Text>
           <Text style={{ color: COLORS.muted, fontSize: 13, textAlign: 'center', marginBottom: 14 }}>
-            TheTotal on ilmainen. Jos haluat tukea kehitystä, voit ostaa kahvin.
+            {t('profile.supportBody')}
           </Text>
           <TouchableOpacity
             onPress={() => Linking.openURL('https://ko-fi.com/thetotal')}
             style={{ backgroundColor: '#FF5E5B', borderRadius: 12, paddingVertical: 12, paddingHorizontal: 28 }}
           >
-            <Text style={{ color: '#fff', fontWeight: '900', fontSize: 14 }}>☕ Osta kahvi Ko-fi:ssa</Text>
+            <Text style={{ color: '#fff', fontWeight: '900', fontSize: 14 }}>{t('profile.supportButton')}</Text>
           </TouchableOpacity>
         </View>
 
         <TouchableOpacity className="mt-4 items-center py-3" onPress={signOut}>
-          <Text className="text-muted text-sm">Kirjaudu ulos</Text>
+          <Text className="text-muted text-sm">{t('profile.signOut')}</Text>
         </TouchableOpacity>
 
         <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 20, marginBottom: 8 }}>
           <TouchableOpacity onPress={() => Linking.openURL('https://mcrauli.github.io/Thetotal/terms.html')}>
-            <Text style={{ color: COLORS.muted, fontSize: 12 }}>Käyttöehdot</Text>
+            <Text style={{ color: COLORS.muted, fontSize: 12 }}>{t('profile.terms')}</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => Linking.openURL('https://mcrauli.github.io/Thetotal/privacy.html')}>
-            <Text style={{ color: COLORS.muted, fontSize: 12 }}>Tietosuoja</Text>
+            <Text style={{ color: COLORS.muted, fontSize: 12 }}>{t('profile.privacy')}</Text>
           </TouchableOpacity>
         </View>
 
         <TouchableOpacity
           className="mb-8 items-center py-3"
           onPress={() => Alert.alert(
-            'Poista tili',
-            'Kaikki tietosi poistetaan pysyvästi. Tätä ei voi peruuttaa.',
+            t('profile.deleteTitle'),
+            t('profile.deleteBody'),
             [
-              { text: 'Peruuta', style: 'cancel' },
-              { text: 'Poista tili', style: 'destructive', onPress: deleteAccount },
+              { text: t('common.cancel'), style: 'cancel' },
+              { text: t('profile.deleteTitle'), style: 'destructive', onPress: deleteAccount },
             ]
           )}
         >
-          <Text style={{ color: '#ef4444', fontSize: 13 }}>Poista tili ja kaikki data</Text>
+          <Text style={{ color: '#ef4444', fontSize: 13 }}>{t('profile.deleteAccount')}</Text>
         </TouchableOpacity>
       </ScrollView>
 
@@ -332,7 +334,7 @@ export default function ProfileScreen() {
             <Text className="text-white font-black text-lg mb-4">Vaihda käyttäjänimi</Text>
             <TextInput
               className="bg-bg rounded-xl px-4 py-3 text-white mb-4"
-              placeholder="Uusi käyttäjänimi"
+              placeholder={t('profile.newUsername')}
               placeholderTextColor="#888"
               value={usernameInput}
               onChangeText={setUsernameInput}

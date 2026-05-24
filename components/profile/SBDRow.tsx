@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity } from 'react-native'
+import { useT } from '../../lib/i18n'
 
 interface SBDRowProps {
   squat: number
@@ -11,13 +12,14 @@ interface SBDRowProps {
 }
 
 export function SBDRow({ squat, bench, deadlift, squatVerified, benchVerified, deadliftVerified, onPress }: SBDRowProps) {
+  const t = useT()
   const total = squat + bench + deadlift
   const Wrapper: any = onPress ? TouchableOpacity : View
   return (
     <Wrapper onPress={onPress} activeOpacity={onPress ? 0.7 : 1}>
       <View className="flex-row justify-between items-baseline mb-2">
-        <Text className="text-muted text-xs tracking-widest">SBD ENNÄTYKSET</Text>
-        {onPress && <Text className="text-muted text-xs">muokkaa ✎</Text>}
+        <Text className="text-muted text-xs tracking-widest">{t('profile.sbdRecords')}</Text>
+        {onPress && <Text className="text-muted text-xs">{t('profile.editPin').toLowerCase()}</Text>}
       </View>
       <View className="flex-row gap-2 mb-4">
         {[
@@ -37,7 +39,7 @@ export function SBDRow({ squat, bench, deadlift, squatVerified, benchVerified, d
             {value > 0 && verified !== undefined && (
               verified
                 ? <Text style={{ color: '#4ade80', fontSize: 9, marginTop: 2, fontWeight: '700' }}>✓</Text>
-                : <Text style={{ color: '#888', fontSize: 9, marginTop: 2 }}>ei vahv.</Text>
+                : <Text style={{ color: '#888', fontSize: 9, marginTop: 2 }}>{t('profile.notVerified')}</Text>
             )}
           </View>
         ))}

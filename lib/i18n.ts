@@ -173,6 +173,18 @@ const STRINGS = {
   'profile.privacy':          { fi: 'Tietosuoja', en: 'Privacy' },
   'profile.repsLabel':        { fi: 'toistoa', en: 'reps' },
   'profile.support':          { fi: 'Tue kehitystä', en: 'Support development' },
+  'profile.privacySection':   { fi: 'YKSITYISYYS', en: 'PRIVACY' },
+  'profile.hideSBD':          { fi: 'Piilota SBD-tulokset kavereilta', en: 'Hide SBD results from friends' },
+  'profile.hideWeight':       { fi: 'Piilota kehonpaino kavereilta', en: 'Hide bodyweight from friends' },
+  'profile.supportTitle':     { fi: 'Tykkäsitkö sovelluksesta?', en: 'Enjoying the app?' },
+  'profile.supportBody':      { fi: 'TheTotal on ilmainen. Jos haluat tukea kehitystä, voit ostaa kahvin.', en: 'TheTotal is free. If you want to support development, you can buy a coffee.' },
+  'profile.supportButton':    { fi: '☕ Osta kahvi Ko-fi:ssa', en: '☕ Buy coffee on Ko-fi' },
+  'profile.signOut':          { fi: 'Kirjaudu ulos', en: 'Sign out' },
+  'profile.usernameShort':    { fi: 'Käyttäjänimi on liian lyhyt (min. 3 merkkiä)', en: 'Username too short (min. 3 characters)' },
+  'profile.usernameTaken':    { fi: 'Nimi on jo käytössä', en: 'Name already taken' },
+  'profile.deleteFailed':     { fi: 'Tilin poistaminen epäonnistui. Yritä uudelleen.', en: 'Account deletion failed. Try again.' },
+  'profile.enterValidWeight': { fi: 'Syötä kelvollinen paino', en: 'Enter a valid weight' },
+  'profile.newUsername':      { fi: 'Uusi käyttäjänimi', en: 'New username' },
 
   // Ranks (proper nouns - kept similar but with English translations)
   'rank.Aloittelija':         { fi: 'Aloittelija', en: 'Beginner' },
@@ -199,6 +211,7 @@ const STRINGS = {
   'friends.sent':             { fi: 'Lähetetty', en: 'Sent' },
   'friends.accept':           { fi: 'Hyväksy', en: 'Accept' },
   'friends.decline':          { fi: 'Hylkää', en: 'Decline' },
+  'friends.friendsCount':     { fi: 'kaveria', en: 'friends' },
 
   // Reactions and comments
   'comments.title':           { fi: 'Kommentit', en: 'Comments' },

@@ -8,6 +8,7 @@ import { ScreenBackground } from '../../components/ui/ScreenBackground'
 import { getRankData } from '../../lib/xp'
 import { COLORS } from '../../lib/constants'
 import type { RankName } from '../../lib/constants'
+import { useT } from '../../lib/i18n'
 
 interface UserProfile {
   id: string; username: string; sbd_rank: RankName; xp: number
@@ -27,6 +28,7 @@ interface Challenge {
 const RANK_ORDER: RankName[] = ['Aloittelija','Harrastaja','Kilpailija','Alueellinen','Kansallinen','Kansainvälinen','Eliitti','Mestari','Maailmaluokka','Legenda']
 
 export default function SocialScreen() {
+  const t = useT()
   const { profile } = useUserStore()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<UserProfile[]>([])
@@ -119,6 +121,11 @@ export default function SocialScreen() {
     setPending(prev => prev.filter(p => p.id !== friendshipId))
   }
 
+  async function declineChallenge(challengeId: string) {
+    await supabase.from('friend_challenges').delete().eq('id', challengeId)
+    setChallenges(prev => prev.filter(c => c.id !== challengeId))
+  }
+
   const sortedFriends = [...friends].sort((a, b) => {
     const ratioA = a.bodyweight_kg ? (a.sbd_total ?? 0) / a.bodyweight_kg : 0
     const ratioB = b.bodyweight_kg ? (b.sbd_total ?? 0) / b.bodyweight_kg : 0
@@ -142,13 +149,13 @@ export default function SocialScreen() {
     <ScreenBackground variant="log">
       <SafeAreaView style={{ flex: 1 }}>
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: 32 }}>
-          <Text style={{ color: '#fff', fontSize: 20, fontWeight: '900', marginBottom: 16 }}>Kaverit</Text>
+          <Text style={{ color: '#fff', fontSize: 20, fontWeight: '900', marginBottom: 16 }}>{t('friends.title')}</Text>
 
           {/* Search */}
           <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
             <TextInput
               style={{ flex: 1, backgroundColor: COLORS.card, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: '#fff' }}
-              placeholder="Hae käyttäjänimellä..."
+              placeholder={t('friends.searchPlaceholder')}
               placeholderTextColor="#888"
               value={query}
               onChangeText={setQuery}
@@ -159,7 +166,7 @@ export default function SocialScreen() {
               style={{ backgroundColor: COLORS.accent, borderRadius: 12, paddingHorizontal: 16, justifyContent: 'center' }}
               onPress={searchUsers}
             >
-              <Text style={{ color: '#fff', fontWeight: '700' }}>Hae</Text>
+              <Text style={{ color: '#fff', fontWeight: '700' }}>{t('common.search')}</Text>
             </TouchableOpacity>
           </View>
 
@@ -167,7 +174,7 @@ export default function SocialScreen() {
 
           {results.length > 0 && (
             <View style={{ marginBottom: 16 }}>
-              <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 8 }}>HAKUTULOKSET</Text>
+              <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 8 }}>{t('friends.searchResults')}</Text>
               {results.map(u => {
                 const isFriend = friends.some(f => f.id === u.id)
                 const isPending = sentIds.has(u.id)
@@ -180,12 +187,12 @@ export default function SocialScreen() {
                       </View>
                       <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
                         {isFriend ? (
-                          <Text style={{ color: COLORS.muted, fontSize: 12 }}>Kaveri ✓</Text>
+                          <Text style={{ color: COLORS.muted, fontSize: 12 }}>{t('friends.alreadyFriend')}</Text>
                         ) : isPending ? (
-                          <Text style={{ color: COLORS.muted, fontSize: 12 }}>Lähetetty</Text>
+                          <Text style={{ color: COLORS.muted, fontSize: 12 }}>{t('friends.sent')}</Text>
                         ) : (
                           <TouchableOpacity style={{ backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6 }} onPress={() => sendRequest(u.id)}>
-                            <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>+ Lisää</Text>
+                            <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>+ {t('common.add')}</Text>
                           </TouchableOpacity>
                         )}
                       </View>
@@ -199,7 +206,7 @@ export default function SocialScreen() {
           {/* Incoming friend requests */}
           {pending.length > 0 && (
             <View style={{ marginBottom: 16 }}>
-              <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 8 }}>KAVERIPYYNNÖT ({pending.length})</Text>
+              <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 8 }}>{t('friends.requests')} ({pending.length})</Text>
               {pending.map(p => (
                 <View key={p.id} style={{ backgroundColor: COLORS.card, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                   <View>
@@ -208,10 +215,10 @@ export default function SocialScreen() {
                   </View>
                   <View style={{ flexDirection: 'row', gap: 8 }}>
                     <TouchableOpacity style={{ backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6 }} onPress={() => acceptRequest(p.id)}>
-                      <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>Hyväksy</Text>
+                      <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>{t('friends.accept')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={{ backgroundColor: COLORS.card2, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6 }} onPress={() => declineRequest(p.id)}>
-                      <Text style={{ color: COLORS.muted, fontSize: 12 }}>Hylkää</Text>
+                      <Text style={{ color: COLORS.muted, fontSize: 12 }}>{t('friends.decline')}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -222,7 +229,7 @@ export default function SocialScreen() {
           {/* Incoming challenges */}
           {myChallenges.length > 0 && (
             <View style={{ marginBottom: 16 }}>
-              <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 8 }}>HAASTEET ({myChallenges.length})</Text>
+              <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 8 }}>{t('friends.challenges')} ({myChallenges.length})</Text>
               {myChallenges.map(c => {
                 const isDuel = c.challenge_type === 'volume' || c.challenge_type === 'workouts'
                 const expiresAt = c.duration_days ? new Date(new Date(c.created_at).getTime() + c.duration_days * 86400000) : null
@@ -262,6 +269,12 @@ export default function SocialScreen() {
                         <Text style={{ color: COLORS.muted, fontSize: 11, marginTop: 6 }}>Nosta enemmän voittaaksesi 💪</Text>
                       </>
                     )}
+                    <TouchableOpacity
+                      onPress={() => declineChallenge(c.id)}
+                      style={{ marginTop: 10, alignSelf: 'flex-end' }}
+                    >
+                      <Text style={{ color: COLORS.muted, fontSize: 12 }}>Hylkää ✕</Text>
+                    </TouchableOpacity>
                   </View>
                 )
               })}
@@ -271,7 +284,7 @@ export default function SocialScreen() {
           {/* Sent challenges */}
           {sentChallenges.length > 0 && (
             <View style={{ marginBottom: 16 }}>
-              <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 8 }}>LÄHETETYT HAASTEET</Text>
+              <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 8 }}>{t('friends.sentChallenges')}</Text>
               {sentChallenges.map(c => {
                 const isDuel = c.challenge_type === 'volume' || c.challenge_type === 'workouts'
                 const expiresAt = c.duration_days ? new Date(new Date(c.created_at).getTime() + c.duration_days * 86400000) : null
@@ -319,11 +332,11 @@ export default function SocialScreen() {
 
           {/* Leaderboard */}
           <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 8 }}>
-            RANKING {sortedFriends.length > 0 ? `— ${sortedFriends.length} kaveria` : ''}
+            {t('friends.ranking')} {sortedFriends.length > 0 ? `— ${sortedFriends.length} ${t('friends.friendsCount')}` : ''}
           </Text>
           {sortedFriends.length === 0 ? (
             <View style={{ backgroundColor: COLORS.card, borderRadius: 16, padding: 24, alignItems: 'center' }}>
-              <Text style={{ color: COLORS.muted, textAlign: 'center' }}>Ei kavereita vielä.{'\n'}Hae käyttäjänimiä ylhäältä!</Text>
+              <Text style={{ color: COLORS.muted, textAlign: 'center' }}>{t('friends.noFriends')}</Text>
             </View>
           ) : (
             sortedFriends.map((f, i) => {
