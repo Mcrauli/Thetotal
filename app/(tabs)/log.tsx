@@ -5,7 +5,6 @@ import { Ionicons } from '@expo/vector-icons'
 import { router, useFocusEffect } from 'expo-router'
 import { supabase } from '../../lib/supabase'
 import { useUserStore } from '../../store/userStore'
-import { useWorkoutStore } from '../../store/workoutStore'
 import { ScreenBackground } from '../../components/ui/ScreenBackground'
 import { WorkoutDetailModal } from '../../components/workout/WorkoutDetailModal'
 import { COLORS } from '../../lib/constants'
@@ -26,7 +25,6 @@ interface Template {
 
 export default function LogScreen() {
   const { profile } = useUserStore()
-  const { startFromTemplate, startWorkout } = useWorkoutStore()
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [templates, setTemplates] = useState<Template[]>([])
   const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null)
@@ -38,7 +36,7 @@ export default function LogScreen() {
 
   async function loadData(userId: string) {
     const [{ data: wData }, { data: tData }] = await Promise.all([
-      supabase.from('workouts').select('*').eq('user_id', userId).order('started_at', { ascending: false }),
+      supabase.from('workouts').select('*').eq('user_id', userId).order('started_at', { ascending: false }).limit(10),
       supabase.from('workout_templates')
         .select('id, name, template_exercises(exercise_id, order_index, exercises(name, muscle_group))')
         .eq('user_id', userId)
@@ -52,32 +50,6 @@ export default function LogScreen() {
         .sort((a: any, b: any) => a.order_index - b.order_index)
         .map((te: any) => ({ exerciseId: te.exercise_id, exerciseName: te.exercises?.name ?? '', muscleGroup: te.exercises?.muscle_group })),
     })))
-  }
-
-  async function handleStartTemplate(t: Template) {
-    const ids = t.exercises.map(e => e.exerciseId)
-    const lastWeights: Record<string, { weight: number; reps: number }> = {}
-
-    if (ids.length > 0 && profile) {
-      const { data } = await supabase
-        .from('workout_sets')
-        .select('weight_kg, reps, exercise_id, workout_id, workouts!inner(started_at, user_id)')
-        .in('exercise_id', ids)
-        .eq('workouts.user_id', profile.id)
-        .order('workouts.started_at', { ascending: false })
-        .limit(ids.length * 10)
-
-      const seen = new Set<string>()
-      for (const s of (data ?? []) as any[]) {
-        if (!seen.has(s.exercise_id)) {
-          seen.add(s.exercise_id)
-          lastWeights[s.exercise_id] = { weight: s.weight_kg, reps: s.reps }
-        }
-      }
-    }
-
-    startFromTemplate(t.name, t.exercises, lastWeights)
-    router.push('/(tabs)/active')
   }
 
   async function deleteTemplate(id: string) {
@@ -103,18 +75,8 @@ export default function LogScreen() {
       <SafeAreaView className="flex-1">
         <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 32 }}>
 
-          {/* Vapaa treeni */}
-          <View className="px-4 pt-6 pb-4">
-            <TouchableOpacity
-              style={{ backgroundColor: COLORS.accent, borderRadius: 16, paddingVertical: 14, alignItems: 'center' }}
-              onPress={() => { startWorkout(); router.push('/(tabs)/active') }}
-            >
-              <Text style={{ color: '#fff', fontWeight: '900', fontSize: 15, letterSpacing: 1 }}>▶ Aloita vapaa treeni</Text>
-            </TouchableOpacity>
-          </View>
-
           {/* Ohjelmat */}
-          <View className="px-4 pb-3 flex-row justify-between items-center">
+          <View className="px-4 pt-6 pb-3 flex-row justify-between items-center">
             <Text className="text-white text-xl font-black">Ohjelmat</Text>
             <TouchableOpacity
               className="flex-row items-center gap-1.5"
@@ -168,32 +130,20 @@ export default function LogScreen() {
                       </TouchableOpacity>
                     </View>
 
-                    <View style={{ minHeight: 60, marginBottom: 12 }}>
+                    <View style={{ minHeight: 60 }}>
                       {t.exercises.length === 0 ? (
                         <Text className="text-muted text-xs">Ei liikkeitä</Text>
                       ) : (
-                        t.exercises.slice(0, 4).map((ex, i) => (
+                        t.exercises.slice(0, 5).map((ex, i) => (
                           <Text key={i} className="text-muted text-xs mb-0.5" numberOfLines={1}>
                             · {ex.exerciseName}
                           </Text>
                         ))
                       )}
-                      {t.exercises.length > 4 && (
-                        <Text className="text-muted text-xs">+{t.exercises.length - 4} lisää</Text>
+                      {t.exercises.length > 5 && (
+                        <Text className="text-muted text-xs">+{t.exercises.length - 5} lisää</Text>
                       )}
                     </View>
-
-                    <TouchableOpacity
-                      style={{
-                        backgroundColor: COLORS.accent,
-                        borderRadius: 10,
-                        paddingVertical: 8,
-                        alignItems: 'center',
-                      }}
-                      onPress={() => handleStartTemplate(t)}
-                    >
-                      <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>▶ Aloita</Text>
-                    </TouchableOpacity>
                   </View>
                 </View>
               ))}
@@ -220,7 +170,7 @@ export default function LogScreen() {
 
           {/* Historia */}
           <View className="px-4 mb-3">
-            <Text className="text-white text-xl font-black">Historia</Text>
+            <Text className="text-white text-xl font-black">Viimeisimmät treenit</Text>
           </View>
 
           {workouts.length === 0 ? (
