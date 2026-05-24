@@ -191,6 +191,9 @@ export default function ProfileScreen() {
           squat={sbd.squat}
           bench={sbd.bench}
           deadlift={sbd.deadlift}
+          squatVerified={!!prRecords.find(r => r.exercises?.name === 'Squat')?.verified}
+          benchVerified={!!prRecords.find(r => r.exercises?.name === 'Bench Press')?.verified}
+          deadliftVerified={!!prRecords.find(r => r.exercises?.name === 'Deadlift')?.verified}
           onPress={() => setSbdEditVisible(true)}
         />
         <SBDEditModal

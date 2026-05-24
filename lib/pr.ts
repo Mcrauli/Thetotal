@@ -21,7 +21,7 @@ export function estimateOneRepMax(weight: number, reps: number): number {
 }
 
 export function shouldShowEstimatedOneRepMax(reps: number): boolean {
-  return reps >= 2 && reps <= 5
+  return reps >= 2 && reps <= 3
 }
 
 export function detectPRs(

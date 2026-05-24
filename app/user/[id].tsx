@@ -217,7 +217,16 @@ export default function UserProfileScreen() {
           )}
         </View>
 
-        {!user.hide_sbd && <SBDRow squat={sbd.squat} bench={sbd.bench} deadlift={sbd.deadlift} />}
+        {!user.hide_sbd && (
+          <SBDRow
+            squat={sbd.squat}
+            bench={sbd.bench}
+            deadlift={sbd.deadlift}
+            squatVerified={sbdMeta.squat?.verified}
+            benchVerified={sbdMeta.bench?.verified}
+            deadliftVerified={sbdMeta.deadlift?.verified}
+          />
+        )}
 
         {!user.hide_sbd && (sbd.squat > 0 || sbd.bench > 0 || sbd.deadlift > 0) && (
           <View style={{ marginBottom: 16, backgroundColor: COLORS.card, borderRadius: 16, padding: 16 }}>
