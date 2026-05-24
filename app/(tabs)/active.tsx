@@ -70,6 +70,7 @@ export default function ActiveWorkoutScreen() {
     savingRef.current = true
     setSaving(true)
 
+    try {
     const finishedAt = new Date()
     const startedAtISO = startedAt ? new Date(startedAt).toISOString() : finishedAt.toISOString()
     const totalVolume = exercises
@@ -198,49 +199,53 @@ export default function ActiveWorkoutScreen() {
     exercises.forEach(e => { exerciseNameById[e.exerciseId] = e.exerciseName })
 
     const sbdPRs = prs.filter(pr => existingPRData?.some((r: any) => r.exercise_id === pr.exerciseId && r.exercises?.is_sbd))
-    if (sbdPRs.length > 0) {
-      const { data: friends } = await supabase
-        .from('friendships')
-        .select('user_id, friend_id')
-        .or(`user_id.eq.${profile.id},friend_id.eq.${profile.id}`)
-        .eq('status', 'accepted')
-      if (friends && friends.length > 0) {
-        const friendIds = friends.map((f: any) => f.user_id === profile.id ? f.friend_id : f.user_id)
-        const { data: friendProfiles } = await supabase
-          .from('users').select('push_token').in('id', friendIds).not('push_token', 'is', null)
-        const tokens = (friendProfiles ?? []).map((u: any) => u.push_token).filter(Boolean)
-        if (tokens.length > 0) {
-          const prName = exerciseNameById[sbdPRs[0].exerciseId] ?? 'SBD'
-          await fetch('https://exp.host/--/api/v2/push/send', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(tokens.map((to: string) => ({
-              to,
-              title: `${profile.username} löi ennätyksen! 💪`,
-              body: `${prName}: ${sbdPRs[0].weight} kg`,
-            }))),
-          })
+    try {
+      if (sbdPRs.length > 0) {
+        const { data: friends } = await supabase
+          .from('friendships')
+          .select('user_id, friend_id')
+          .or(`user_id.eq.${profile.id},friend_id.eq.${profile.id}`)
+          .eq('status', 'accepted')
+        if (friends && friends.length > 0) {
+          const friendIds = friends.map((f: any) => f.user_id === profile.id ? f.friend_id : f.user_id)
+          const { data: friendProfiles } = await supabase
+            .from('users').select('push_token').in('id', friendIds).not('push_token', 'is', null)
+          const tokens = (friendProfiles ?? []).map((u: any) => u.push_token).filter(Boolean)
+          if (tokens.length > 0) {
+            const prName = exerciseNameById[sbdPRs[0].exerciseId] ?? 'SBD'
+            await fetch('https://exp.host/--/api/v2/push/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(tokens.map((to: string) => ({
+                to,
+                title: `${profile.username} löi ennätyksen! 💪`,
+                body: `${prName}: ${sbdPRs[0].weight} kg`,
+              }))),
+            })
+          }
         }
       }
-    }
+    } catch {}
 
-    // Check friend challenges
-    const { data: pendingChallenges } = await supabase
-      .from('friend_challenges')
-      .select('id, exercise_name, target_weight')
-      .eq('challenged_id', profile.id)
-      .eq('status', 'pending')
-    const beatenIds: string[] = []
-    if (pendingChallenges) {
-      for (const ch of pendingChallenges as any[]) {
-        const exerciseName: string = ch.exercise_name.toLowerCase()
-        const beatingPR = prs.find(pr => {
-          const name = (exerciseNameById[pr.exerciseId] ?? '').toLowerCase()
-          return name.includes(exerciseName) || exerciseName.includes(name.split(' ')[0])
-        })
-        if (beatingPR && beatingPR.weight > ch.target_weight) beatenIds.push(ch.id)
+    // Check friend challenges (non-critical)
+    let beatenIds: string[] = []
+    try {
+      const { data: pendingChallenges } = await supabase
+        .from('friend_challenges')
+        .select('id, exercise_name, target_weight')
+        .eq('challenged_id', profile.id)
+        .eq('status', 'pending')
+      if (pendingChallenges) {
+        for (const ch of pendingChallenges as any[]) {
+          const exerciseName: string = ch.exercise_name.toLowerCase()
+          const beatingPR = prs.find(pr => {
+            const name = (exerciseNameById[pr.exerciseId] ?? '').toLowerCase()
+            return name.includes(exerciseName) || exerciseName.includes(name.split(' ')[0])
+          })
+          if (beatingPR && beatingPR.weight > ch.target_weight) beatenIds.push(ch.id)
+        }
       }
-    }
+    } catch {}
 
     await Promise.all([
       supabase.from('users').update({
@@ -297,37 +302,43 @@ export default function ActiveWorkoutScreen() {
 
     const challengeResults: ChallengeResult[] = newChallenges.map(c => ({ name: c.name, xp: c.xp }))
 
-    // Update volume/workouts duel challenges
-    const { data: activeDuels } = await supabase
-      .from('friend_challenges')
-      .select('id, challenge_type, challenger_id, challenged_id, challenger_value, challenged_value, created_at, duration_days')
-      .or(`challenger_id.eq.${profile.id},challenged_id.eq.${profile.id}`)
-      .in('challenge_type', ['volume', 'workouts'])
-      .eq('status', 'pending')
-    if (activeDuels && activeDuels.length > 0) {
-      const now = new Date()
-      const duelOps = (activeDuels as any[]).filter(duel => {
-        const expires = new Date(duel.created_at)
-        expires.setDate(expires.getDate() + (duel.duration_days ?? 7))
-        return now <= expires
-      }).map(duel => {
-        const isChallenger = duel.challenger_id === profile.id
-        const add = duel.challenge_type === 'volume' ? totalVolume : 1
-        return supabase.from('friend_challenges').update(
-          isChallenger
-            ? { challenger_value: (duel.challenger_value ?? 0) + add }
-            : { challenged_value: (duel.challenged_value ?? 0) + add }
-        ).eq('id', duel.id)
-      })
-      if (duelOps.length > 0) await Promise.all(duelOps)
-    }
+    // Update volume/workouts duel challenges (non-critical)
+    try {
+      const { data: activeDuels } = await supabase
+        .from('friend_challenges')
+        .select('id, challenge_type, challenger_id, challenged_id, challenger_value, challenged_value, created_at, duration_days')
+        .or(`challenger_id.eq.${profile.id},challenged_id.eq.${profile.id}`)
+        .in('challenge_type', ['volume', 'workouts'])
+        .eq('status', 'pending')
+      if (activeDuels && activeDuels.length > 0) {
+        const now = new Date()
+        const duelOps = (activeDuels as any[]).filter(duel => {
+          const expires = new Date(duel.created_at)
+          expires.setDate(expires.getDate() + (duel.duration_days ?? 7))
+          return now <= expires
+        }).map(duel => {
+          const isChallenger = duel.challenger_id === profile.id
+          const add = duel.challenge_type === 'volume' ? totalVolume : 1
+          return supabase.from('friend_challenges').update(
+            isChallenger
+              ? { challenger_value: (duel.challenger_value ?? 0) + add }
+              : { challenged_value: (duel.challenged_value ?? 0) + add }
+          ).eq('id', duel.id)
+        })
+        if (duelOps.length > 0) await Promise.all(duelOps)
+      }
+    } catch {}
 
     const displayXPGain = xpGain + challengeXP
     const challengeBonus = challengeXP
-    await fetchProfile()
-    setSaving(false)
-    savingRef.current = false
+    try { await fetchProfile() } catch {}
     setResults({ xpGain: displayXPGain, xpBreakdown: { base: xpBase, prBonus, streakBonus, challengeBonus }, improvements, challenges: challengeResults })
+    } catch (e: any) {
+      Alert.alert('Tallennusvirhe', (e?.message ?? 'Tuntematon virhe') + '. Treeni saattoi silti tallentua. Tarkista historiasta.')
+    } finally {
+      setSaving(false)
+      savingRef.current = false
+    }
   }
 
   return (
