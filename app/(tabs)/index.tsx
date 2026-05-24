@@ -73,12 +73,14 @@ export default function HomeScreen() {
       .eq('status', 'accepted')
     if (!fs || fs.length === 0) { setFriendPRs([]); return }
     const friendIds = fs.map((f: any) => f.user_id === userId ? f.friend_id : f.user_id)
+    const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString()
     const { data } = await supabase
       .from('personal_records')
       .select('id, user_id, weight_kg, reps, recorded_at, verified, exercises!inner(name, is_sbd), users!inner(username, sbd_rank, hide_sbd)')
       .in('user_id', friendIds)
       .eq('exercises.is_sbd', true)
       .eq('verified', true)
+      .gte('recorded_at', sevenDaysAgo)
       .order('recorded_at', { ascending: false })
       .limit(10)
     const baseFiltered = (data ?? [])

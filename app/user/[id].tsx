@@ -5,6 +5,7 @@ import { useLocalSearchParams, router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
 import { getSBDSubRank } from '../../lib/xp'
 import { estimateOneRepMax } from '../../lib/pr'
+import { sendPushToUsers } from '../../lib/notifications'
 import { useUserStore } from '../../store/userStore'
 import { RankBanner } from '../../components/profile/RankBanner'
 import { SBDRow } from '../../components/profile/SBDRow'
@@ -19,6 +20,11 @@ interface PublicProfile {
 }
 interface SBDMap { squat: number; bench: number; deadlift: number }
 interface SBDReps { squat: number; bench: number; deadlift: number }
+interface SBDPRMeta {
+  squat?: { id: string; verified: boolean }
+  bench?: { id: string; verified: boolean }
+  deadlift?: { id: string; verified: boolean }
+}
 interface Template {
   id: string; name: string
   exercises: { id: string; name: string }[]
@@ -30,6 +36,8 @@ export default function UserProfileScreen() {
   const [user, setUser] = useState<PublicProfile | null>(null)
   const [sbd, setSBD] = useState<SBDMap>({ squat: 0, bench: 0, deadlift: 0 })
   const [sbdReps, setSbdReps] = useState<SBDReps>({ squat: 0, bench: 0, deadlift: 0 })
+  const [sbdMeta, setSbdMeta] = useState<SBDPRMeta>({})
+  const [myVerifiedIds, setMyVerifiedIds] = useState<Set<string>>(new Set())
   const [totalWorkouts, setTotalWorkouts] = useState(0)
   const [templates, setTemplates] = useState<Template[]>([])
   const [loading, setLoading] = useState(true)
@@ -47,23 +55,34 @@ export default function UserProfileScreen() {
     if (!id) return
     Promise.all([
       supabase.from('users').select('id, username, sbd_rank, xp, streak, bodyweight_kg, gender, hide_sbd, hide_weight').eq('id', id).single(),
-      supabase.from('personal_records').select('weight_kg, reps, exercises(name, is_sbd)').eq('user_id', id),
+      supabase.from('personal_records').select('id, weight_kg, reps, verified, exercises(name, is_sbd)').eq('user_id', id),
       supabase.from('workouts').select('id', { count: 'exact', head: true }).eq('user_id', id),
       supabase.from('workout_templates').select('id, name, template_exercises(exercise_id, order_index, exercises(name))').eq('user_id', id).order('created_at'),
-    ]).then(([{ data: u }, { data: prData }, { count }, { data: tmplData }]) => {
+    ]).then(async ([{ data: u }, { data: prData }, { count }, { data: tmplData }]) => {
       if (u) setUser(u as PublicProfile)
       if (prData) {
         const totals = { squat: 0, bench: 0, deadlift: 0 }
         const reps = { squat: 0, bench: 0, deadlift: 0 }
+        const meta: SBDPRMeta = {}
         for (const pr of prData as any[]) {
           if (!pr.exercises?.is_sbd) continue
           const name: string = pr.exercises.name.toLowerCase()
-          if (name.includes('squat'))    { totals.squat = pr.weight_kg;    reps.squat = pr.reps }
-          else if (name.includes('bench')) { totals.bench = pr.weight_kg;    reps.bench = pr.reps }
-          else if (name.includes('deadlift')) { totals.deadlift = pr.weight_kg; reps.deadlift = pr.reps }
+          if (name.includes('squat'))    { totals.squat = pr.weight_kg;    reps.squat = pr.reps;    meta.squat = { id: pr.id, verified: pr.verified } }
+          else if (name.includes('bench')) { totals.bench = pr.weight_kg;    reps.bench = pr.reps;    meta.bench = { id: pr.id, verified: pr.verified } }
+          else if (name.includes('deadlift')) { totals.deadlift = pr.weight_kg; reps.deadlift = pr.reps; meta.deadlift = { id: pr.id, verified: pr.verified } }
         }
         setSBD(totals)
         setSbdReps(reps)
+        setSbdMeta(meta)
+
+        if (me) {
+          const prIds = Object.values(meta).map(m => m?.id).filter(Boolean) as string[]
+          if (prIds.length > 0) {
+            const { data: vData } = await supabase
+              .from('pr_verifications').select('pr_id').eq('verifier_id', me.id).in('pr_id', prIds)
+            setMyVerifiedIds(new Set((vData ?? []).map((v: any) => v.pr_id)))
+          }
+        }
       }
       setTotalWorkouts(count ?? 0)
       setTemplates((tmplData ?? []).map((t: any) => ({
@@ -76,6 +95,29 @@ export default function UserProfileScreen() {
       setLoading(false)
     })
   }, [id])
+
+  async function verifyPR(prId: string, exerciseName: string, weight: number) {
+    if (!me || !user) return
+    setMyVerifiedIds(prev => new Set(prev).add(prId))
+    setSbdMeta(prev => {
+      const next = { ...prev }
+      for (const k of Object.keys(next) as (keyof SBDPRMeta)[]) {
+        if (next[k]?.id === prId) next[k] = { ...next[k]!, verified: true }
+      }
+      return next
+    })
+    const { error } = await supabase.from('pr_verifications').insert({ pr_id: prId, verifier_id: me.id })
+    if (error) {
+      setMyVerifiedIds(prev => { const next = new Set(prev); next.delete(prId); return next })
+      Alert.alert('Virhe', error.message)
+      return
+    }
+    await sendPushToUsers({
+      toUserIds: [user.id],
+      title: `🤝 ${me.username} vahvisti`,
+      body: `${exerciseName} ${weight}kg PR:si on nyt vahvistettu`,
+    })
+  }
 
   async function sendChallenge() {
     if (!me || !user) return
@@ -182,23 +224,49 @@ export default function UserProfileScreen() {
             <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 12 }}>ENNÄTYKSET</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {[
-                { label: 'Squat', value: sbd.squat, reps: sbdReps.squat },
-                { label: 'Bench Press', value: sbd.bench, reps: sbdReps.bench },
-                { label: 'Deadlift', value: sbd.deadlift, reps: sbdReps.deadlift },
-              ].filter(pr => pr.value > 0).map(pr => (
-                <View key={pr.label} style={{ flex: 1, backgroundColor: COLORS.card2, borderRadius: 12, padding: 12, alignItems: 'center' }}>
-                  <Text style={{ color: COLORS.gold, fontWeight: '900', fontSize: 22 }}>
-                    {pr.value}<Text style={{ fontSize: 13, fontWeight: '400' }}>kg</Text>
-                  </Text>
-                  {pr.reps > 1 && (
-                    <>
-                      <Text style={{ color: COLORS.muted, fontSize: 10 }}>{pr.reps} toistoa</Text>
-                      <Text style={{ color: COLORS.muted, fontSize: 10, marginTop: 1 }}>≈ {estimateOneRepMax(pr.value, pr.reps)}kg 1RM</Text>
-                    </>
-                  )}
-                  <Text style={{ color: '#fff', fontSize: 11, marginTop: 2, textAlign: 'center' }} numberOfLines={1}>{pr.label}</Text>
-                </View>
-              ))}
+                { label: 'Squat', value: sbd.squat, reps: sbdReps.squat, meta: sbdMeta.squat },
+                { label: 'Bench Press', value: sbd.bench, reps: sbdReps.bench, meta: sbdMeta.bench },
+                { label: 'Deadlift', value: sbd.deadlift, reps: sbdReps.deadlift, meta: sbdMeta.deadlift },
+              ].filter(pr => pr.value > 0).map(pr => {
+                const verified = pr.meta?.verified ?? false
+                const verifiedByMe = pr.meta ? myVerifiedIds.has(pr.meta.id) : false
+                const canVerify = !!me && !!pr.meta && !verified && !verifiedByMe && me.id !== id
+                return (
+                  <View key={pr.label} style={{ flex: 1, backgroundColor: COLORS.card2, borderRadius: 12, padding: 12, alignItems: 'center' }}>
+                    <Text style={{ color: COLORS.gold, fontWeight: '900', fontSize: 22 }}>
+                      {pr.value}<Text style={{ fontSize: 13, fontWeight: '400' }}>kg</Text>
+                    </Text>
+                    {pr.reps > 1 && (
+                      <>
+                        <Text style={{ color: COLORS.muted, fontSize: 10 }}>{pr.reps} toistoa</Text>
+                        <Text style={{ color: COLORS.muted, fontSize: 10, marginTop: 1 }}>≈ {estimateOneRepMax(pr.value, pr.reps)}kg 1RM</Text>
+                      </>
+                    )}
+                    <Text style={{ color: '#fff', fontSize: 11, marginTop: 2, textAlign: 'center' }} numberOfLines={1}>{pr.label}</Text>
+                    {verified ? (
+                      <Text style={{ color: '#4ade80', fontSize: 10, marginTop: 4, fontWeight: '700' }}>✓ Vahvistettu</Text>
+                    ) : canVerify ? (
+                      <TouchableOpacity
+                        onPress={() => verifyPR(pr.meta!.id, pr.label, pr.value)}
+                        activeOpacity={0.7}
+                        style={{
+                          marginTop: 6,
+                          backgroundColor: '#4ade8025',
+                          borderRadius: 8,
+                          paddingHorizontal: 8,
+                          paddingVertical: 3,
+                          borderWidth: 1,
+                          borderColor: '#4ade80',
+                        }}
+                      >
+                        <Text style={{ color: '#4ade80', fontSize: 10, fontWeight: '700' }}>🤝 Vahvista</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <Text style={{ color: COLORS.muted, fontSize: 10, marginTop: 4, fontStyle: 'italic' }}>Itse ilmoitettu</Text>
+                    )}
+                  </View>
+                )
+              })}
             </View>
           </View>
         )}
