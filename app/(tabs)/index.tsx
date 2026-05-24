@@ -15,6 +15,16 @@ import { supabase } from '../../lib/supabase'
 
 interface SBDTotals { squat: number; bench: number; deadlift: number }
 interface LastWorkout { id: string; name: string; started_at: string; total_volume_kg: number }
+interface FriendPR {
+  id: string
+  user_id: string
+  username: string
+  exerciseName: string
+  weight_kg: number
+  reps: number
+  recorded_at: string
+  sbd_rank: import('../../lib/constants').RankName
+}
 
 export default function HomeScreen() {
   const { profile, loading, fetchProfile } = useUserStore()
@@ -22,8 +32,9 @@ export default function HomeScreen() {
   const [lastWorkout, setLastWorkout] = useState<LastWorkout | null>(null)
   const [ranksVisible, setRanksVisible] = useState(false)
   const [selectedWorkout, setSelectedWorkout] = useState<LastWorkout | null>(null)
+  const [friendPRs, setFriendPRs] = useState<FriendPR[]>([])
 
-  const cardAnims = useRef([0, 1, 2, 3, 4].map(() => new Animated.Value(0))).current
+  const cardAnims = useRef([0, 1, 2, 3, 4, 5].map(() => new Animated.Value(0))).current
   const progressBarAnim = useRef(new Animated.Value(0)).current
 
   useFocusEffect(useCallback(() => {
@@ -34,7 +45,38 @@ export default function HomeScreen() {
     )).start()
     fetchSBD(profile.id)
     fetchLastWorkout(profile.id)
+    fetchFriendPRs(profile.id)
   }, [profile?.id]))
+
+  async function fetchFriendPRs(userId: string) {
+    const { data: fs } = await supabase
+      .from('friendships')
+      .select('user_id, friend_id')
+      .or(`user_id.eq.${userId},friend_id.eq.${userId}`)
+      .eq('status', 'accepted')
+    if (!fs || fs.length === 0) { setFriendPRs([]); return }
+    const friendIds = fs.map((f: any) => f.user_id === userId ? f.friend_id : f.user_id)
+    const { data } = await supabase
+      .from('personal_records')
+      .select('id, user_id, weight_kg, reps, recorded_at, exercises!inner(name, is_sbd), users!inner(username, sbd_rank, hide_sbd)')
+      .in('user_id', friendIds)
+      .eq('exercises.is_sbd', true)
+      .order('recorded_at', { ascending: false })
+      .limit(10)
+    const filtered = (data ?? [])
+      .filter((r: any) => !r.users?.hide_sbd)
+      .map((r: any) => ({
+        id: r.id,
+        user_id: r.user_id,
+        username: r.users?.username ?? '?',
+        exerciseName: r.exercises?.name ?? '?',
+        weight_kg: r.weight_kg,
+        reps: r.reps,
+        recorded_at: r.recorded_at,
+        sbd_rank: r.users?.sbd_rank ?? 'Aloittelija',
+      })) as FriendPR[]
+    setFriendPRs(filtered)
+  }
 
   async function fetchSBD(userId: string) {
     const { data } = await supabase
@@ -225,7 +267,7 @@ export default function HomeScreen() {
 
           {/* Last workout */}
           {lastWorkout && (
-            <Animated.View style={[card(4)]}>
+            <Animated.View style={[card(4), { marginBottom: 12 }]}>
               <TouchableOpacity
                 activeOpacity={0.75}
                 onPress={() => setSelectedWorkout(lastWorkout)}
@@ -244,6 +286,50 @@ export default function HomeScreen() {
                   {Math.round(lastWorkout.total_volume_kg).toLocaleString()} kg volyymi
                 </Text>
               </TouchableOpacity>
+            </Animated.View>
+          )}
+
+          {/* Kaverien PR-feed */}
+          {friendPRs.length > 0 && (
+            <Animated.View style={[card(5)]}>
+              <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 10 }}>
+                KAVERIEN ENNÄTYKSET
+              </Text>
+              {friendPRs.map(pr => {
+                const rd = getRankData(pr.sbd_rank)
+                const d = new Date(pr.recorded_at)
+                const days = Math.floor((Date.now() - d.getTime()) / 86400000)
+                const dateLabel = days === 0 ? 'Tänään' : days === 1 ? 'Eilen' : days < 7 ? `${days} pv` : d.toLocaleDateString('fi-FI', { day: 'numeric', month: 'short' })
+                return (
+                  <TouchableOpacity
+                    key={pr.id}
+                    onPress={() => router.push(`/user/${pr.user_id}` as any)}
+                    activeOpacity={0.75}
+                    style={{
+                      backgroundColor: COLORS.card,
+                      borderRadius: 16,
+                      padding: 14,
+                      marginBottom: 8,
+                      borderLeftWidth: 3,
+                      borderLeftColor: rd.color,
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                      <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>{pr.username}</Text>
+                      <Text style={{ color: COLORS.muted, fontSize: 11 }}>{dateLabel}</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
+                      <Text style={{ color: COLORS.gold, fontWeight: '900', fontSize: 22 }}>
+                        {pr.weight_kg}<Text style={{ fontSize: 13, fontWeight: '400' }}>kg</Text>
+                      </Text>
+                      {pr.reps > 1 && (
+                        <Text style={{ color: COLORS.muted, fontSize: 12 }}>× {pr.reps}</Text>
+                      )}
+                      <Text style={{ color: '#fff', fontSize: 13, marginLeft: 4 }}>{pr.exerciseName}</Text>
+                    </View>
+                  </TouchableOpacity>
+                )
+              })}
             </Animated.View>
           )}
 
