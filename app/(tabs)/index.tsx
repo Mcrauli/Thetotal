@@ -26,6 +26,16 @@ interface FriendPR {
   sbd_rank: import('../../lib/constants').RankName
 }
 
+type ReactionEmoji = 'fire' | 'muscle' | 'clap' | 'eyes'
+const EMOJI_LABELS: Record<ReactionEmoji, string> = {
+  fire: '🔥',
+  muscle: '💪',
+  clap: '👏',
+  eyes: '👀',
+}
+interface ReactionCount { count: number; mine: boolean }
+type ReactionMap = Record<string, Partial<Record<ReactionEmoji, ReactionCount>>>
+
 export default function HomeScreen() {
   const { profile, loading, fetchProfile } = useUserStore()
   const [sbd, setSBD] = useState<SBDTotals>({ squat: 0, bench: 0, deadlift: 0 })
@@ -33,6 +43,7 @@ export default function HomeScreen() {
   const [ranksVisible, setRanksVisible] = useState(false)
   const [selectedWorkout, setSelectedWorkout] = useState<LastWorkout | null>(null)
   const [friendPRs, setFriendPRs] = useState<FriendPR[]>([])
+  const [reactions, setReactions] = useState<ReactionMap>({})
 
   const cardAnims = useRef([0, 1, 2, 3, 4, 5].map(() => new Animated.Value(0))).current
   const progressBarAnim = useRef(new Animated.Value(0)).current
@@ -76,6 +87,51 @@ export default function HomeScreen() {
         sbd_rank: r.users?.sbd_rank ?? 'Aloittelija',
       })) as FriendPR[]
     setFriendPRs(filtered)
+
+    if (filtered.length > 0) {
+      const prIds = filtered.map(p => p.id)
+      const { data: rData } = await supabase
+        .from('pr_reactions')
+        .select('pr_id, user_id, emoji')
+        .in('pr_id', prIds)
+      const map: ReactionMap = {}
+      for (const r of (rData ?? []) as any[]) {
+        if (!map[r.pr_id]) map[r.pr_id] = {}
+        const slot = map[r.pr_id][r.emoji as ReactionEmoji] ?? { count: 0, mine: false }
+        slot.count++
+        if (r.user_id === userId) slot.mine = true
+        map[r.pr_id][r.emoji as ReactionEmoji] = slot
+      }
+      setReactions(map)
+    } else {
+      setReactions({})
+    }
+  }
+
+  async function toggleReaction(prId: string, emoji: ReactionEmoji) {
+    if (!profile) return
+    const current = reactions[prId]?.[emoji]
+    const isAdding = !current?.mine
+
+    setReactions(prev => {
+      const next = { ...prev }
+      if (!next[prId]) next[prId] = {}
+      const slot = next[prId][emoji] ?? { count: 0, mine: false }
+      next[prId] = {
+        ...next[prId],
+        [emoji]: {
+          count: slot.count + (isAdding ? 1 : -1),
+          mine: isAdding,
+        },
+      }
+      return next
+    })
+
+    if (isAdding) {
+      await supabase.from('pr_reactions').insert({ pr_id: prId, user_id: profile.id, emoji })
+    } else {
+      await supabase.from('pr_reactions').delete().eq('pr_id', prId).eq('user_id', profile.id).eq('emoji', emoji)
+    }
   }
 
   async function fetchSBD(userId: string) {
@@ -301,10 +357,8 @@ export default function HomeScreen() {
                 const days = Math.floor((Date.now() - d.getTime()) / 86400000)
                 const dateLabel = days === 0 ? 'Tänään' : days === 1 ? 'Eilen' : days < 7 ? `${days} pv` : d.toLocaleDateString('fi-FI', { day: 'numeric', month: 'short' })
                 return (
-                  <TouchableOpacity
+                  <View
                     key={pr.id}
-                    onPress={() => router.push(`/user/${pr.user_id}` as any)}
-                    activeOpacity={0.75}
                     style={{
                       backgroundColor: COLORS.card,
                       borderRadius: 16,
@@ -314,20 +368,55 @@ export default function HomeScreen() {
                       borderLeftColor: rd.color,
                     }}
                   >
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                      <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>{pr.username}</Text>
-                      <Text style={{ color: COLORS.muted, fontSize: 11 }}>{dateLabel}</Text>
+                    <TouchableOpacity
+                      onPress={() => router.push(`/user/${pr.user_id}` as any)}
+                      activeOpacity={0.75}
+                    >
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                        <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>{pr.username}</Text>
+                        <Text style={{ color: COLORS.muted, fontSize: 11 }}>{dateLabel}</Text>
+                      </View>
+                      <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
+                        <Text style={{ color: COLORS.gold, fontWeight: '900', fontSize: 22 }}>
+                          {pr.weight_kg}<Text style={{ fontSize: 13, fontWeight: '400' }}>kg</Text>
+                        </Text>
+                        {pr.reps > 1 && (
+                          <Text style={{ color: COLORS.muted, fontSize: 12 }}>× {pr.reps}</Text>
+                        )}
+                        <Text style={{ color: '#fff', fontSize: 13, marginLeft: 4 }}>{pr.exerciseName}</Text>
+                      </View>
+                    </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', gap: 6, marginTop: 10 }}>
+                      {(Object.keys(EMOJI_LABELS) as ReactionEmoji[]).map(emoji => {
+                        const data = reactions[pr.id]?.[emoji]
+                        const count = data?.count ?? 0
+                        const mine = data?.mine ?? false
+                        return (
+                          <TouchableOpacity
+                            key={emoji}
+                            onPress={() => toggleReaction(pr.id, emoji)}
+                            activeOpacity={0.7}
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              gap: 4,
+                              backgroundColor: mine ? COLORS.accentDim : COLORS.card2,
+                              borderRadius: 14,
+                              paddingHorizontal: 10,
+                              paddingVertical: 5,
+                              borderWidth: mine ? 1 : 0,
+                              borderColor: mine ? COLORS.accent : 'transparent',
+                            }}
+                          >
+                            <Text style={{ fontSize: 14 }}>{EMOJI_LABELS[emoji]}</Text>
+                            {count > 0 && (
+                              <Text style={{ color: mine ? COLORS.accent : COLORS.muted, fontSize: 12, fontWeight: '700' }}>{count}</Text>
+                            )}
+                          </TouchableOpacity>
+                        )
+                      })}
                     </View>
-                    <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
-                      <Text style={{ color: COLORS.gold, fontWeight: '900', fontSize: 22 }}>
-                        {pr.weight_kg}<Text style={{ fontSize: 13, fontWeight: '400' }}>kg</Text>
-                      </Text>
-                      {pr.reps > 1 && (
-                        <Text style={{ color: COLORS.muted, fontSize: 12 }}>× {pr.reps}</Text>
-                      )}
-                      <Text style={{ color: '#fff', fontSize: 13, marginLeft: 4 }}>{pr.exerciseName}</Text>
-                    </View>
-                  </TouchableOpacity>
+                  </View>
                 )
               })}
             </Animated.View>
