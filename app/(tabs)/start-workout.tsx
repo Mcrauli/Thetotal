@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native'
+import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
 import { useUserStore } from '../../store/userStore'
 import { useWorkoutStore } from '../../store/workoutStore'
+import { PRESET_TEMPLATES, type PresetTemplate } from '../../lib/preset-templates'
 import { COLORS } from '../../lib/constants'
 
 interface Template {
@@ -66,6 +67,49 @@ export default function StartWorkoutScreen() {
 
     startFromTemplate(t.name, t.exercises, lastWeights)
     router.replace('/(tabs)/active')
+  }
+
+  async function resolvePresetToTemplate(p: PresetTemplate): Promise<Template | null> {
+    const { data: exData } = await supabase
+      .from('exercises')
+      .select('id, name, muscle_group')
+      .in('name', p.exerciseNames)
+    if (!exData || exData.length === 0) {
+      Alert.alert('Virhe', 'Liikkeitä ei löytynyt')
+      return null
+    }
+    const byName: Record<string, any> = {}
+    for (const ex of exData as any[]) byName[ex.name] = ex
+    const exercises = p.exerciseNames
+      .filter(n => byName[n])
+      .map(n => ({
+        exerciseId: byName[n].id,
+        exerciseName: byName[n].name,
+        muscleGroup: byName[n].muscle_group,
+      }))
+    return { id: p.id, name: p.name, exercises }
+  }
+
+  async function handlePresetStart(p: PresetTemplate) {
+    const t = await resolvePresetToTemplate(p)
+    if (t) handleTemplate(t)
+  }
+
+  async function handlePresetSave(p: PresetTemplate) {
+    if (!profile) return
+    const t = await resolvePresetToTemplate(p)
+    if (!t || t.exercises.length === 0) return
+    const { data: newTmpl, error } = await supabase
+      .from('workout_templates')
+      .insert({ user_id: profile.id, name: t.name })
+      .select('id')
+      .single()
+    if (error || !newTmpl) { Alert.alert('Virhe', 'Tallennus epäonnistui'); return }
+    await supabase.from('template_exercises').insert(
+      t.exercises.map((ex, i) => ({ template_id: newTmpl.id, exercise_id: ex.exerciseId, order_index: i }))
+    )
+    setTemplates(prev => [...prev, { id: newTmpl.id, name: t.name, exercises: t.exercises }])
+    Alert.alert('Tallennettu', `"${t.name}" lisätty omiin ohjelmiisi.`)
   }
 
   return (
@@ -150,13 +194,60 @@ export default function StartWorkoutScreen() {
 
         {templates.length === 0 && (
           <TouchableOpacity
-            className="flex-row items-center gap-3 py-3"
+            className="flex-row items-center gap-3 py-3 mb-4"
             onPress={() => { router.back(); router.push('/(tabs)/create-template') }}
           >
             <Ionicons name="add-circle-outline" size={22} color={COLORS.muted} />
             <Text className="text-muted text-sm">Luo treeniohjelma</Text>
           </TouchableOpacity>
         )}
+
+        <Text className="text-muted text-xs tracking-widest mb-3" style={{ marginTop: templates.length > 0 ? 24 : 0 }}>
+          ESIMERKKIOHJELMAT
+        </Text>
+        {PRESET_TEMPLATES.map(p => (
+          <View
+            key={p.id}
+            style={{
+              backgroundColor: COLORS.card,
+              borderRadius: 16,
+              padding: 14,
+              marginBottom: 10,
+            }}
+          >
+            <Text className="text-white font-bold text-base mb-1">{p.name}</Text>
+            <Text className="text-muted text-xs mb-2">{p.description}</Text>
+            <Text className="text-muted text-xs mb-3" numberOfLines={2}>
+              {p.exerciseNames.join(' · ')}
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <TouchableOpacity
+                onPress={() => handlePresetStart(p)}
+                style={{
+                  flex: 1,
+                  backgroundColor: COLORS.accent,
+                  borderRadius: 10,
+                  paddingVertical: 9,
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>▶ Aloita</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => handlePresetSave(p)}
+                style={{
+                  flex: 1,
+                  backgroundColor: COLORS.card2,
+                  borderRadius: 10,
+                  paddingVertical: 9,
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{ color: COLORS.muted, fontWeight: '700', fontSize: 13 }}>+ Tallenna omaksi</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ))}
 
       </ScrollView>
     </SafeAreaView>
