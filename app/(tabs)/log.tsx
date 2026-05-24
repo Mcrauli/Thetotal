@@ -103,69 +103,39 @@ export default function LogScreen() {
               <Text className="text-muted text-sm mt-2">Luo ensimmäinen ohjelmasi</Text>
             </TouchableOpacity>
           ) : (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 4, gap: 12 }}
-              className="mb-6"
-            >
+            <View className="px-4 mb-6" style={{ gap: 10 }}>
               {templates.map(t => (
                 <View
                   key={t.id}
                   style={{
-                    width: 180,
                     backgroundColor: COLORS.card,
-                    borderRadius: 16,
+                    borderRadius: 14,
                     overflow: 'hidden',
+                    flexDirection: 'row',
                   }}
                 >
-                  <View style={{ height: 3, backgroundColor: COLORS.accent }} />
+                  <View style={{ width: 3, backgroundColor: COLORS.accent }} />
                   <View style={{ padding: 14, flex: 1 }}>
-                    <View className="flex-row justify-between items-start mb-2">
+                    <View className="flex-row justify-between items-center mb-1.5">
                       <Text className="text-white font-black text-base flex-1" numberOfLines={1}>
                         {t.name}
                       </Text>
-                      <TouchableOpacity onPress={() => deleteTemplate(t.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                        <Ionicons name="trash-outline" size={14} color={COLORS.muted} />
+                      <TouchableOpacity onPress={() => deleteTemplate(t.id)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                        <Ionicons name="trash-outline" size={16} color={COLORS.muted} />
                       </TouchableOpacity>
                     </View>
 
-                    <View style={{ minHeight: 60 }}>
-                      {t.exercises.length === 0 ? (
-                        <Text className="text-muted text-xs">Ei liikkeitä</Text>
-                      ) : (
-                        t.exercises.slice(0, 5).map((ex, i) => (
-                          <Text key={i} className="text-muted text-xs mb-0.5" numberOfLines={1}>
-                            · {ex.exerciseName}
-                          </Text>
-                        ))
-                      )}
-                      {t.exercises.length > 5 && (
-                        <Text className="text-muted text-xs">+{t.exercises.length - 5} lisää</Text>
-                      )}
-                    </View>
+                    {t.exercises.length === 0 ? (
+                      <Text className="text-muted text-xs">Ei liikkeitä</Text>
+                    ) : (
+                      <Text className="text-muted text-xs" numberOfLines={2}>
+                        {t.exercises.map(e => e.exerciseName).join(' · ')}
+                      </Text>
+                    )}
                   </View>
                 </View>
               ))}
-
-              <TouchableOpacity
-                style={{
-                  width: 120,
-                  backgroundColor: COLORS.card,
-                  borderRadius: 16,
-                  borderWidth: 1,
-                  borderStyle: 'dashed',
-                  borderColor: COLORS.cardEdge,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  paddingVertical: 24,
-                }}
-                onPress={() => router.push('/(tabs)/create-template')}
-              >
-                <Ionicons name="add-circle-outline" size={28} color={COLORS.muted} />
-                <Text className="text-muted text-xs mt-1">Uusi</Text>
-              </TouchableOpacity>
-            </ScrollView>
+            </View>
           )}
 
           {/* Historia */}
