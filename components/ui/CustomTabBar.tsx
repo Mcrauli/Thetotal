@@ -5,21 +5,23 @@ import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import { COLORS } from '../../lib/constants'
+import { useT } from '../../lib/i18n'
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name']
 
-const TAB_META: Record<string, { icon: IoniconName; activeIcon: IoniconName; label: string }> = {
-  index:    { icon: 'home-outline',        activeIcon: 'home',        label: 'Koti' },
-  log:      { icon: 'barbell-outline',     activeIcon: 'barbell',     label: 'Treeni' },
-  progress: { icon: 'stats-chart-outline', activeIcon: 'stats-chart', label: 'Kehitys' },
-  social:   { icon: 'people-outline',      activeIcon: 'people',      label: 'Kaverit' },
-  profile:  { icon: 'trophy-outline',      activeIcon: 'trophy',      label: 'Profiili' },
+const TAB_META: Record<string, { icon: IoniconName; activeIcon: IoniconName; labelKey: string }> = {
+  index:    { icon: 'home-outline',        activeIcon: 'home',        labelKey: 'tabs.home' },
+  log:      { icon: 'barbell-outline',     activeIcon: 'barbell',     labelKey: 'tabs.workouts' },
+  progress: { icon: 'stats-chart-outline', activeIcon: 'stats-chart', labelKey: 'tabs.progress' },
+  social:   { icon: 'people-outline',      activeIcon: 'people',      labelKey: 'tabs.friends' },
+  profile:  { icon: 'trophy-outline',      activeIcon: 'trophy',      labelKey: 'tabs.profile' },
 }
 
 const HIDE_ON = new Set(['active', 'create-template', 'start-workout'])
 
 export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets()
+  const t = useT()
   const currentRoute = state.routes[state.index]?.name
   if (HIDE_ON.has(currentRoute)) return null
   const visible = state.routes.filter(r => TAB_META[r.name])
@@ -75,7 +77,7 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
             color: isFocused ? COLORS.white : COLORS.muted,
           }}
         >
-          {meta.label.toUpperCase()}
+          {t(meta.labelKey as any).toUpperCase()}
         </Text>
       </TouchableOpacity>
     )

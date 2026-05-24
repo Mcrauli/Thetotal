@@ -5,6 +5,7 @@ import { router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
 import { useUserStore } from '../../store/userStore'
 import { getRankForXP, getSBDRank, getRankData } from '../../lib/xp'
+import { useT } from '../../lib/i18n'
 
 function xpFromRatio(ratio: number): number {
   if (ratio >= 8)    return 30000
@@ -20,6 +21,7 @@ function xpFromRatio(ratio: number): number {
 
 export default function OnboardingScreen() {
   const { profile, fetchProfile } = useUserStore()
+  const t = useT()
   const [squat, setSquat] = useState('')
   const [bench, setBench] = useState('')
   const [deadlift, setDeadlift] = useState('')
@@ -43,7 +45,7 @@ export default function OnboardingScreen() {
 
   async function handleFinish() {
     if (!profile) return
-    if (!accepted) { Alert.alert('Hyväksy käyttöehdot', 'Sinun on hyväksyttävä käyttöehdot ja tietosuojaseloste jatkaaksesi.'); return }
+    if (!accepted) { Alert.alert(t('onboarding.acceptRequired'), t('onboarding.acceptRequiredBody')); return }
     setLoading(true)
 
     const { data: exercises } = await supabase
@@ -82,7 +84,7 @@ export default function OnboardingScreen() {
 
   async function handleSkip() {
     if (!profile) return
-    if (!accepted) { Alert.alert('Hyväksy käyttöehdot', 'Sinun on hyväksyttävä käyttöehdot ja tietosuojaseloste jatkaaksesi.'); return }
+    if (!accepted) { Alert.alert(t('onboarding.acceptRequired'), t('onboarding.acceptRequiredBody')); return }
     await supabase.from('users').update({ onboarded: true }).eq('id', profile.id)
     await fetchProfile()
     router.replace('/(auth)/tutorial')
@@ -91,10 +93,10 @@ export default function OnboardingScreen() {
   return (
     <SafeAreaView className="flex-1 bg-bg">
       <ScrollView className="flex-1 px-6" contentContainerStyle={{ paddingTop: 48, paddingBottom: 32 }}>
-        <Text className="text-white text-2xl font-black mb-2">Aseta profiilisi</Text>
-        <Text className="text-muted text-sm mb-8">Kaikki kentät valinnaisia. Mitä enemmän annat, sitä tarkempi lähtörankkisi.</Text>
+        <Text className="text-white text-2xl font-black mb-2">{t('onboarding.title')}</Text>
+        <Text className="text-muted text-sm mb-8">{t('onboarding.subtitle')}</Text>
 
-        <Text className="text-muted text-xs tracking-widest mb-3">SUKUPUOLI</Text>
+        <Text className="text-muted text-xs tracking-widest mb-3">{t('onboarding.gender')}</Text>
         <View className="flex-row gap-3 mb-6">
           {(['male', 'female'] as const).map(g => (
             <TouchableOpacity
@@ -104,16 +106,16 @@ export default function OnboardingScreen() {
               onPress={() => setGender(g)}
             >
               <Text className="font-bold" style={{ color: gender === g ? '#fff' : '#888' }}>
-                {g === 'male' ? 'Mies' : 'Nainen'}
+                {g === 'male' ? t('onboarding.male') : t('onboarding.female')}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        <Text className="text-muted text-xs tracking-widest mb-3">KEHON MITAT</Text>
+        <Text className="text-muted text-xs tracking-widest mb-3">{t('onboarding.body')}</Text>
         <View className="flex-row gap-3 mb-6">
           <View className="flex-1">
-            <Text className="text-muted text-xs mb-1 ml-1">PAINO (kg)</Text>
+            <Text className="text-muted text-xs mb-1 ml-1">{t('onboarding.weight')}</Text>
             <TextInput
               className="bg-card rounded-xl px-4 py-3 text-white"
               placeholder="80"
@@ -124,7 +126,7 @@ export default function OnboardingScreen() {
             />
           </View>
           <View className="flex-1">
-            <Text className="text-muted text-xs mb-1 ml-1">PITUUS (cm)</Text>
+            <Text className="text-muted text-xs mb-1 ml-1">{t('onboarding.height')}</Text>
             <TextInput
               className="bg-card rounded-xl px-4 py-3 text-white"
               placeholder="178"
@@ -136,11 +138,11 @@ export default function OnboardingScreen() {
           </View>
         </View>
 
-        <Text className="text-muted text-xs tracking-widest mb-3">PARHAAT TULOKSET (kg)</Text>
+        <Text className="text-muted text-xs tracking-widest mb-3">{t('onboarding.bestResults')}</Text>
         {[
-          { label: 'KYYKKY', value: squat, setter: setSquat },
-          { label: 'PENKKIPUNNERRUS', value: bench, setter: setBench },
-          { label: 'MAASTAVETO', value: deadlift, setter: setDeadlift },
+          { label: t('onboarding.squat'), value: squat, setter: setSquat },
+          { label: t('onboarding.bench'), value: bench, setter: setBench },
+          { label: t('onboarding.deadlift'), value: deadlift, setter: setDeadlift },
         ].map(({ label, value, setter }) => (
           <View key={label} className="mb-4">
             <Text className="text-muted text-xs mb-1 ml-1">{label}</Text>
@@ -157,7 +159,7 @@ export default function OnboardingScreen() {
 
         {total > 0 && (
           <View className="bg-card rounded-2xl p-4 mb-6 items-center">
-            <Text className="text-muted text-xs tracking-widest mb-2">LÄHTÖRANKKISI</Text>
+            <Text className="text-muted text-xs tracking-widest mb-2">{t('onboarding.startingRank')}</Text>
             <Text style={{ fontSize: 36 }}>{rankData.icon}</Text>
             <Text className="text-xl font-black mt-1" style={{ color: rankData.color }}>
               {startingSBDRank.toUpperCase()}
@@ -169,9 +171,9 @@ export default function OnboardingScreen() {
         )}
 
         <View style={{ backgroundColor: '#1a1a2e', borderRadius: 12, padding: 14, marginBottom: 16, marginTop: 8 }}>
-          <Text style={{ color: '#ffa726', fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 6 }}>⚠ TÄRKEÄÄ TERVEYDESTÄ</Text>
+          <Text style={{ color: '#ffa726', fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 6 }}>{t('onboarding.healthWarning')}</Text>
           <Text style={{ color: '#aaa', fontSize: 12, lineHeight: 17 }}>
-            Voimaharjoittelu on omalla vastuulla. Konsultoi lääkäriä jos sinulla on terveydellisiä rajoitteita. Sovellus ei korvaa ammattilaisvalmennusta. Lopeta harjoittelu välittömästi jos koet kipua.
+            {t('onboarding.healthBody')}
           </Text>
         </View>
 
@@ -193,15 +195,15 @@ export default function OnboardingScreen() {
             {accepted && <Text style={{ color: '#fff', fontSize: 14, fontWeight: '900', lineHeight: 16 }}>✓</Text>}
           </View>
           <Text style={{ color: '#ccc', fontSize: 13, flex: 1, lineHeight: 18 }}>
-            Olen yli 13-vuotias ja hyväksyn{' '}
+            {t('onboarding.acceptPre')}{' '}
             <Text style={{ color: '#e63946', textDecorationLine: 'underline' }} onPress={() => Linking.openURL('https://mcrauli.github.io/Thetotal/terms.html')}>
-              käyttöehdot
+              {t('onboarding.acceptTerms')}
             </Text>
-            {' '}ja{' '}
+            {' '}{t('onboarding.acceptAnd')}{' '}
             <Text style={{ color: '#e63946', textDecorationLine: 'underline' }} onPress={() => Linking.openURL('https://mcrauli.github.io/Thetotal/privacy.html')}>
-              tietosuojaselosteen
+              {t('onboarding.acceptPrivacy')}
             </Text>
-            , mukaan lukien suostumus terveystietojen käsittelyyn.
+            {t('onboarding.acceptPost')}
           </Text>
         </TouchableOpacity>
 
@@ -211,12 +213,12 @@ export default function OnboardingScreen() {
           disabled={loading || !accepted}
         >
           <Text className="text-white font-bold text-base">
-            {total > 0 ? `Aloita rankkina ${startingSBDRank}` : 'Aloita (Aloittelija)'}
+            {total > 0 ? `${t('onboarding.startAs')} ${t(`rank.${startingSBDRank}` as any)}` : t('onboarding.startBeginner')}
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity className="items-center py-2" onPress={handleSkip} disabled={!accepted}>
-          <Text className="text-muted text-sm" style={{ opacity: accepted ? 1 : 0.5 }}>Ohita toistaiseksi</Text>
+          <Text className="text-muted text-sm" style={{ opacity: accepted ? 1 : 0.5 }}>{t('onboarding.skip')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
