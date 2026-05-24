@@ -54,7 +54,7 @@ export default function OnboardingScreen() {
       for (const ex of exercises) {
         const weight = ex.name === 'Squat' ? sq : ex.name === 'Bench Press' ? bp : dl
         if (weight > 0) {
-          prsToInsert.push({ user_id: profile.id, exercise_id: ex.id, weight_kg: weight, reps: 1 })
+          prsToInsert.push({ user_id: profile.id, exercise_id: ex.id, weight_kg: weight, reps: 1, verified: false })
         }
       }
       if (prsToInsert.length > 0) {

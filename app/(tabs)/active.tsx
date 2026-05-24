@@ -130,6 +130,7 @@ export default function ActiveWorkoutScreen() {
           weight_kg: pr.weight,
           reps: pr.reps,
           recorded_at: finishedAt.toISOString(),
+          verified: true,
         })),
         { onConflict: 'user_id,exercise_id' }
       )

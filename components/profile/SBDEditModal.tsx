@@ -42,7 +42,7 @@ export function SBDEditModal({ visible, onClose, initial, onSaved }: SBDEditModa
       for (const ex of exercises) {
         const w = ex.name === 'Squat' ? sq : ex.name === 'Bench Press' ? bp : dl
         if (w > 0) {
-          upserts.push({ user_id: profile.id, exercise_id: ex.id, weight_kg: w, reps: 1 })
+          upserts.push({ user_id: profile.id, exercise_id: ex.id, weight_kg: w, reps: 1, verified: false })
         }
       }
       if (upserts.length > 0) {

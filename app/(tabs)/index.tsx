@@ -26,6 +26,8 @@ interface FriendPR {
   reps: number
   recorded_at: string
   sbd_rank: import('../../lib/constants').RankName
+  verified: boolean
+  verifiedByMe: boolean
 }
 
 type ReactionEmoji = 'fire' | 'muscle' | 'clap' | 'eyes'
@@ -73,23 +75,34 @@ export default function HomeScreen() {
     const friendIds = fs.map((f: any) => f.user_id === userId ? f.friend_id : f.user_id)
     const { data } = await supabase
       .from('personal_records')
-      .select('id, user_id, weight_kg, reps, recorded_at, exercises!inner(name, is_sbd), users!inner(username, sbd_rank, hide_sbd)')
+      .select('id, user_id, weight_kg, reps, recorded_at, verified, exercises!inner(name, is_sbd), users!inner(username, sbd_rank, hide_sbd)')
       .in('user_id', friendIds)
       .eq('exercises.is_sbd', true)
       .order('recorded_at', { ascending: false })
       .limit(10)
-    const filtered = (data ?? [])
+    const baseFiltered = (data ?? [])
       .filter((r: any) => !r.users?.hide_sbd)
-      .map((r: any) => ({
-        id: r.id,
-        user_id: r.user_id,
-        username: r.users?.username ?? '?',
-        exerciseName: r.exercises?.name ?? '?',
-        weight_kg: r.weight_kg,
-        reps: r.reps,
-        recorded_at: r.recorded_at,
-        sbd_rank: r.users?.sbd_rank ?? 'Aloittelija',
-      })) as FriendPR[]
+    let myVerified = new Set<string>()
+    if (baseFiltered.length > 0) {
+      const { data: vData } = await supabase
+        .from('pr_verifications')
+        .select('pr_id')
+        .eq('verifier_id', userId)
+        .in('pr_id', baseFiltered.map((r: any) => r.id))
+      myVerified = new Set((vData ?? []).map((v: any) => v.pr_id))
+    }
+    const filtered = baseFiltered.map((r: any) => ({
+      id: r.id,
+      user_id: r.user_id,
+      username: r.users?.username ?? '?',
+      exerciseName: r.exercises?.name ?? '?',
+      weight_kg: r.weight_kg,
+      reps: r.reps,
+      recorded_at: r.recorded_at,
+      sbd_rank: r.users?.sbd_rank ?? 'Aloittelija',
+      verified: !!r.verified,
+      verifiedByMe: myVerified.has(r.id),
+    })) as FriendPR[]
     setFriendPRs(filtered)
 
     if (filtered.length > 0) {
@@ -116,6 +129,21 @@ export default function HomeScreen() {
       setReactions({})
       setCommentCounts({})
     }
+  }
+
+  async function verifyPR(pr: FriendPR) {
+    if (!profile || pr.verifiedByMe) return
+    setFriendPRs(prev => prev.map(p => p.id === pr.id ? { ...p, verified: true, verifiedByMe: true } : p))
+    const { error } = await supabase.from('pr_verifications').insert({ pr_id: pr.id, verifier_id: profile.id })
+    if (error) {
+      setFriendPRs(prev => prev.map(p => p.id === pr.id ? { ...p, verifiedByMe: false } : p))
+      return
+    }
+    await sendPushToUsers({
+      toUserIds: [pr.user_id],
+      title: `🤝 ${profile.username} vahvisti`,
+      body: `${pr.exerciseName} ${pr.weight_kg}kg PR:si on nyt vahvistettu`,
+    })
   }
 
   async function toggleReaction(prId: string, emoji: ReactionEmoji) {
@@ -402,7 +430,17 @@ export default function HomeScreen() {
                           <Text style={{ color: COLORS.muted, fontSize: 12 }}>× {pr.reps}</Text>
                         )}
                         <Text style={{ color: '#fff', fontSize: 13, marginLeft: 4 }}>{pr.exerciseName}</Text>
+                        {pr.verified ? (
+                          <Text style={{ color: '#4ade80', fontSize: 11, marginLeft: 4 }}>✓</Text>
+                        ) : (
+                          <Text style={{ color: COLORS.muted, fontSize: 11, marginLeft: 4 }}>*</Text>
+                        )}
                       </View>
+                      {!pr.verified && (
+                        <Text style={{ color: COLORS.muted, fontSize: 10, marginTop: 4, fontStyle: 'italic' }}>
+                          Itse ilmoitettu — kaverit voivat vahvistaa
+                        </Text>
+                      )}
                     </TouchableOpacity>
                     <View style={{ flexDirection: 'row', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
                       {(Object.keys(EMOJI_LABELS) as ReactionEmoji[]).map(emoji => {
@@ -433,6 +471,26 @@ export default function HomeScreen() {
                           </TouchableOpacity>
                         )
                       })}
+                      {!pr.verified && !pr.verifiedByMe && (
+                        <TouchableOpacity
+                          onPress={() => verifyPR(pr)}
+                          activeOpacity={0.7}
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 4,
+                            backgroundColor: '#4ade8025',
+                            borderRadius: 14,
+                            paddingHorizontal: 10,
+                            paddingVertical: 5,
+                            borderWidth: 1,
+                            borderColor: '#4ade80',
+                          }}
+                        >
+                          <Text style={{ fontSize: 13 }}>🤝</Text>
+                          <Text style={{ color: '#4ade80', fontSize: 11, fontWeight: '700' }}>Vahvista</Text>
+                        </TouchableOpacity>
+                      )}
                       <TouchableOpacity
                         onPress={() => setCommentPR(pr)}
                         activeOpacity={0.7}
