@@ -9,6 +9,7 @@ import { ScreenBackground } from '../../components/ui/ScreenBackground'
 import { RanksModal } from '../../components/ui/RanksModal'
 import { RankBarbellIcon } from '../../components/ui/RankBarbellIcon'
 import { WorkoutDetailModal } from '../../components/workout/WorkoutDetailModal'
+import { PRCommentsModal } from '../../components/ui/PRCommentsModal'
 import { getRankData, getSBDSubRank } from '../../lib/xp'
 import { SBD_RANK_THRESHOLDS, COLORS } from '../../lib/constants'
 import { supabase } from '../../lib/supabase'
@@ -44,6 +45,8 @@ export default function HomeScreen() {
   const [selectedWorkout, setSelectedWorkout] = useState<LastWorkout | null>(null)
   const [friendPRs, setFriendPRs] = useState<FriendPR[]>([])
   const [reactions, setReactions] = useState<ReactionMap>({})
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({})
+  const [commentPR, setCommentPR] = useState<FriendPR | null>(null)
 
   const cardAnims = useRef([0, 1, 2, 3, 4, 5].map(() => new Animated.Value(0))).current
   const progressBarAnim = useRef(new Animated.Value(0)).current
@@ -90,10 +93,10 @@ export default function HomeScreen() {
 
     if (filtered.length > 0) {
       const prIds = filtered.map(p => p.id)
-      const { data: rData } = await supabase
-        .from('pr_reactions')
-        .select('pr_id, user_id, emoji')
-        .in('pr_id', prIds)
+      const [{ data: rData }, { data: cData }] = await Promise.all([
+        supabase.from('pr_reactions').select('pr_id, user_id, emoji').in('pr_id', prIds),
+        supabase.from('pr_comments').select('pr_id').in('pr_id', prIds),
+      ])
       const map: ReactionMap = {}
       for (const r of (rData ?? []) as any[]) {
         if (!map[r.pr_id]) map[r.pr_id] = {}
@@ -103,8 +106,14 @@ export default function HomeScreen() {
         map[r.pr_id][r.emoji as ReactionEmoji] = slot
       }
       setReactions(map)
+      const counts: Record<string, number> = {}
+      for (const c of (cData ?? []) as any[]) {
+        counts[c.pr_id] = (counts[c.pr_id] ?? 0) + 1
+      }
+      setCommentCounts(counts)
     } else {
       setReactions({})
+      setCommentCounts({})
     }
   }
 
@@ -386,7 +395,7 @@ export default function HomeScreen() {
                         <Text style={{ color: '#fff', fontSize: 13, marginLeft: 4 }}>{pr.exerciseName}</Text>
                       </View>
                     </TouchableOpacity>
-                    <View style={{ flexDirection: 'row', gap: 6, marginTop: 10 }}>
+                    <View style={{ flexDirection: 'row', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
                       {(Object.keys(EMOJI_LABELS) as ReactionEmoji[]).map(emoji => {
                         const data = reactions[pr.id]?.[emoji]
                         const count = data?.count ?? 0
@@ -415,6 +424,25 @@ export default function HomeScreen() {
                           </TouchableOpacity>
                         )
                       })}
+                      <TouchableOpacity
+                        onPress={() => setCommentPR(pr)}
+                        activeOpacity={0.7}
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 4,
+                          backgroundColor: COLORS.card2,
+                          borderRadius: 14,
+                          paddingHorizontal: 10,
+                          paddingVertical: 5,
+                          marginLeft: 'auto',
+                        }}
+                      >
+                        <Text style={{ fontSize: 14 }}>💬</Text>
+                        <Text style={{ color: COLORS.muted, fontSize: 12, fontWeight: '700' }}>
+                          {commentCounts[pr.id] ?? 0}
+                        </Text>
+                      </TouchableOpacity>
                     </View>
                   </View>
                 )
@@ -439,6 +467,22 @@ export default function HomeScreen() {
         startedAt={selectedWorkout?.started_at ?? ''}
         totalVolume={selectedWorkout?.total_volume_kg ?? 0}
         onClose={() => setSelectedWorkout(null)}
+      />
+
+      <PRCommentsModal
+        visible={!!commentPR}
+        prId={commentPR?.id ?? null}
+        prLabel={commentPR ? `${commentPR.username} · ${commentPR.exerciseName} ${commentPR.weight_kg}kg` : undefined}
+        onClose={() => {
+          const closingPRId = commentPR?.id
+          setCommentPR(null)
+          if (closingPRId && profile) {
+            supabase.from('pr_comments').select('id', { count: 'exact', head: true }).eq('pr_id', closingPRId)
+              .then(({ count }) => {
+                setCommentCounts(prev => ({ ...prev, [closingPRId]: count ?? 0 }))
+              })
+          }
+        }}
       />
     </ScreenBackground>
   )
