@@ -123,6 +123,14 @@ export default function ActiveWorkoutScreen() {
     )
 
     if (prs.length > 0) {
+      const prExerciseIds = prs.map(pr => pr.exerciseId)
+      const { data: exMeta } = await supabase
+        .from('exercises')
+        .select('id, is_sbd')
+        .in('id', prExerciseIds)
+      const isSbdMap: Record<string, boolean> = {}
+      for (const e of (exMeta ?? []) as any[]) isSbdMap[e.id] = !!e.is_sbd
+
       await supabase.from('personal_records').upsert(
         prs.map(pr => ({
           user_id: profile.id,
@@ -130,7 +138,7 @@ export default function ActiveWorkoutScreen() {
           weight_kg: pr.weight,
           reps: pr.reps,
           recorded_at: finishedAt.toISOString(),
-          verified: true,
+          verified: !isSbdMap[pr.exerciseId],
         })),
         { onConflict: 'user_id,exercise_id' }
       )
