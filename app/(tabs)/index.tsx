@@ -72,7 +72,15 @@ export default function HomeScreen() {
       .or(`user_id.eq.${userId},friend_id.eq.${userId}`)
       .eq('status', 'accepted')
     if (!fs || fs.length === 0) { setFriendPRs([]); return }
-    const friendIds = fs.map((f: any) => f.user_id === userId ? f.friend_id : f.user_id)
+    let friendIds = fs.map((f: any) => f.user_id === userId ? f.friend_id : f.user_id)
+
+    const { data: blocked } = await supabase
+      .from('blocks')
+      .select('blocked_id')
+      .eq('blocker_id', userId)
+    const blockedIds = new Set((blocked ?? []).map((b: any) => b.blocked_id))
+    friendIds = friendIds.filter(id => !blockedIds.has(id))
+    if (friendIds.length === 0) { setFriendPRs([]); return }
     const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString()
     const { data } = await supabase
       .from('personal_records')

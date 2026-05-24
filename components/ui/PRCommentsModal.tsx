@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
 import { useUserStore } from '../../store/userStore'
 import { sendPushToUsers } from '../../lib/notifications'
+import { reportContent, promptReport } from '../../lib/moderation'
 import { COLORS } from '../../lib/constants'
 
 interface Comment {
@@ -95,6 +96,19 @@ export function PRCommentsModal({ visible, prId, prLabel, prOwnerId, onClose }: 
     ])
   }
 
+  function reportComment(commentId: string) {
+    if (!profile) return
+    promptReport(async (reason) => {
+      const ok = await reportContent({
+        reporterId: profile.id,
+        targetType: 'comment',
+        targetId: commentId,
+        reason,
+      })
+      if (ok) Alert.alert('Kiitos', 'Ilmianto vastaanotettu. Käsittelemme sen 24 tunnin sisällä.')
+    })
+  }
+
   function timeAgo(iso: string) {
     const diff = Date.now() - new Date(iso).getTime()
     const mins = Math.floor(diff / 60000)
@@ -139,9 +153,13 @@ export function PRCommentsModal({ visible, prId, prLabel, prOwnerId, onClose }: 
                       <Text style={{ color: COLORS.accent, fontWeight: '700', fontSize: 13 }}>{c.username}</Text>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                         <Text style={{ color: COLORS.muted, fontSize: 11 }}>{timeAgo(c.created_at)}</Text>
-                        {c.user_id === profile?.id && (
+                        {c.user_id === profile?.id ? (
                           <TouchableOpacity onPress={() => deleteComment(c.id)} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
                             <Text style={{ color: COLORS.muted, fontSize: 14 }}>×</Text>
+                          </TouchableOpacity>
+                        ) : (
+                          <TouchableOpacity onPress={() => reportComment(c.id)} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
+                            <Text style={{ color: COLORS.muted, fontSize: 11 }}>⚑</Text>
                           </TouchableOpacity>
                         )}
                       </View>

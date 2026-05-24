@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase'
 import { getSBDSubRank } from '../../lib/xp'
 import { estimateOneRepMax, shouldShowEstimatedOneRepMax } from '../../lib/pr'
 import { sendPushToUsers } from '../../lib/notifications'
+import { blockUser, reportContent, promptReport } from '../../lib/moderation'
 import { useUserStore } from '../../store/userStore'
 import { RankBanner } from '../../components/profile/RankBanner'
 import { SBDRow } from '../../components/profile/SBDRow'
@@ -166,6 +167,41 @@ export default function UserProfileScreen() {
     Alert.alert('Kopioitu!', `"${t.name}" lisätty omiin ohjelmiisi.`)
   }
 
+  function handleReport() {
+    if (!me || !id) return
+    promptReport(async (reason) => {
+      const ok = await reportContent({
+        reporterId: me.id,
+        targetType: 'user',
+        targetId: id,
+        reason,
+      })
+      if (ok) Alert.alert('Kiitos', 'Ilmianto vastaanotettu. Käsittelemme sen 24 tunnin sisällä.')
+    })
+  }
+
+  function handleBlock() {
+    if (!me || !id || !user) return
+    Alert.alert(
+      'Estä käyttäjä',
+      `Haluatko varmasti estää käyttäjän ${user.username}? Et näe enää hänen sisältöään etkä hän sinun. Mahdollinen kaveriyhteys poistetaan.`,
+      [
+        { text: 'Peruuta', style: 'cancel' },
+        {
+          text: 'Estä',
+          style: 'destructive',
+          onPress: async () => {
+            const ok = await blockUser(me.id, id)
+            if (ok) {
+              Alert.alert('Estetty', `${user.username} on nyt estetty.`)
+              router.back()
+            }
+          },
+        },
+      ],
+    )
+  }
+
   if (loading) return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.bg, justifyContent: 'center', alignItems: 'center' }}>
       <ActivityIndicator color={COLORS.accent} />
@@ -181,10 +217,22 @@ export default function UserProfileScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.bg }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 }}>
         <TouchableOpacity onPress={() => router.back()} style={{ paddingVertical: 8, paddingRight: 16 }}>
           <Text style={{ color: COLORS.muted, fontSize: 15 }}>‹ Takaisin</Text>
         </TouchableOpacity>
+        {me && me.id !== id && (
+          <TouchableOpacity
+            onPress={() => Alert.alert('Toiminnot', undefined, [
+              { text: 'Ilmianna käyttäjä', onPress: handleReport },
+              { text: 'Estä käyttäjä', style: 'destructive', onPress: handleBlock },
+              { text: 'Peruuta', style: 'cancel' },
+            ])}
+            style={{ paddingVertical: 8, paddingHorizontal: 12 }}
+          >
+            <Text style={{ color: COLORS.muted, fontSize: 22, lineHeight: 22 }}>⋯</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
