@@ -20,6 +20,10 @@ export function estimateOneRepMax(weight: number, reps: number): number {
   return Math.round(weight * (1 + reps / 30))
 }
 
+export function shouldShowEstimatedOneRepMax(reps: number): boolean {
+  return reps >= 2 && reps <= 5
+}
+
 export function detectPRs(
   newSets: SetRecord[],
   existingRecords: SetRecord[],

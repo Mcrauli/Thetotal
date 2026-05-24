@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { View, Text, TouchableOpacity, ScrollView, Animated, Dimensions, Modal } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { COLORS } from '../../lib/constants'
-import { estimateOneRepMax } from '../../lib/pr'
+import { estimateOneRepMax, shouldShowEstimatedOneRepMax } from '../../lib/pr'
 
 export interface ImprovementResult {
   exerciseName: string
@@ -149,7 +149,7 @@ export function WorkoutResults({ visible, xpGain, xpBreakdown, improvements, cha
                       </View>
                     )}
                   </View>
-                  {item.newReps > 1 && (
+                  {shouldShowEstimatedOneRepMax(item.newReps) && (
                     <Text style={{ color: COLORS.muted, fontSize: 11, marginTop: 6 }}>
                       ≈ {estimateOneRepMax(item.newWeight, item.newReps)} kg 1RM
                     </Text>

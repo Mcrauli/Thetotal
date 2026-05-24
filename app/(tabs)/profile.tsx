@@ -12,7 +12,7 @@ import { ScreenBackground } from '../../components/ui/ScreenBackground'
 import { ChallengesSection } from '../../components/profile/ChallengesSection'
 import { SBDEditModal } from '../../components/profile/SBDEditModal'
 import { getSBDSubRank, getSBDRank } from '../../lib/xp'
-import { estimateOneRepMax } from '../../lib/pr'
+import { estimateOneRepMax, shouldShowEstimatedOneRepMax } from '../../lib/pr'
 import { supabase } from '../../lib/supabase'
 import { COLORS } from '../../lib/constants'
 
@@ -22,6 +22,7 @@ interface PRRecord {
   weight_kg: number
   reps: number
   recorded_at: string
+  verified: boolean
   exercises: { name: string; is_sbd: boolean }
 }
 
@@ -68,7 +69,7 @@ export default function ProfileScreen() {
 
   async function fetchData(userId: string) {
     const [{ data: prData }, { count }] = await Promise.all([
-      supabase.from('personal_records').select('weight_kg, reps, recorded_at, exercises(name, is_sbd)').eq('user_id', userId).order('recorded_at', { ascending: false }),
+      supabase.from('personal_records').select('weight_kg, reps, recorded_at, verified, exercises(name, is_sbd)').eq('user_id', userId).order('recorded_at', { ascending: false }),
       supabase.from('workouts').select('id', { count: 'exact', head: true }).eq('user_id', userId),
     ])
     if (prData) {
@@ -220,12 +221,17 @@ export default function ProfileScreen() {
                     <View key={pr.exercises?.name} style={{ flex: 1, backgroundColor: COLORS.card2, borderRadius: 12, padding: 12, alignItems: 'center' }}>
                       <Text style={{ color: COLORS.gold, fontWeight: '900', fontSize: 22 }}>{pr.weight_kg}<Text style={{ fontSize: 13, fontWeight: '400' }}>kg</Text></Text>
                       {pr.reps > 1 && (
-                        <>
-                          <Text style={{ color: COLORS.muted, fontSize: 10 }}>{pr.reps} toistoa</Text>
-                          <Text style={{ color: COLORS.muted, fontSize: 10, marginTop: 1 }}>≈ {estimateOneRepMax(pr.weight_kg, pr.reps)}kg 1RM</Text>
-                        </>
+                        <Text style={{ color: COLORS.muted, fontSize: 10 }}>{pr.reps} toistoa</Text>
+                      )}
+                      {shouldShowEstimatedOneRepMax(pr.reps) && (
+                        <Text style={{ color: COLORS.muted, fontSize: 10, marginTop: 1 }}>≈ {estimateOneRepMax(pr.weight_kg, pr.reps)}kg 1RM</Text>
                       )}
                       <Text style={{ color: '#fff', fontSize: 11, marginTop: 2, textAlign: 'center' }} numberOfLines={1}>{pr.exercises?.name}</Text>
+                      {pr.exercises?.is_sbd && (
+                        pr.verified
+                          ? <Text style={{ color: '#4ade80', fontSize: 9, marginTop: 3, fontWeight: '700' }}>✓ Vahvistettu</Text>
+                          : <Text style={{ color: COLORS.muted, fontSize: 9, marginTop: 3, fontStyle: 'italic' }}>Pyydä kaverin vahvistus</Text>
+                      )}
                     </View>
                   ))}
                 </View>

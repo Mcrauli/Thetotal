@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useLocalSearchParams, router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
 import { getSBDSubRank } from '../../lib/xp'
-import { estimateOneRepMax } from '../../lib/pr'
+import { estimateOneRepMax, shouldShowEstimatedOneRepMax } from '../../lib/pr'
 import { sendPushToUsers } from '../../lib/notifications'
 import { useUserStore } from '../../store/userStore'
 import { RankBanner } from '../../components/profile/RankBanner'
@@ -237,10 +237,10 @@ export default function UserProfileScreen() {
                       {pr.value}<Text style={{ fontSize: 13, fontWeight: '400' }}>kg</Text>
                     </Text>
                     {pr.reps > 1 && (
-                      <>
-                        <Text style={{ color: COLORS.muted, fontSize: 10 }}>{pr.reps} toistoa</Text>
-                        <Text style={{ color: COLORS.muted, fontSize: 10, marginTop: 1 }}>≈ {estimateOneRepMax(pr.value, pr.reps)}kg 1RM</Text>
-                      </>
+                      <Text style={{ color: COLORS.muted, fontSize: 10 }}>{pr.reps} toistoa</Text>
+                    )}
+                    {shouldShowEstimatedOneRepMax(pr.reps) && (
+                      <Text style={{ color: COLORS.muted, fontSize: 10, marginTop: 1 }}>≈ {estimateOneRepMax(pr.value, pr.reps)}kg 1RM</Text>
                     )}
                     <Text style={{ color: '#fff', fontSize: 11, marginTop: 2, textAlign: 'center' }} numberOfLines={1}>{pr.label}</Text>
                     {verified ? (
