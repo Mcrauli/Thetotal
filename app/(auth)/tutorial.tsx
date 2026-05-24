@@ -9,23 +9,28 @@ const { width } = Dimensions.get('window')
 const SLIDES = [
   {
     icon: '🏋️',
-    title: 'Tervetuloa The Totaliin',
-    body: 'Seuraa voimaharjoitteluasi, nouse rankeissa ja kilpaile kavereiden kanssa. Kaikki perustuu omaan kehonpainoosi — ei älykkäitä kaavoja.',
+    title: 'Tervetuloa TheTotaliin',
+    body: 'Voimaharjoittelun seuranta + sosiaalinen vertailu. SBD-rankkisi perustuu kehonpainoosi nähden lyötyihin painoihin.',
   },
   {
-    icon: '📋',
-    title: 'Käynnistä treeni',
-    body: 'Mene Treeni-välilehdelle. Voit valita valmiin ohjelman tai aloittaa tyhjältä. Lisää liikkeet, kirjaa sarjat painolla ja toistoilla.',
+    icon: '➕',
+    title: 'Aloita treeni',
+    body: 'Paina + nappia alapalkista. Valitse tyhjä treeni, oma ohjelma tai valmis esimerkkiohjelma (Full Body, 5×5, PPL).',
   },
   {
-    icon: '⚡',
-    title: 'Ansaitse XP ja nouse rankeissa',
-    body: 'Jokaisesta treenistä saat XP:tä. PR:t ja putki tuovat bonusta. SBD-rankkisi (Kyykky + Penkkipunnerrus + Maastaveto ÷ kehonpaino) määrää rankkisi Iron:sta Legend:iin.',
+    icon: '💪',
+    title: 'Kirjaa sarjat',
+    body: 'Lisää liike, paino ja toistot. Vapaaehtoisesti voit merkitä RPE-rasituksen (5–10) jokaiselle sarjalle. Treenistäsi tallentuu volyymi, ennätykset ja XP.',
+  },
+  {
+    icon: '🏆',
+    title: 'Nouse rankissa',
+    body: 'SBD-rankki kasvaa Aloittelijasta Legendaan kun parannat Kyykky + Penkki + Maastaveto -yhteistulosta suhteessa kehonpainoosi. Top 1 % saavuttaa Eliitin.',
   },
   {
     icon: '👥',
-    title: 'Haasta kaverit',
-    body: 'Hae kavereita käyttäjänimellä Kaverit-välilehdeltä. Näet heidän rankkinsä ja vertaat suorituksia. Kuka nousee ensin Goldiin?',
+    title: 'Kaverit ja vahvistukset',
+    body: 'Lisää kaverit Kaverit-välilehdeltä. Heidän PR:nsä näkyvät etusivun feedissä. Reagoi 🔥💪, kommentoi ja vahvista kavereiden SBD-ennätykset 🤝 — se on luotettavuuden mittari.',
   },
 ]
 
