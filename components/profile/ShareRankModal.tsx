@@ -19,11 +19,11 @@ interface ShareRankModalProps {
   sbdTotal: number
   streak: number
   totalWorkouts: number
-  duelWins: number
+  duelWins?: number
 }
 
 export function ShareRankModal({
-  visible, onClose, username, sbdRank, tier, ratio, sbdTotal, streak, totalWorkouts, duelWins,
+  visible, onClose, username, sbdRank, tier, ratio, sbdTotal, streak, totalWorkouts, duelWins = 0,
 }: ShareRankModalProps) {
   const t = useT()
   const cardRef = useRef<View>(null)

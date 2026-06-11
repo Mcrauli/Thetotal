@@ -289,6 +289,7 @@ const STRINGS = {
 
   // Share rank card
   'share.button':             { fi: '📸 Jaa rank', en: '📸 Share rank' },
+  'share.achievement':        { fi: '📸 Jaa saavutus', en: '📸 Share achievement' },
   'share.shareButton':        { fi: 'Jaa', en: 'Share' },
   'share.cta':                { fi: 'Haasta minut TheTotal-sovelluksessa 💪', en: 'Challenge me on the TheTotal app 💪' },
   'share.winsLabel':          { fi: 'Voittoa', en: 'Wins' },

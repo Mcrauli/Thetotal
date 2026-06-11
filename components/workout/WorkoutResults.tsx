@@ -33,6 +33,7 @@ interface Props {
   improvements: ImprovementResult[]
   challenges: ChallengeResult[]
   onDismiss: () => void
+  onShare?: () => void
 }
 
 const { height } = Dimensions.get('window')
@@ -45,9 +46,10 @@ function XPChip({ label, accent }: { label: string; accent?: boolean }) {
   )
 }
 
-export function WorkoutResults({ visible, xpGain, xpBreakdown, improvements, challenges, onDismiss }: Props) {
+export function WorkoutResults({ visible, xpGain, xpBreakdown, improvements, challenges, onDismiss, onShare }: Props) {
   const t = useT()
   const translateY = useRef(new Animated.Value(80)).current
+  const hasAllTimePR = improvements.some(i => i.isAllTimePR)
 
   useEffect(() => {
     if (visible) {
@@ -146,7 +148,7 @@ export function WorkoutResults({ visible, xpGain, xpBreakdown, improvements, cha
                         <Text style={{ color: COLORS.accent, fontSize: 12, fontWeight: '700' }}>
                           {item.newWeight > item.prevWeight
                             ? `+${Math.round((item.newWeight - item.prevWeight) * 10) / 10}kg`
-                            : `+${item.newReps - item.prevReps} toistoa`}
+                            : `+${item.newReps - item.prevReps} ${t('profile.repsLabel')}`}
                         </Text>
                       </View>
                     )}
@@ -180,13 +182,22 @@ export function WorkoutResults({ visible, xpGain, xpBreakdown, improvements, cha
           )}
         </ScrollView>
 
-        <View style={{ paddingHorizontal: 20, paddingBottom: 20, paddingTop: 8 }}>
+        <View style={{ paddingHorizontal: 20, paddingBottom: 20, paddingTop: 8, gap: 10 }}>
+          {hasAllTimePR && onShare && (
+            <TouchableOpacity
+              onPress={onShare}
+              activeOpacity={0.8}
+              style={{ backgroundColor: COLORS.gold, borderRadius: 16, paddingVertical: 15, alignItems: 'center' }}
+            >
+              <Text style={{ color: '#1a1a1a', fontWeight: '900', fontSize: 15, letterSpacing: 1 }}>{t('share.achievement')}</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
             onPress={onDismiss}
             activeOpacity={0.8}
             style={{ backgroundColor: COLORS.accent, borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}
           >
-            <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16, letterSpacing: 1 }}>JATKA</Text>
+            <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16, letterSpacing: 1 }}>{t('results.continue')}</Text>
           </TouchableOpacity>
         </View>
       </Animated.View>
