@@ -8,6 +8,7 @@ import { ExerciseBlock } from '../../components/workout/ExerciseBlock'
 import { ExercisePicker } from '../../components/workout/ExercisePicker'
 import { WorkoutResults, type ImprovementResult, type ChallengeResult } from '../../components/workout/WorkoutResults'
 import { ShareRankModal } from '../../components/profile/ShareRankModal'
+import { PlateModal } from '../../components/workout/PlateModal'
 import { supabase } from '../../lib/supabase'
 import { detectPRs } from '../../lib/pr'
 import { calculateXPGain, getRankForXP, getSBDRank, getSBDSubRank } from '../../lib/xp'
@@ -25,6 +26,7 @@ export default function ActiveWorkoutScreen() {
   const [results, setResults] = useState<{ xpGain: number; xpBreakdown: { base: number; prBonus: number; streakBonus: number; challengeBonus: number }; improvements: ImprovementResult[]; challenges: ChallengeResult[] } | null>(null)
   const [shareData, setShareData] = useState<{ sbdRank: any; tier: 1 | 2 | 3 | 4; ratio: number; sbdTotal: number; streak: number; totalWorkouts: number; duelWins: number } | null>(null)
   const [shareVisible, setShareVisible] = useState(false)
+  const [plateVisible, setPlateVisible] = useState(false)
   const [lastSets, setLastSets] = useState<Record<string, { text: string; weight: number; reps: number } | null>>({})
 
   async function fetchLastSets(exerciseId: string) {
@@ -453,6 +455,9 @@ export default function ActiveWorkoutScreen() {
           onChangeText={setWorkoutName}
           style={{ color: '#fff' }}
         />
+        <TouchableOpacity onPress={() => setPlateVisible(true)} style={{ marginRight: 16 }}>
+          <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{t('plate.tool')}</Text>
+        </TouchableOpacity>
         <TouchableOpacity
           onPress={() => Alert.alert(t('active.stopTitle'), t('active.stopBody'), [
             { text: t('common.cancel'), style: 'cancel' },
@@ -462,6 +467,8 @@ export default function ActiveWorkoutScreen() {
           <Text style={{ color: '#ef4444', fontSize: 13, fontWeight: '700' }}>{t('active.stop')}</Text>
         </TouchableOpacity>
       </View>
+
+      <PlateModal visible={plateVisible} onClose={() => setPlateVisible(false)} />
       <View className="items-center pb-1">
         <Text style={{ color: '#fff', fontSize: 28, fontWeight: '900', letterSpacing: 2 }}>{formatTime(elapsed)}</Text>
       </View>

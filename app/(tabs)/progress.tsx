@@ -10,6 +10,7 @@ import { COLORS } from '../../lib/constants'
 import type { RankName } from '../../lib/constants'
 import { ScreenBackground } from '../../components/ui/ScreenBackground'
 import { useT } from '../../lib/i18n'
+import { calcDOTS } from '../../lib/dots'
 
 const CHART_WIDTH = Dimensions.get('window').width - 64
 
@@ -28,13 +29,14 @@ interface LeaderboardEntry {
   xp: number
   sbd_total: number
   bodyweight_kg: number | null
+  gender: string | null
 }
 
 export default function ProgressScreen() {
   const t = useT()
   const { profile } = useUserStore()
   const [tab, setTab] = useState<'progress' | 'leaderboard' | 'weekly'>('progress')
-  const [lbFilter, setLbFilter] = useState<'sbd' | 'xp'>('sbd')
+  const [lbFilter, setLbFilter] = useState<'sbd' | 'xp' | 'dots'>('sbd')
   const [lbScope, setLbScope] = useState<'all' | 'friends'>('all')
   const [exercises, setExercises] = useState<ExerciseProgress[]>([])
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null)
@@ -135,7 +137,7 @@ export default function ProgressScreen() {
   async function loadLeaderboard() {
     setLoadingLB(true)
     const [{ data }, { data: fs }] = await Promise.all([
-      supabase.from('users').select('id, username, sbd_rank, xp, sbd_total, bodyweight_kg').order('xp', { ascending: false }).limit(200),
+      supabase.from('users').select('id, username, sbd_rank, xp, sbd_total, bodyweight_kg, gender').order('xp', { ascending: false }).limit(200),
       profile
         ? supabase.from('friendships').select('user_id, friend_id').or(`user_id.eq.${profile.id},friend_id.eq.${profile.id}`).eq('status', 'accepted')
         : Promise.resolve({ data: [] }),
@@ -354,6 +356,12 @@ export default function ProgressScreen() {
                 <Text style={{ color: lbFilter === 'sbd' ? '#fff' : COLORS.muted, fontSize: 12, fontWeight: '700' }}>{t('lb.filterSBD')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
+                onPress={() => setLbFilter('dots')}
+                style={{ flex: 1, paddingVertical: 7, borderRadius: 10, alignItems: 'center', backgroundColor: lbFilter === 'dots' ? COLORS.card2 : COLORS.card, borderWidth: lbFilter === 'dots' ? 1 : 0, borderColor: COLORS.accent }}
+              >
+                <Text style={{ color: lbFilter === 'dots' ? '#fff' : COLORS.muted, fontSize: 12, fontWeight: '700' }}>{t('lb.filterDOTS')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
                 onPress={() => setLbFilter('xp')}
                 style={{ flex: 1, paddingVertical: 7, borderRadius: 10, alignItems: 'center', backgroundColor: lbFilter === 'xp' ? COLORS.card2 : COLORS.card, borderWidth: lbFilter === 'xp' ? 1 : 0, borderColor: COLORS.accent }}
               >
@@ -362,7 +370,7 @@ export default function ProgressScreen() {
             </View>
 
             <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 12 }}>
-              {lbFilter === 'sbd' ? t('lb.titleSBD') : t('lb.titleXP')}
+              {lbFilter === 'sbd' ? t('lb.titleSBD') : lbFilter === 'dots' ? t('lb.titleDOTS') : t('lb.titleXP')}
             </Text>
 
             {loadingLB ? (
@@ -379,6 +387,13 @@ export default function ProgressScreen() {
                       const rb = b.bodyweight_kg ? b.sbd_total / b.bodyweight_kg : -1
                       return rb - ra
                     })
+                : lbFilter === 'dots'
+                ? [...base]
+                    .filter(e => (e.sbd_total ?? 0) > 0 && (e.bodyweight_kg ?? 0) > 0)
+                    .sort((a, b) =>
+                      calcDOTS(b.sbd_total, b.bodyweight_kg ?? 0, b.gender !== 'female') -
+                      calcDOTS(a.sbd_total, a.bodyweight_kg ?? 0, a.gender !== 'female')
+                    )
                 : [...base].sort((a, b) => (b.xp ?? 0) - (a.xp ?? 0))
               if (sorted.length === 0) return (
                 <View style={{ backgroundColor: COLORS.card, borderRadius: 16, padding: 24, alignItems: 'center' }}>
@@ -392,8 +407,10 @@ export default function ProgressScreen() {
                   ? entry.bodyweight_kg && entry.sbd_total > 0
                     ? `${(entry.sbd_total / entry.bodyweight_kg).toFixed(2)}×`
                     : entry.sbd_total > 0 ? `${entry.sbd_total} kg` : '—'
+                  : lbFilter === 'dots'
+                  ? `${calcDOTS(entry.sbd_total, entry.bodyweight_kg ?? 0, entry.gender !== 'female')}`
                   : t('lb.level', { n: String(getLevel(entry.xp ?? 0)) })
-                const rightSub = lbFilter === 'sbd' && entry.bodyweight_kg && entry.sbd_total > 0
+                const rightSub = (lbFilter === 'sbd' || lbFilter === 'dots') && entry.bodyweight_kg && entry.sbd_total > 0
                   ? `${entry.sbd_total} kg`
                   : null
                 return (

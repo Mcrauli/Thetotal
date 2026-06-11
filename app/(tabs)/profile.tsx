@@ -13,6 +13,7 @@ import { ChallengesSection } from '../../components/profile/ChallengesSection'
 import { SBDEditModal } from '../../components/profile/SBDEditModal'
 import { ShareRankModal } from '../../components/profile/ShareRankModal'
 import { getSBDSubRank, getSBDRank } from '../../lib/xp'
+import { calcDOTS } from '../../lib/dots'
 import { estimateOneRepMax, shouldShowEstimatedOneRepMax } from '../../lib/pr'
 import { getNewlyCompleted } from '../../lib/challenges'
 import { useT, useLocaleStore } from '../../lib/i18n'
@@ -175,6 +176,7 @@ export default function ProfileScreen() {
   const sbdTotal = sbd.squat + sbd.bench + sbd.deadlift
   const isMale = profile.gender !== 'female'
   const subRank = getSBDSubRank(sbdTotal, profile.bodyweight_kg ?? 0, isMale)
+  const dots = calcDOTS(sbdTotal, profile.bodyweight_kg ?? 0, isMale)
 
   return (
     <ScreenBackground variant="profile">
@@ -193,6 +195,13 @@ export default function ProfileScreen() {
           currentTier={subRank.tier}
           ratio={subRank.ratio}
         />
+
+        {dots > 0 && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: COLORS.card, borderRadius: 14, paddingVertical: 12, marginBottom: 8 }}>
+            <Text style={{ color: COLORS.muted, fontSize: 11, letterSpacing: 2 }}>{t('dots.label')}</Text>
+            <Text style={{ color: COLORS.gold, fontWeight: '900', fontSize: 18 }}>{dots}</Text>
+          </View>
+        )}
 
         <TouchableOpacity
           onPress={() => setShareVisible(true)}

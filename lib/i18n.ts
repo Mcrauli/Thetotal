@@ -295,6 +295,22 @@ const STRINGS = {
   'share.winsLabel':          { fi: 'Voittoa', en: 'Wins' },
   'share.dialogTitle':        { fi: 'Jaa rankisi', en: 'Share your rank' },
 
+  // Plate calculator & warmup
+  'plate.title':              { fi: 'Levylaskuri', en: 'Plate calculator' },
+  'plate.weightLabel':        { fi: 'PAINO (kg)', en: 'WEIGHT (kg)' },
+  'plate.bar':                { fi: 'Tanko', en: 'Bar' },
+  'plate.perSide':            { fi: 'per puoli', en: 'per side' },
+  'plate.leftover':           { fi: 'ei mene tasan — {kg} kg yli per puoli', en: 'not exact — {kg} kg over per side' },
+  'plate.warmup':             { fi: 'LÄMMITTELY', en: 'WARM-UP' },
+  'plate.barOnly':            { fi: 'pelkkä tanko', en: 'bar only' },
+  'plate.workSet':            { fi: 'TYÖSARJA', en: 'WORK SET' },
+  'plate.tool':               { fi: '🏋️ Levyt', en: '🏋️ Plates' },
+
+  // DOTS
+  'dots.label':               { fi: 'DOTS', en: 'DOTS' },
+  'lb.filterDOTS':            { fi: '📊 DOTS', en: '📊 DOTS' },
+  'lb.titleDOTS':             { fi: 'RANKING — DOTS', en: 'RANKING — DOTS' },
+
   // Language selector
   'language.section':         { fi: 'KIELI', en: 'LANGUAGE' },
   'language.system':          { fi: 'Järjestelmä', en: 'System' },
