@@ -9,6 +9,7 @@ import { getRankData } from '../../lib/xp'
 import { COLORS } from '../../lib/constants'
 import type { RankName } from '../../lib/constants'
 import { useT } from '../../lib/i18n'
+import { sendPushToUsers } from '../../lib/notifications'
 
 interface UserProfile {
   id: string; username: string; sbd_rank: RankName; xp: number
@@ -80,18 +81,50 @@ export default function SocialScreen() {
     // Enrich challenges with usernames
     const rawChallenges = (challengeData.data ?? []) as Challenge[]
     const allIds = [...new Set(rawChallenges.flatMap(c => [c.challenger_id, c.challenged_id]).filter(id => id !== userId))]
+    const uMap: Record<string, any> = {}
     if (allIds.length > 0) {
       const { data: uData } = await supabase.from('users').select('id, username, sbd_rank').in('id', allIds)
-      const uMap: Record<string, any> = {}
       ;(uData ?? []).forEach((u: any) => { uMap[u.id] = u })
-      setChallenges(rawChallenges.map(c => ({
-        ...c,
-        challenger: uMap[c.challenger_id],
-        challenged: uMap[c.challenged_id],
-      })))
-    } else {
-      setChallenges(rawChallenges)
     }
+
+    // Resolve expired duel challenges
+    const resolvedIds = new Set<string>()
+    for (const c of rawChallenges) {
+      if (c.status !== 'pending') continue
+      if (c.challenge_type !== 'volume' && c.challenge_type !== 'workouts') continue
+      if (!c.duration_days) continue
+      if (new Date(c.created_at).getTime() + c.duration_days * 86400000 > Date.now()) continue
+      const { data: updated } = await supabase
+        .from('friend_challenges')
+        .update({ status: 'beaten' })
+        .eq('id', c.id)
+        .eq('status', 'pending')
+        .select('id')
+      if (updated && updated.length > 0) {
+        resolvedIds.add(c.id)
+        const challVal = c.challenger_value ?? 0
+        const challedVal = c.challenged_value ?? 0
+        const tie = challVal === challedVal
+        const winnerName = !tie
+          ? challVal > challedVal
+            ? uMap[c.challenger_id]?.username ?? '?'
+            : uMap[c.challenged_id]?.username ?? '?'
+          : null
+        const title = tie ? '🤝 Haaste päättyi tasan!' : `🏆 ${winnerName} voitti haasteen!`
+        await sendPushToUsers({
+          toUserIds: [c.challenger_id, c.challenged_id],
+          title,
+          body: `${c.challenge_type === 'volume' ? 'Volyymi' : 'Treeniputki'} ${c.duration_days}pv haaste päättyi`,
+        })
+      }
+    }
+
+    setChallenges(rawChallenges.map(c => ({
+      ...c,
+      status: resolvedIds.has(c.id) ? 'beaten' : c.status,
+      challenger: uMap[c.challenger_id],
+      challenged: uMap[c.challenged_id],
+    })))
   }
 
   async function searchUsers() {
@@ -134,6 +167,16 @@ export default function SocialScreen() {
 
   const myChallenges = challenges.filter(c => c.challenged_id === profile?.id && c.status === 'pending')
   const sentChallenges = challenges.filter(c => c.challenger_id === profile?.id)
+
+  function getDuelResult(c: Challenge): string {
+    const challVal = c.challenger_value ?? 0
+    const challedVal = c.challenged_value ?? 0
+    if (challVal === challedVal) return t('friends.duel.tie')
+    const winnerId = challVal > challedVal ? c.challenger_id : c.challenged_id
+    if (winnerId === profile?.id) return t('friends.duel.youWon')
+    const winnerName = challVal > challedVal ? c.challenger?.username : c.challenged?.username
+    return t('friends.duel.theyWon', { name: winnerName ?? '?' })
+  }
 
   function RankTag({ rank }: { rank: RankName }) {
     const rd = getRankData(rank)
@@ -237,16 +280,16 @@ export default function SocialScreen() {
                 return (
                   <View key={c.id} style={{ backgroundColor: COLORS.card, borderRadius: 16, padding: 14, marginBottom: 8, borderLeftWidth: 3, borderLeftColor: COLORS.accent }}>
                     <Text style={{ color: COLORS.accent, fontSize: 11, fontWeight: '700', marginBottom: 4 }}>
-                      {c.challenger?.username ?? '?'} haastaa sinut!
+                      {c.challenger?.username ?? '?'} {t('friends.challengesYou')}
                     </Text>
                     {isDuel ? (
                       <>
                         <Text style={{ color: '#fff', fontSize: 15, fontWeight: '900' }}>
-                          {c.challenge_type === 'volume' ? '⚡ Volyymi' : '📅 Treeniputki'} — {c.duration_days} pv
+                          {c.challenge_type === 'volume' ? t('friends.duel.volume') : t('friends.duel.workouts')} — {c.duration_days} pv
                         </Text>
                         <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
                           <View style={{ flex: 1, backgroundColor: COLORS.card2, borderRadius: 8, padding: 8, alignItems: 'center' }}>
-                            <Text style={{ color: COLORS.muted, fontSize: 10 }}>Sinä</Text>
+                            <Text style={{ color: COLORS.muted, fontSize: 10 }}>{t('friends.duel.you')}</Text>
                             <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>
                               {c.challenge_type === 'volume' ? `${c.challenged_value ?? 0} kg` : `${c.challenged_value ?? 0}`}
                             </Text>
@@ -258,7 +301,7 @@ export default function SocialScreen() {
                             </Text>
                           </View>
                         </View>
-                        {daysLeft !== null && <Text style={{ color: COLORS.muted, fontSize: 11, marginTop: 6 }}>⏰ {daysLeft} päivää jäljellä</Text>}
+                        {daysLeft !== null && <Text style={{ color: COLORS.muted, fontSize: 11, marginTop: 6 }}>{t('friends.duel.daysLeft', { n: String(daysLeft) })}</Text>}
                       </>
                     ) : (
                       <>
@@ -266,14 +309,14 @@ export default function SocialScreen() {
                           {c.exercise_name} › {c.target_weight} kg
                         </Text>
                         {c.message ? <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 4 }}>"{c.message}"</Text> : null}
-                        <Text style={{ color: COLORS.muted, fontSize: 11, marginTop: 6 }}>Nosta enemmän voittaaksesi 💪</Text>
+                        <Text style={{ color: COLORS.muted, fontSize: 11, marginTop: 6 }}>{t('friends.challengeHint')}</Text>
                       </>
                     )}
                     <TouchableOpacity
                       onPress={() => declineChallenge(c.id)}
                       style={{ marginTop: 10, alignSelf: 'flex-end' }}
                     >
-                      <Text style={{ color: COLORS.muted, fontSize: 12 }}>Hylkää ✕</Text>
+                      <Text style={{ color: COLORS.muted, fontSize: 12 }}>{t('friends.decline')} ✕</Text>
                     </TouchableOpacity>
                   </View>
                 )
@@ -294,11 +337,11 @@ export default function SocialScreen() {
                     {isDuel ? (
                       <>
                         <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700', marginBottom: 6 }}>
-                          {c.challenged?.username ?? '?'} — {c.challenge_type === 'volume' ? '⚡ Volyymi' : '📅 Treeniputki'} {c.duration_days} pv
+                          {c.challenged?.username ?? '?'} — {c.challenge_type === 'volume' ? t('friends.duel.volume') : t('friends.duel.workouts')} {c.duration_days} pv
                         </Text>
                         <View style={{ flexDirection: 'row', gap: 10, marginBottom: 6 }}>
                           <View style={{ flex: 1, backgroundColor: COLORS.card2, borderRadius: 8, padding: 8, alignItems: 'center' }}>
-                            <Text style={{ color: COLORS.muted, fontSize: 10 }}>Sinä</Text>
+                            <Text style={{ color: COLORS.muted, fontSize: 10 }}>{t('friends.duel.you')}</Text>
                             <Text style={{ color: '#fff', fontWeight: '700' }}>
                               {c.challenge_type === 'volume' ? `${c.challenger_value ?? 0} kg` : `${c.challenger_value ?? 0}`}
                             </Text>
@@ -311,7 +354,11 @@ export default function SocialScreen() {
                           </View>
                         </View>
                         <Text style={{ color: COLORS.muted, fontSize: 11 }}>
-                          {c.status === 'beaten' ? '✅ Päättynyt' : daysLeft !== null ? `⏰ ${daysLeft} pv jäljellä` : '⏳ Odottaa...'}
+                          {c.status === 'beaten'
+                            ? getDuelResult(c)
+                            : daysLeft !== null
+                              ? t('friends.duel.daysLeft', { n: String(daysLeft) })
+                              : t('friends.duel.waiting')}
                         </Text>
                       </>
                     ) : (
@@ -320,7 +367,7 @@ export default function SocialScreen() {
                           {c.challenged?.username ?? '?'} — {c.exercise_name} {c.target_weight}kg
                         </Text>
                         <Text style={{ color: COLORS.muted, fontSize: 11, marginTop: 2 }}>
-                          {c.status === 'beaten' ? '✅ Voitti!' : '⏳ Odottaa...'}
+                          {c.status === 'beaten' ? t('friends.duel.won') : t('friends.duel.waiting')}
                         </Text>
                       </View>
                     )}

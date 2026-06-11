@@ -38,6 +38,24 @@ export const CHALLENGES: Challenge[] = [
   { id: 'total_400',    icon: '🏅', name: 'SBD total 400kg',      description: 'SBD yhteistulos vähintään 400kg',   xp: 1000 },
   { id: 'total_500',    icon: '🏅', name: 'SBD total 500kg',      description: 'SBD yhteistulos vähintään 500kg',   xp: 2000 },
   { id: 'total_600',    icon: '🏅', name: 'SBD total 600kg',      description: 'SBD yhteistulos vähintään 600kg',   xp: 4000 },
+  { id: 'total_700',    icon: '🏅', name: 'SBD total 700kg',      description: 'SBD yhteistulos vähintään 700kg',   xp: 6000 },
+  { id: 'total_800',    icon: '🏅', name: 'SBD total 800kg',      description: 'SBD yhteistulos vähintään 800kg',   xp: 9000 },
+  { id: 'total_1000',   icon: '🏅', name: 'SBD total 1000kg',     description: 'SBD yhteistulos vähintään 1000kg',  xp: 15000 },
+
+  { id: 'squat_260',    icon: '🦵', name: 'Kyykky 260kg',         description: 'Kyykky vähintään 260kg',            xp: 5000 },
+  { id: 'squat_300',    icon: '🦵', name: 'Kyykky 300kg',         description: 'Kyykky vähintään 300kg',            xp: 10000 },
+  { id: 'bench_160',    icon: '💪', name: 'Penkkipunnerrus 160kg', description: 'Penkkipunnerrus vähintään 160kg',   xp: 4000 },
+  { id: 'bench_200',    icon: '💪', name: 'Penkkipunnerrus 200kg', description: 'Penkkipunnerrus vähintään 200kg',   xp: 10000 },
+  { id: 'deadlift_300', icon: '⚔',  name: 'Maastaveto 300kg',     description: 'Maastaveto vähintään 300kg',        xp: 5000 },
+  { id: 'deadlift_340', icon: '⚔',  name: 'Maastaveto 340kg',     description: 'Maastaveto vähintään 340kg',        xp: 10000 },
+
+  { id: 'workout_500',  icon: '🏆', name: '500 treeniä',           description: 'Kirjaa 500 treeniä',               xp: 10000 },
+  { id: 'streak_60',    icon: '🔥', name: '2 kuukauden putki',     description: 'Treenaa 60 päivänä peräkkäin',     xp: 5000 },
+  { id: 'streak_100',   icon: '🔥', name: '100 päivän legenda',    description: 'Treenaa 100 päivänä peräkkäin',    xp: 10000 },
+
+  { id: 'bench_bw',     icon: '💪', name: 'Penkkipunnerrus oma paino', description: 'Penkkipunnerrus vähintään oma kehonpaino', xp: 500 },
+  { id: 'squat_2bw',    icon: '🦵', name: 'Kaksinkertainen paino',     description: 'Kyykky 2× oma kehonpaino',                xp: 1000 },
+  { id: 'deadlift_2bw', icon: '⚔',  name: 'Maastaveto 2× paino',      description: 'Maastaveto 2× oma kehonpaino',             xp: 800 },
 ]
 
 export interface ChallengeCheckInput {
@@ -46,6 +64,7 @@ export interface ChallengeCheckInput {
   squat: number
   bench: number
   deadlift: number
+  bodyweight?: number
 }
 
 export function getNewlyCompleted(input: ChallengeCheckInput, alreadyDone: string[]): Challenge[] {
@@ -85,6 +104,21 @@ export function getNewlyCompleted(input: ChallengeCheckInput, alreadyDone: strin
     if (c.id === 'total_400')    return total >= 400
     if (c.id === 'total_500')    return total >= 500
     if (c.id === 'total_600')    return total >= 600
+    if (c.id === 'total_700')    return total >= 700
+    if (c.id === 'total_800')    return total >= 800
+    if (c.id === 'total_1000')   return total >= 1000
+    if (c.id === 'squat_260')    return input.squat >= 260
+    if (c.id === 'squat_300')    return input.squat >= 300
+    if (c.id === 'bench_160')    return input.bench >= 160
+    if (c.id === 'bench_200')    return input.bench >= 200
+    if (c.id === 'deadlift_300') return input.deadlift >= 300
+    if (c.id === 'deadlift_340') return input.deadlift >= 340
+    if (c.id === 'workout_500')  return input.totalWorkouts >= 500
+    if (c.id === 'streak_60')    return input.streak >= 60
+    if (c.id === 'streak_100')   return input.streak >= 100
+    if (c.id === 'bench_bw')     return input.bodyweight ? input.bench >= input.bodyweight : false
+    if (c.id === 'squat_2bw')    return input.bodyweight ? input.squat >= input.bodyweight * 2 : false
+    if (c.id === 'deadlift_2bw') return input.bodyweight ? input.deadlift >= input.bodyweight * 2 : false
     return false
   })
 }

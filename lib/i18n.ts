@@ -258,6 +258,24 @@ const STRINGS = {
   'verify.selfReported':      { fi: 'Itse ilmoitettu', en: 'Self-reported' },
   'verify.pushTitle':         { fi: '🤝 {name} vahvisti', en: '🤝 {name} verified' },
   'verify.pushBody':          { fi: '{exercise} {weight}kg PR:si on nyt vahvistettu', en: 'Your {exercise} {weight}kg PR is now verified' },
+
+  // Challenges (profile achievements)
+  'challenges.title':         { fi: 'Haasteet', en: 'Challenges' },
+  'challenges.completedOf':   { fi: '{done}/{total} suoritettu', en: '{done}/{total} completed' },
+  'challenges.more':          { fi: '+{count} muuta', en: '+{count} more' },
+
+  // Friend duels / challenges (social)
+  'friends.challengesYou':    { fi: 'haastaa sinut!', en: 'challenges you!' },
+  'friends.duel.volume':      { fi: '⚡ Volyymi', en: '⚡ Volume' },
+  'friends.duel.workouts':    { fi: '📅 Treeniputki', en: '📅 Workout streak' },
+  'friends.duel.daysLeft':    { fi: '⏰ {n} päivää jäljellä', en: '⏰ {n} days left' },
+  'friends.duel.you':         { fi: 'Sinä', en: 'You' },
+  'friends.challengeHint':    { fi: 'Nosta enemmän voittaaksesi 💪', en: 'Lift more to win 💪' },
+  'friends.duel.waiting':     { fi: '⏳ Odottaa...', en: '⏳ Waiting...' },
+  'friends.duel.won':         { fi: '✅ Voitti!', en: '✅ Won!' },
+  'friends.duel.youWon':      { fi: '🏆 Sinä voitit!', en: '🏆 You won!' },
+  'friends.duel.theyWon':     { fi: '😤 {name} voitti', en: '😤 {name} won' },
+  'friends.duel.tie':         { fi: '🤝 Tasapeli', en: '🤝 Tie' },
 }
 
 type StringKey = keyof typeof STRINGS

@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { View, Text, TouchableOpacity, ScrollView, Modal } from 'react-native'
 import { CHALLENGES } from '../../lib/challenges'
+import { useT } from '../../lib/i18n'
 
 interface ChallengesSectionProps {
   completedIds: string[]
 }
 
 export function ChallengesSection({ completedIds }: ChallengesSectionProps) {
+  const t = useT()
   const [modalVisible, setModalVisible] = useState(false)
   const done = new Set(completedIds)
   const completedCount = CHALLENGES.filter(c => done.has(c.id)).length
@@ -18,7 +20,7 @@ export function ChallengesSection({ completedIds }: ChallengesSectionProps) {
         onPress={() => setModalVisible(true)}
       >
         <View className="flex-row justify-between items-center">
-          <Text className="text-muted text-xs tracking-widest">HAASTEET</Text>
+          <Text className="text-muted text-xs tracking-widest">{t('friends.challenges')}</Text>
           <Text className="text-muted text-xs">{completedCount}/{CHALLENGES.length} →</Text>
         </View>
         <View className="flex-row flex-wrap gap-1 mt-3">
@@ -28,7 +30,9 @@ export function ChallengesSection({ completedIds }: ChallengesSectionProps) {
             </Text>
           ))}
           {completedCount > 8 && (
-            <Text className="text-muted text-xs self-center ml-1">+{completedCount - 8} muuta</Text>
+            <Text className="text-muted text-xs self-center ml-1">
+              {t('challenges.more', { count: String(completedCount - 8) })}
+            </Text>
           )}
         </View>
       </TouchableOpacity>
@@ -37,11 +41,13 @@ export function ChallengesSection({ completedIds }: ChallengesSectionProps) {
         <View className="flex-1 bg-bg">
           <View className="flex-row justify-between items-center px-6 pt-6 pb-4">
             <View>
-              <Text className="text-white text-xl font-black">Haasteet</Text>
-              <Text className="text-muted text-xs">{completedCount}/{CHALLENGES.length} suoritettu</Text>
+              <Text className="text-white text-xl font-black">{t('challenges.title')}</Text>
+              <Text className="text-muted text-xs">
+                {t('challenges.completedOf', { done: String(completedCount), total: String(CHALLENGES.length) })}
+              </Text>
             </View>
             <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Text className="text-muted text-base">Sulje</Text>
+              <Text className="text-muted text-base">{t('common.close')}</Text>
             </TouchableOpacity>
           </View>
 
