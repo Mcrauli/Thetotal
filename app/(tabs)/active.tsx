@@ -229,6 +229,59 @@ export default function ActiveWorkoutScreen() {
       }
     } catch {}
 
+    // Competitive weekly overtake push (non-critical)
+    try {
+      const weekStart = (() => {
+        const now = new Date()
+        const day = (now.getDay() + 6) % 7
+        const d = new Date(now)
+        d.setHours(0, 0, 0, 0)
+        d.setDate(d.getDate() - day)
+        return d
+      })()
+      const startISO = weekStart.toISOString()
+      const { count: myWeekCount } = await supabase
+        .from('workouts')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', profile.id)
+        .gte('started_at', startISO)
+      const myCount = myWeekCount ?? 0
+      if (myCount > 0) {
+        const { data: friends } = await supabase
+          .from('friendships')
+          .select('user_id, friend_id')
+          .or(`user_id.eq.${profile.id},friend_id.eq.${profile.id}`)
+          .eq('status', 'accepted')
+        const friendIds = (friends ?? []).map((f: any) => f.user_id === profile.id ? f.friend_id : f.user_id)
+        if (friendIds.length > 0) {
+          const { data: fw } = await supabase
+            .from('workouts')
+            .select('user_id')
+            .in('user_id', friendIds)
+            .gte('started_at', startISO)
+          const fcounts: Record<string, number> = {}
+          for (const w of (fw ?? []) as any[]) fcounts[w.user_id] = (fcounts[w.user_id] ?? 0) + 1
+          const overtaken = friendIds.filter((fid: string) => (fcounts[fid] ?? 0) === myCount - 1)
+          if (overtaken.length > 0) {
+            const { data: tokenRows } = await supabase
+              .from('users').select('push_token').in('id', overtaken).not('push_token', 'is', null)
+            const tokens = (tokenRows ?? []).map((u: any) => u.push_token).filter(Boolean)
+            if (tokens.length > 0) {
+              await fetch('https://exp.host/--/api/v2/push/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(tokens.map((to: string) => ({
+                  to,
+                  title: `🔥 ${profile.username} ohitti sinut viikkohaasteessa!`,
+                  body: `${myCount} treeniä tällä viikolla. Sinun vuorosi 💪`,
+                }))),
+              })
+            }
+          }
+        }
+      }
+    } catch {}
+
     // Check friend challenges (non-critical)
     let beatenIds: string[] = []
     try {
