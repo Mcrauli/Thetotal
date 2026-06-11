@@ -36,21 +36,33 @@ export function PRCommentsModal({ visible, prId, prLabel, prOwnerId, onClose }: 
     if (!visible || !prId) return
     setLoading(true)
     setText('')
-    supabase
-      .from('pr_comments')
-      .select('id, user_id, body, created_at, users!inner(username)')
-      .eq('pr_id', prId)
-      .order('created_at', { ascending: true })
-      .then(({ data }) => {
-        setComments((data ?? []).map((c: any) => ({
+    ;(async () => {
+      const blocked = new Set<string>()
+      if (profile) {
+        const { data: bl } = await supabase
+          .from('blocks')
+          .select('blocker_id, blocked_id')
+          .or(`blocker_id.eq.${profile.id},blocked_id.eq.${profile.id}`)
+        for (const b of (bl ?? []) as any[]) {
+          blocked.add(b.blocker_id === profile.id ? b.blocked_id : b.blocker_id)
+        }
+      }
+      const { data } = await supabase
+        .from('pr_comments')
+        .select('id, user_id, body, created_at, users!inner(username)')
+        .eq('pr_id', prId)
+        .order('created_at', { ascending: true })
+      setComments((data ?? [])
+        .filter((c: any) => !blocked.has(c.user_id))
+        .map((c: any) => ({
           id: c.id,
           user_id: c.user_id,
           username: c.users?.username ?? '?',
           body: c.body,
           created_at: c.created_at,
         })))
-        setLoading(false)
-      })
+      setLoading(false)
+    })()
   }, [visible, prId])
 
   async function postComment() {

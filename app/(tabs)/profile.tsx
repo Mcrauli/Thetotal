@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, Modal, Switch, FlatList, Linking } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, Modal, Switch, FlatList, Linking, Platform } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect } from 'expo-router'
@@ -18,6 +18,7 @@ import { estimateOneRepMax, shouldShowEstimatedOneRepMax } from '../../lib/pr'
 import { getNewlyCompleted } from '../../lib/challenges'
 import { useT, useLocaleStore } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
+import { unblockUser } from '../../lib/moderation'
 import { COLORS } from '../../lib/constants'
 
 interface PRMap { squat: number; bench: number; deadlift: number }
@@ -43,6 +44,28 @@ export default function ProfileScreen() {
   const [completedChallenges, setCompletedChallenges] = useState<string[]>([])
   const [duelWins, setDuelWins] = useState(0)
   const [shareVisible, setShareVisible] = useState(false)
+  const [blockedVisible, setBlockedVisible] = useState(false)
+  const [blockedList, setBlockedList] = useState<{ id: string; username: string }[]>([])
+
+  async function loadBlocked() {
+    if (!profile) return
+    const { data: blocks } = await supabase
+      .from('blocks')
+      .select('blocked_id')
+      .eq('blocker_id', profile.id)
+    const ids = (blocks ?? []).map((b: any) => b.blocked_id)
+    if (ids.length === 0) { setBlockedList([]); return }
+    const { data: users } = await supabase.from('users').select('id, username').in('id', ids)
+    const nameById: Record<string, string> = {}
+    for (const u of (users ?? []) as any[]) nameById[u.id] = u.username
+    setBlockedList(ids.map((id: string) => ({ id, username: nameById[id] ?? '?' })))
+  }
+
+  async function handleUnblock(blockedId: string) {
+    if (!profile) return
+    await unblockUser(profile.id, blockedId)
+    setBlockedList(prev => prev.filter(b => b.id !== blockedId))
+  }
   const [sbdEditVisible, setSbdEditVisible] = useState(false)
   const [bwInput, setBwInput] = useState('')
   const [usernameVisible, setUsernameVisible] = useState(false)
@@ -224,6 +247,29 @@ export default function ProfileScreen() {
           dots={dots}
         />
 
+        <Modal visible={blockedVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setBlockedVisible(false)}>
+          <View style={{ flex: 1, backgroundColor: COLORS.bg }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingTop: 24, paddingBottom: 12 }}>
+              <Text style={{ color: '#fff', fontSize: 20, fontWeight: '900' }}>{t('mod.blockedUsers')}</Text>
+              <TouchableOpacity onPress={() => setBlockedVisible(false)}>
+                <Text style={{ color: COLORS.muted, fontSize: 15 }}>{t('common.close')}</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView contentContainerStyle={{ padding: 16 }}>
+              {blockedList.length === 0 ? (
+                <Text style={{ color: COLORS.muted, textAlign: 'center', marginTop: 24 }}>{t('mod.noBlocked')}</Text>
+              ) : blockedList.map(b => (
+                <View key={b.id} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: COLORS.card, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 8 }}>
+                  <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }}>{b.username}</Text>
+                  <TouchableOpacity onPress={() => handleUnblock(b.id)} style={{ backgroundColor: COLORS.card2, borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8 }}>
+                    <Text style={{ color: COLORS.accent, fontSize: 13, fontWeight: '700' }}>{t('mod.unblock')}</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        </Modal>
+
         <TouchableOpacity
           className="mb-4 flex-row items-center gap-2"
           onPress={() => { setUsernameInput(profile.username); setUsernameVisible(true) }}
@@ -357,6 +403,13 @@ export default function ProfileScreen() {
               />
             </View>
           ))}
+          <TouchableOpacity
+            onPress={() => { loadBlocked(); setBlockedVisible(true) }}
+            style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderTopWidth: 1, borderTopColor: COLORS.card2 }}
+          >
+            <Text style={{ color: '#fff', fontSize: 14 }}>{t('mod.blockedUsers')}</Text>
+            <Text style={{ color: COLORS.muted, fontSize: 16 }}>›</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={{ marginTop: 24, backgroundColor: COLORS.card, borderRadius: 16, padding: 16 }}>
@@ -377,19 +430,21 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        <View style={{ marginTop: 24, backgroundColor: COLORS.card, borderRadius: 16, padding: 20, alignItems: 'center', marginBottom: 12 }}>
-          <Text style={{ fontSize: 24, marginBottom: 6 }}>☕</Text>
-          <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16, marginBottom: 4 }}>{t('profile.supportTitle')}</Text>
-          <Text style={{ color: COLORS.muted, fontSize: 13, textAlign: 'center', marginBottom: 14 }}>
-            {t('profile.supportBody')}
-          </Text>
-          <TouchableOpacity
-            onPress={() => Linking.openURL('https://ko-fi.com/thetotal')}
-            style={{ backgroundColor: '#FF5E5B', borderRadius: 12, paddingVertical: 12, paddingHorizontal: 28 }}
-          >
-            <Text style={{ color: '#fff', fontWeight: '900', fontSize: 14 }}>{t('profile.supportButton')}</Text>
-          </TouchableOpacity>
-        </View>
+        {Platform.OS !== 'ios' && (
+          <View style={{ marginTop: 24, backgroundColor: COLORS.card, borderRadius: 16, padding: 20, alignItems: 'center', marginBottom: 12 }}>
+            <Text style={{ fontSize: 24, marginBottom: 6 }}>☕</Text>
+            <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16, marginBottom: 4 }}>{t('profile.supportTitle')}</Text>
+            <Text style={{ color: COLORS.muted, fontSize: 13, textAlign: 'center', marginBottom: 14 }}>
+              {t('profile.supportBody')}
+            </Text>
+            <TouchableOpacity
+              onPress={() => Linking.openURL('https://ko-fi.com/thetotal')}
+              style={{ backgroundColor: '#FF5E5B', borderRadius: 12, paddingVertical: 12, paddingHorizontal: 28 }}
+            >
+              <Text style={{ color: '#fff', fontWeight: '900', fontSize: 14 }}>{t('profile.supportButton')}</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <TouchableOpacity className="mt-4 items-center py-3" onPress={signOut}>
           <Text className="text-muted text-sm">{t('profile.signOut')}</Text>
