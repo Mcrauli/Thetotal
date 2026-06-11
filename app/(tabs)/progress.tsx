@@ -33,7 +33,7 @@ interface LeaderboardEntry {
 export default function ProgressScreen() {
   const t = useT()
   const { profile } = useUserStore()
-  const [tab, setTab] = useState<'progress' | 'leaderboard'>('progress')
+  const [tab, setTab] = useState<'progress' | 'leaderboard' | 'weekly'>('progress')
   const [lbFilter, setLbFilter] = useState<'sbd' | 'xp'>('sbd')
   const [lbScope, setLbScope] = useState<'all' | 'friends'>('all')
   const [exercises, setExercises] = useState<ExerciseProgress[]>([])
@@ -42,6 +42,8 @@ export default function ProgressScreen() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [friendIds, setFriendIds] = useState<Set<string>>(new Set())
   const [loadingLB, setLoadingLB] = useState(false)
+  const [weeklyCounts, setWeeklyCounts] = useState<Record<string, number>>({})
+  const [loadingWeekly, setLoadingWeekly] = useState(false)
 
   useEffect(() => {
     if (!profile) return
@@ -50,11 +52,36 @@ export default function ProgressScreen() {
 
   useFocusEffect(useCallback(() => {
     if (tab === 'leaderboard') loadLeaderboard()
+    if (tab === 'weekly') loadWeekly()
   }, [tab]))
 
   useEffect(() => {
     if (tab === 'leaderboard' && leaderboard.length === 0) loadLeaderboard()
+    if (tab === 'weekly') loadWeekly()
   }, [tab])
+
+  function getWeekStart(): Date {
+    const now = new Date()
+    const day = (now.getDay() + 6) % 7
+    const d = new Date(now)
+    d.setHours(0, 0, 0, 0)
+    d.setDate(d.getDate() - day)
+    return d
+  }
+
+  async function loadWeekly() {
+    setLoadingWeekly(true)
+    if (leaderboard.length === 0) await loadLeaderboard()
+    const start = getWeekStart().toISOString()
+    const { data: ws } = await supabase
+      .from('workouts')
+      .select('user_id, started_at')
+      .gte('started_at', start)
+    const counts: Record<string, number> = {}
+    for (const w of (ws ?? []) as any[]) counts[w.user_id] = (counts[w.user_id] ?? 0) + 1
+    setWeeklyCounts(counts)
+    setLoadingWeekly(false)
+  }
 
   async function loadProgress(userId: string) {
     const { data: workouts } = await supabase
@@ -138,6 +165,12 @@ export default function ProgressScreen() {
             style={{ flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: tab === 'leaderboard' ? COLORS.accent : COLORS.card }}
           >
             <Text style={{ color: tab === 'leaderboard' ? '#fff' : COLORS.muted, fontWeight: '700', fontSize: 13 }}>{t('progress.tabLeaderboard')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setTab('weekly')}
+            style={{ flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: tab === 'weekly' ? COLORS.accent : COLORS.card }}
+          >
+            <Text style={{ color: tab === 'weekly' ? '#fff' : COLORS.muted, fontWeight: '700', fontSize: 13 }}>{t('weekly.tab')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -296,7 +329,7 @@ export default function ProgressScreen() {
               )
             })()}
           </ScrollView>
-        ) : (
+        ) : tab === 'leaderboard' ? (
           <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} contentContainerStyle={{ paddingBottom: 32 }}>
             {/* Scope + Filter */}
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
@@ -388,6 +421,66 @@ export default function ProgressScreen() {
                         <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16 }}>{rightTop}</Text>
                         {rightSub && <Text style={{ color: COLORS.muted, fontSize: 11 }}>{rightSub}</Text>}
                       </View>
+                    </View>
+                  </TouchableOpacity>
+                )
+              })
+            })()}
+          </ScrollView>
+        ) : (
+          <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} contentContainerStyle={{ paddingBottom: 32 }}>
+            {(() => {
+              const weekStart = getWeekStart()
+              const weekEnd = new Date(weekStart.getTime() + 7 * 86400000)
+              const daysLeft = Math.max(1, Math.ceil((weekEnd.getTime() - Date.now()) / 86400000))
+              return (
+                <View style={{ backgroundColor: COLORS.card, borderRadius: 16, padding: 16, marginBottom: 16 }}>
+                  <Text style={{ color: COLORS.accent, fontSize: 10, letterSpacing: 2, fontWeight: '900' }}>{t('weekly.title')}</Text>
+                  <Text style={{ color: '#fff', fontSize: 18, fontWeight: '900', marginTop: 4 }}>{t('weekly.metric')}</Text>
+                  <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 2 }}>⏰ {t('weekly.daysLeft', { n: String(daysLeft) })}</Text>
+                </View>
+              )
+            })()}
+
+            {loadingWeekly ? (
+              <ActivityIndicator color={COLORS.accent} style={{ marginTop: 40 }} />
+            ) : (() => {
+              const userMap: Record<string, LeaderboardEntry> = {}
+              for (const e of leaderboard) userMap[e.id] = e
+              const sorted = Object.entries(weeklyCounts)
+                .filter(([, c]) => c > 0)
+                .sort(([, a], [, b]) => b - a)
+              if (sorted.length === 0) return (
+                <View style={{ backgroundColor: COLORS.card, borderRadius: 16, padding: 24, alignItems: 'center' }}>
+                  <Text style={{ color: COLORS.muted, textAlign: 'center' }}>{t('weekly.empty')}</Text>
+                </View>
+              )
+              return sorted.map(([uid, count], i) => {
+                const entry = userMap[uid]
+                const isMe = uid === profile?.id
+                const rd = entry ? getRankData(entry.sbd_rank) : null
+                return (
+                  <TouchableOpacity
+                    key={uid}
+                    onPress={() => !isMe && router.push(`/user/${uid}` as any)}
+                    activeOpacity={isMe ? 1 : 0.75}
+                  >
+                    <View style={{
+                      backgroundColor: isMe ? COLORS.accentDim : COLORS.card,
+                      borderRadius: 16, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 8,
+                      flexDirection: 'row', alignItems: 'center', gap: 12,
+                      borderWidth: isMe ? 1 : 0, borderColor: COLORS.accent,
+                    }}>
+                      <Text style={{ color: i < 3 ? COLORS.gold : COLORS.muted, fontWeight: '900', width: 28, fontSize: 14 }}>
+                        {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
+                      </Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>
+                          {entry?.username ?? '?'}{isMe ? t('lb.youTag') : ''}
+                        </Text>
+                        {rd && <Text style={{ color: rd.color, fontSize: 12, marginTop: 1 }}>{t(`rank.${entry!.sbd_rank}` as any)}</Text>}
+                      </View>
+                      <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16 }}>🔥 {count}</Text>
                     </View>
                   </TouchableOpacity>
                 )

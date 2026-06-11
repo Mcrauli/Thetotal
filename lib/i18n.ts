@@ -232,6 +232,11 @@ const STRINGS = {
   'lb.empty':                 { fi: 'Ei tuloksia vielä.', en: 'No results yet.' },
   'lb.level':                 { fi: 'Taso {n}', en: 'Level {n}' },
   'lb.youTag':                { fi: ' (sinä)', en: ' (you)' },
+  'weekly.tab':               { fi: '🔥 Viikko', en: '🔥 Week' },
+  'weekly.title':             { fi: 'TÄMÄN VIIKON HAASTE', en: 'THIS WEEK\'S CHALLENGE' },
+  'weekly.metric':            { fi: 'Eniten treenejä', en: 'Most workouts' },
+  'weekly.daysLeft':          { fi: '{n} päivää jäljellä', en: '{n} days left' },
+  'weekly.empty':             { fi: 'Ei vielä treenejä tällä viikolla. Ole ensimmäinen! 💪', en: 'No workouts this week yet. Be the first! 💪' },
 
   // Template creation & exercise picker
   'template.namePlaceholder': { fi: 'Ohjelman nimi...', en: 'Program name...' },
