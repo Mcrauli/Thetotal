@@ -13,6 +13,7 @@ import { supabase } from '../../lib/supabase'
 import { detectPRs } from '../../lib/pr'
 import { calculateXPGain, getRankForXP, getSBDRank, getSBDSubRank } from '../../lib/xp'
 import { getNewlyCompleted } from '../../lib/challenges'
+import { calcDOTS } from '../../lib/dots'
 import { useT } from '../../lib/i18n'
 
 export default function ActiveWorkoutScreen() {
@@ -24,7 +25,7 @@ export default function ActiveWorkoutScreen() {
   const savingRef = useRef(false)
   const [elapsed, setElapsed] = useState(0)
   const [results, setResults] = useState<{ xpGain: number; xpBreakdown: { base: number; prBonus: number; streakBonus: number; challengeBonus: number }; improvements: ImprovementResult[]; challenges: ChallengeResult[] } | null>(null)
-  const [shareData, setShareData] = useState<{ sbdRank: any; tier: 1 | 2 | 3 | 4; ratio: number; sbdTotal: number; streak: number; totalWorkouts: number; duelWins: number } | null>(null)
+  const [shareData, setShareData] = useState<{ sbdRank: any; tier: 1 | 2 | 3 | 4; ratio: number; sbdTotal: number; streak: number; totalWorkouts: number; duelWins: number; dots: number } | null>(null)
   const [shareVisible, setShareVisible] = useState(false)
   const [plateVisible, setPlateVisible] = useState(false)
   const [lastSets, setLastSets] = useState<Record<string, { text: string; weight: number; reps: number } | null>>({})
@@ -406,7 +407,8 @@ export default function ActiveWorkoutScreen() {
           if (cv === dv) return false
           return (cv > dv ? d.challenger_id : d.challenged_id) === profile.id
         }).length
-        setShareData({ sbdRank: newSBDRank, tier: sub.tier, ratio: sub.ratio, sbdTotal, streak: newStreak, totalWorkouts: workoutCount ?? 0, duelWins })
+        const dots = calcDOTS(sbdTotal, profile.bodyweight_kg ?? 0, profile.gender !== 'female')
+        setShareData({ sbdRank: newSBDRank, tier: sub.tier, ratio: sub.ratio, sbdTotal, streak: newStreak, totalWorkouts: workoutCount ?? 0, duelWins, dots })
       } catch {}
     } else {
       setShareData(null)
@@ -445,6 +447,7 @@ export default function ActiveWorkoutScreen() {
           streak={shareData.streak}
           totalWorkouts={shareData.totalWorkouts}
           duelWins={shareData.duelWins}
+          dots={shareData.dots}
         />
       )}
 

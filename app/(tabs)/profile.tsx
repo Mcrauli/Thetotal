@@ -221,6 +221,7 @@ export default function ProfileScreen() {
           streak={profile.streak}
           totalWorkouts={totalWorkouts}
           duelWins={duelWins}
+          dots={dots}
         />
 
         <TouchableOpacity

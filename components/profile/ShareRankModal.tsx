@@ -20,10 +20,11 @@ interface ShareRankModalProps {
   streak: number
   totalWorkouts: number
   duelWins?: number
+  dots?: number
 }
 
 export function ShareRankModal({
-  visible, onClose, username, sbdRank, tier, ratio, sbdTotal, streak, totalWorkouts, duelWins = 0,
+  visible, onClose, username, sbdRank, tier, ratio, sbdTotal, streak, totalWorkouts, duelWins = 0, dots = 0,
 }: ShareRankModalProps) {
   const t = useT()
   const cardRef = useRef<View>(null)
@@ -80,6 +81,12 @@ export function ShareRankModal({
               </Text>
               {ratio > 0 && (
                 <Text style={{ color: COLORS.muted, fontSize: 13, marginTop: 2 }}>{ratio.toFixed(2)}× {t('ranks.bw')}</Text>
+              )}
+              {dots > 0 && (
+                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 8 }}>
+                  <Text style={{ color: COLORS.muted, fontSize: 11, letterSpacing: 2 }}>{t('dots.label')}</Text>
+                  <Text style={{ color: rankData.color, fontSize: 20, fontWeight: '900' }}>{dots}</Text>
+                </View>
               )}
             </View>
 
