@@ -35,7 +35,7 @@ export function RanksModal({ visible, onClose, currentRank, currentTier, ratio }
           </TouchableOpacity>
         </View>
         {ratio !== undefined && ratio > 0 && (
-          <Text className="text-muted text-xs px-6 pb-4">SBD-yhteensä: {ratio.toFixed(2)}× oma paino</Text>
+          <Text className="text-muted text-xs px-6 pb-4">{t('ranks.sbdTotal')} {ratio.toFixed(2)}× {t('ranks.bw')}</Text>
         )}
 
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>

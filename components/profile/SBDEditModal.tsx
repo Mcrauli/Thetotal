@@ -3,6 +3,7 @@ import { View, Text, Modal, TextInput, TouchableOpacity, Alert } from 'react-nat
 import { supabase } from '../../lib/supabase'
 import { useUserStore } from '../../store/userStore'
 import { getSBDRank } from '../../lib/xp'
+import { useT } from '../../lib/i18n'
 
 interface SBDEditModalProps {
   visible: boolean
@@ -12,6 +13,7 @@ interface SBDEditModalProps {
 }
 
 export function SBDEditModal({ visible, onClose, initial, onSaved }: SBDEditModalProps) {
+  const t = useT()
   const { profile, fetchProfile } = useUserStore()
   const [squat, setSquat] = useState('')
   const [bench, setBench] = useState('')
@@ -65,13 +67,13 @@ export function SBDEditModal({ visible, onClose, initial, onSaved }: SBDEditModa
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View className="flex-1 bg-black/80 justify-center px-6">
         <View className="bg-card rounded-3xl p-6 border border-cardEdge">
-          <Text className="text-white font-black text-xl mb-1">Muokkaa SBD-tuloksia</Text>
-          <Text className="text-muted text-xs mb-5">Päivitä parhaat 1RM-tulokset. Rank lasketaan uudelleen.</Text>
+          <Text className="text-white font-black text-xl mb-1">{t('sbd.editTitle')}</Text>
+          <Text className="text-muted text-xs mb-5">{t('sbd.editHint')}</Text>
 
           {[
-            { label: 'KYYKKY (kg)',         value: squat,    setter: setSquat },
-            { label: 'PENKKIPUNNERRUS (kg)', value: bench,    setter: setBench },
-            { label: 'MAASTAVETO (kg)',     value: deadlift, setter: setDeadlift },
+            { label: t('sbd.squatKg'),    value: squat,    setter: setSquat },
+            { label: t('sbd.benchKg'),    value: bench,    setter: setBench },
+            { label: t('sbd.deadliftKg'), value: deadlift, setter: setDeadlift },
           ].map(({ label, value, setter }) => (
             <View key={label} className="mb-3">
               <Text className="text-muted text-xs mb-1 ml-1">{label}</Text>
@@ -88,14 +90,14 @@ export function SBDEditModal({ visible, onClose, initial, onSaved }: SBDEditModa
 
           <View className="flex-row gap-3 mt-4">
             <TouchableOpacity className="flex-1 bg-bg rounded-xl py-3 items-center border border-cardEdge" onPress={onClose}>
-              <Text className="text-muted font-bold">Peruuta</Text>
+              <Text className="text-muted font-bold">{t('common.cancel')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               className={`flex-1 bg-accent rounded-xl py-3 items-center ${saving ? 'opacity-50' : ''}`}
               onPress={handleSave}
               disabled={saving}
             >
-              <Text className="text-white font-bold">{saving ? 'Tallennetaan...' : 'Tallenna'}</Text>
+              <Text className="text-white font-bold">{saving ? t('common.saving') : t('common.save')}</Text>
             </TouchableOpacity>
           </View>
         </View>

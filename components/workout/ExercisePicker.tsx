@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { View, Text, TouchableOpacity, Modal, SectionList, TextInput } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
+import { useT } from '../../lib/i18n'
 
 interface Exercise {
   id: string
@@ -17,6 +18,7 @@ interface ExercisePickerProps {
 }
 
 export function ExercisePicker({ visible, onSelect, onClose }: ExercisePickerProps) {
+  const t = useT()
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [search, setSearch] = useState('')
 
@@ -32,7 +34,7 @@ export function ExercisePicker({ visible, onSelect, onClose }: ExercisePickerPro
   )
 
   const grouped = filtered.reduce<Record<string, Exercise[]>>((acc, e) => {
-    const group = e.muscle_group ?? 'Muut'
+    const group = e.muscle_group ?? t('common.other')
     if (!acc[group]) acc[group] = []
     acc[group].push(e)
     return acc
@@ -48,14 +50,14 @@ export function ExercisePicker({ visible, onSelect, onClose }: ExercisePickerPro
       <SafeAreaView className="flex-1 bg-bg">
         <View className="px-4 pt-4 pb-2">
           <View className="flex-row justify-between items-center mb-3">
-            <Text className="text-white text-lg font-bold">Lisää liike</Text>
+            <Text className="text-white text-lg font-bold">{t('template.addExercise')}</Text>
             <TouchableOpacity onPress={onClose}>
-              <Text className="text-muted text-base">Peruuta</Text>
+              <Text className="text-muted text-base">{t('common.cancel')}</Text>
             </TouchableOpacity>
           </View>
           <TextInput
             className="bg-card rounded-xl px-4 py-3 text-white"
-            placeholder="Hae liike..."
+            placeholder={t('template.searchPlaceholder')}
             placeholderTextColor="#888"
             value={search}
             onChangeText={setSearch}

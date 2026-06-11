@@ -12,6 +12,7 @@ import { RankBanner } from '../../components/profile/RankBanner'
 import { SBDRow } from '../../components/profile/SBDRow'
 import { BadgeRow } from '../../components/profile/BadgeRow'
 import { COLORS } from '../../lib/constants'
+import { useT } from '../../lib/i18n'
 import type { RankName } from '../../lib/constants'
 
 interface PublicProfile {
@@ -32,6 +33,7 @@ interface Template {
 }
 
 export default function UserProfileScreen() {
+  const tr = useT()
   const { id } = useLocalSearchParams<{ id: string }>()
   const { profile: me } = useUserStore()
   const [user, setUser] = useState<PublicProfile | null>(null)
@@ -110,7 +112,7 @@ export default function UserProfileScreen() {
     const { error } = await supabase.from('pr_verifications').insert({ pr_id: prId, verifier_id: me.id })
     if (error) {
       setMyVerifiedIds(prev => { const next = new Set(prev); next.delete(prId); return next })
-      Alert.alert('Virhe', error.message)
+      Alert.alert(tr('common.error'), error.message)
       return
     }
     await sendPushToUsers({
@@ -124,9 +126,9 @@ export default function UserProfileScreen() {
     if (!me || !user) return
     setSending(true)
     if (chalType === 'pr') {
-      if (!chalExercise.trim()) { setSending(false); Alert.alert('Kirjoita liike'); return }
+      if (!chalExercise.trim()) { setSending(false); Alert.alert(tr('user.enterExercise')); return }
       const w = parseFloat(chalWeight)
-      if (!w || w <= 0) { setSending(false); Alert.alert('Syötä kelvollinen paino'); return }
+      if (!w || w <= 0) { setSending(false); Alert.alert(tr('profile.enterValidWeight')); return }
       await supabase.from('friend_challenges').insert({
         challenger_id: me.id, challenged_id: user.id,
         challenge_type: 'pr', exercise_name: chalExercise.trim(),
@@ -146,7 +148,7 @@ export default function UserProfileScreen() {
     setChalExercise('')
     setChalWeight('')
     setChalMessage('')
-    Alert.alert('Haaste lähetetty! 💪')
+    Alert.alert(tr('user.challengeSent'))
   }
 
   async function copyTemplate(t: Template) {
@@ -223,10 +225,10 @@ export default function UserProfileScreen() {
         </TouchableOpacity>
         {me && me.id !== id && (
           <TouchableOpacity
-            onPress={() => Alert.alert('Toiminnot', undefined, [
-              { text: 'Ilmianna käyttäjä', onPress: handleReport },
-              { text: 'Estä käyttäjä', style: 'destructive', onPress: handleBlock },
-              { text: 'Peruuta', style: 'cancel' },
+            onPress={() => Alert.alert(tr('mod.actions'), undefined, [
+              { text: tr('mod.reportUser'), onPress: handleReport },
+              { text: tr('mod.blockUser'), style: 'destructive', onPress: handleBlock },
+              { text: tr('common.cancel'), style: 'cancel' },
             ])}
             style={{ paddingVertical: 8, paddingHorizontal: 12 }}
           >
@@ -244,23 +246,23 @@ export default function UserProfileScreen() {
             onPress={() => setChallengeVisible(true)}
             style={{ backgroundColor: COLORS.accent, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 8 }}
           >
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>⚔️ Haasta</Text>
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>{tr('user.challenge')}</Text>
           </TouchableOpacity>
         </View>
 
         <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
           <View style={{ flex: 1, backgroundColor: COLORS.card, borderRadius: 16, padding: 14, alignItems: 'center' }}>
             <Text style={{ color: '#fff', fontWeight: '900', fontSize: 20 }}>{totalWorkouts}</Text>
-            <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 2 }}>Treeniä</Text>
+            <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 2 }}>{tr('profile.workouts')}</Text>
           </View>
           <View style={{ flex: 1, backgroundColor: COLORS.card, borderRadius: 16, padding: 14, alignItems: 'center' }}>
             <Text style={{ color: COLORS.accent, fontWeight: '900', fontSize: 20 }}>🔥{user.streak}</Text>
-            <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 2 }}>Putki</Text>
+            <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 2 }}>{tr('profile.streakLabel')}</Text>
           </View>
           {!user.hide_weight && user.bodyweight_kg && (
             <View style={{ flex: 1, backgroundColor: COLORS.card, borderRadius: 16, padding: 14, alignItems: 'center' }}>
               <Text style={{ color: '#fff', fontWeight: '900', fontSize: 20 }}>{user.bodyweight_kg}kg</Text>
-              <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 2 }}>Paino</Text>
+              <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 2 }}>{tr('user.weight')}</Text>
             </View>
           )}
         </View>
@@ -278,7 +280,7 @@ export default function UserProfileScreen() {
 
         {!user.hide_sbd && (sbd.squat > 0 || sbd.bench > 0 || sbd.deadlift > 0) && (
           <View style={{ marginBottom: 16, backgroundColor: COLORS.card, borderRadius: 16, padding: 16 }}>
-            <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 12 }}>ENNÄTYKSET</Text>
+            <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 12 }}>{tr('profile.records')}</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {[
                 { label: 'Squat', value: sbd.squat, reps: sbdReps.squat, meta: sbdMeta.squat },
@@ -294,14 +296,14 @@ export default function UserProfileScreen() {
                       {pr.value}<Text style={{ fontSize: 13, fontWeight: '400' }}>kg</Text>
                     </Text>
                     {pr.reps > 1 && (
-                      <Text style={{ color: COLORS.muted, fontSize: 10 }}>{pr.reps} toistoa</Text>
+                      <Text style={{ color: COLORS.muted, fontSize: 10 }}>{pr.reps} {tr('profile.repsLabel')}</Text>
                     )}
                     {shouldShowEstimatedOneRepMax(pr.reps) && (
                       <Text style={{ color: COLORS.muted, fontSize: 10, marginTop: 1 }}>≈ {estimateOneRepMax(pr.value, pr.reps)}kg 1RM</Text>
                     )}
                     <Text style={{ color: '#fff', fontSize: 11, marginTop: 2, textAlign: 'center' }} numberOfLines={1}>{pr.label}</Text>
                     {verified ? (
-                      <Text style={{ color: '#4ade80', fontSize: 10, marginTop: 4, fontWeight: '700' }}>✓ Vahvistettu</Text>
+                      <Text style={{ color: '#4ade80', fontSize: 10, marginTop: 4, fontWeight: '700' }}>{tr('profile.verified')}</Text>
                     ) : canVerify ? (
                       <TouchableOpacity
                         onPress={() => verifyPR(pr.meta!.id, pr.label, pr.value)}
@@ -316,10 +318,10 @@ export default function UserProfileScreen() {
                           borderColor: '#4ade80',
                         }}
                       >
-                        <Text style={{ color: '#4ade80', fontSize: 10, fontWeight: '700' }}>🤝 Vahvista</Text>
+                        <Text style={{ color: '#4ade80', fontSize: 10, fontWeight: '700' }}>{tr('user.verifyAction')}</Text>
                       </TouchableOpacity>
                     ) : (
-                      <Text style={{ color: COLORS.muted, fontSize: 10, marginTop: 4, fontStyle: 'italic' }}>Itse ilmoitettu</Text>
+                      <Text style={{ color: COLORS.muted, fontSize: 10, marginTop: 4, fontStyle: 'italic' }}>{tr('verify.selfReported')}</Text>
                     )}
                   </View>
                 )
@@ -335,8 +337,8 @@ export default function UserProfileScreen() {
             style={{ backgroundColor: COLORS.card2, borderRadius: 16, padding: 16, marginBottom: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
           >
             <View>
-              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Ohjelmat</Text>
-              <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 2 }}>{templates.length} ohjelma{templates.length !== 1 ? 'a' : ''}</Text>
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>{tr('user.programs')}</Text>
+              <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 2 }}>{tr('user.programsCount', { n: String(templates.length) })}</Text>
             </View>
             <Text style={{ color: COLORS.accent, fontSize: 22 }}>›</Text>
           </TouchableOpacity>
@@ -352,18 +354,18 @@ export default function UserProfileScreen() {
       <Modal visible={challengeVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setChallengeVisible(false)}>
         <View style={{ flex: 1, backgroundColor: COLORS.bg }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingTop: 24, paddingBottom: 16 }}>
-            <Text style={{ color: '#fff', fontSize: 20, fontWeight: '900' }}>Haasta {user.username}</Text>
+            <Text style={{ color: '#fff', fontSize: 20, fontWeight: '900' }}>{tr('user.challengeUser', { name: user.username })}</Text>
             <TouchableOpacity onPress={() => setChallengeVisible(false)}>
-              <Text style={{ color: COLORS.muted, fontSize: 15 }}>Peruuta</Text>
+              <Text style={{ color: COLORS.muted, fontSize: 15 }}>{tr('common.cancel')}</Text>
             </TouchableOpacity>
           </View>
           <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40 }}>
-            <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 10 }}>HAASTEEN TYYPPI</Text>
+            <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 10 }}>{tr('user.challengeType')}</Text>
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 20 }}>
               {([
-                { type: 'pr' as const, label: '🏆 PR', desc: 'Nosta paino' },
-                { type: 'volume' as const, label: '⚡ Volyymi', desc: 'Enemmän kg' },
-                { type: 'workouts' as const, label: '📅 Treenit', desc: 'Enemmän kertoja' },
+                { type: 'pr' as const, label: tr('user.typePR'), desc: tr('user.typePRDesc') },
+                { type: 'volume' as const, label: tr('user.typeVolume'), desc: tr('user.typeVolumeDesc') },
+                { type: 'workouts' as const, label: tr('user.typeWorkouts'), desc: tr('user.typeWorkoutsDesc') },
               ]).map(({ type, label, desc }) => (
                 <TouchableOpacity
                   key={type}
@@ -378,10 +380,10 @@ export default function UserProfileScreen() {
 
             {chalType === 'pr' && (
               <>
-                <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 10 }}>LIIKE</Text>
+                <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 10 }}>{tr('user.exerciseLabel')}</Text>
                 <TextInput
                   style={{ backgroundColor: COLORS.card, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: '#fff', fontSize: 16, marginBottom: 10 }}
-                  placeholder="esim. Squat"
+                  placeholder={tr('user.exercisePlaceholder')}
                   placeholderTextColor="#555"
                   value={chalExercise}
                   onChangeText={setChalExercise}
@@ -397,10 +399,10 @@ export default function UserProfileScreen() {
                     </TouchableOpacity>
                   ))}
                 </View>
-                <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 10 }}>TAVOITEPAINO (kg)</Text>
+                <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 10 }}>{tr('user.targetWeight')}</Text>
                 <TextInput
                   style={{ backgroundColor: COLORS.card, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: '#fff', fontSize: 18, fontWeight: '700', marginBottom: 20 }}
-                  placeholder="esim. 140"
+                  placeholder={tr('user.targetPlaceholder')}
                   placeholderTextColor="#555"
                   value={chalWeight}
                   onChangeText={setChalWeight}
@@ -413,12 +415,10 @@ export default function UserProfileScreen() {
               <>
                 <View style={{ backgroundColor: COLORS.card2, borderRadius: 12, padding: 14, marginBottom: 20 }}>
                   <Text style={{ color: '#fff', fontSize: 13 }}>
-                    {chalType === 'volume'
-                      ? '⚡ Kumpi nostaa enemmän kiloja yhteensä aikarajan sisällä?'
-                      : '📅 Kumpi tekee enemmän treenejä aikarajan sisällä?'}
+                    {chalType === 'volume' ? tr('user.volumeDesc') : tr('user.workoutsDesc')}
                   </Text>
                 </View>
-                <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 10 }}>KESTO</Text>
+                <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 10 }}>{tr('user.duration')}</Text>
                 <View style={{ flexDirection: 'row', gap: 8, marginBottom: 20 }}>
                   {[7, 14, 28].map(d => (
                     <TouchableOpacity
@@ -426,17 +426,17 @@ export default function UserProfileScreen() {
                       onPress={() => setChalDays(d)}
                       style={{ flex: 1, backgroundColor: chalDays === d ? COLORS.accent : COLORS.card, borderRadius: 12, paddingVertical: 12, alignItems: 'center' }}
                     >
-                      <Text style={{ color: chalDays === d ? '#fff' : COLORS.muted, fontWeight: '700', fontSize: 14 }}>{d} pv</Text>
+                      <Text style={{ color: chalDays === d ? '#fff' : COLORS.muted, fontWeight: '700', fontSize: 14 }}>{tr('user.days', { n: String(d) })}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
               </>
             )}
 
-            <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 10 }}>VIESTI (valinnainen)</Text>
+            <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 10 }}>{tr('user.messageLabel')}</Text>
             <TextInput
               style={{ backgroundColor: COLORS.card, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: '#fff', marginBottom: 28 }}
-              placeholder="esim. Uskallatko yrittää?"
+              placeholder={tr('user.messagePlaceholder')}
               placeholderTextColor="#555"
               value={chalMessage}
               onChangeText={setChalMessage}
@@ -447,7 +447,7 @@ export default function UserProfileScreen() {
               style={{ backgroundColor: sending ? COLORS.card2 : COLORS.accent, borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}
             >
               <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16 }}>
-                {sending ? 'Lähetetään...' : '⚔️ LÄHETÄ HAASTE'}
+                {sending ? tr('user.sending') : tr('user.sendChallenge')}
               </Text>
             </TouchableOpacity>
           </ScrollView>
@@ -457,9 +457,9 @@ export default function UserProfileScreen() {
       <Modal visible={programsVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setProgramsVisible(false)}>
         <View style={{ flex: 1, backgroundColor: COLORS.bg }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingTop: 24, paddingBottom: 12 }}>
-            <Text style={{ color: '#fff', fontSize: 20, fontWeight: '900' }}>{user.username}n ohjelmat</Text>
+            <Text style={{ color: '#fff', fontSize: 20, fontWeight: '900' }}>{tr('user.usersPrograms', { name: user.username })}</Text>
             <TouchableOpacity onPress={() => setProgramsVisible(false)}>
-              <Text style={{ color: COLORS.muted, fontSize: 15 }}>Sulje</Text>
+              <Text style={{ color: COLORS.muted, fontSize: 15 }}>{tr('common.close')}</Text>
             </TouchableOpacity>
           </View>
           <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
@@ -475,7 +475,7 @@ export default function UserProfileScreen() {
                   style={{ marginTop: 14, backgroundColor: copying === t.id ? COLORS.card2 : COLORS.accent, borderRadius: 12, paddingVertical: 12, alignItems: 'center' }}
                 >
                   <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>
-                    {copying === t.id ? 'Kopioidaan...' : 'Kopioi ohjelma'}
+                    {copying === t.id ? tr('user.copying') : tr('user.copyProgram')}
                   </Text>
                 </TouchableOpacity>
               </View>

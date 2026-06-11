@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import * as Notifications from 'expo-notifications'
 import { supabase } from '../lib/supabase'
 import { useUserStore } from '../store/userStore'
+import { useLocaleStore } from '../lib/i18n'
 
 async function registerPushToken() {
   try {
@@ -59,6 +60,7 @@ function useAuthGuard() {
 
 export default function RootLayout() {
   useAuthGuard()
+  useEffect(() => { useLocaleStore.getState().hydrate() }, [])
   return (
     <SafeAreaProvider>
       <Slot />

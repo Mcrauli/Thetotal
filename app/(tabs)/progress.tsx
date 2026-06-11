@@ -9,6 +9,7 @@ import { getRankData, getLevel } from '../../lib/xp'
 import { COLORS } from '../../lib/constants'
 import type { RankName } from '../../lib/constants'
 import { ScreenBackground } from '../../components/ui/ScreenBackground'
+import { useT } from '../../lib/i18n'
 
 const CHART_WIDTH = Dimensions.get('window').width - 64
 
@@ -30,6 +31,7 @@ interface LeaderboardEntry {
 }
 
 export default function ProgressScreen() {
+  const t = useT()
   const { profile } = useUserStore()
   const [tab, setTab] = useState<'progress' | 'leaderboard'>('progress')
   const [lbFilter, setLbFilter] = useState<'sbd' | 'xp'>('sbd')
@@ -129,13 +131,13 @@ export default function ProgressScreen() {
             onPress={() => setTab('progress')}
             style={{ flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: tab === 'progress' ? COLORS.accent : COLORS.card }}
           >
-            <Text style={{ color: tab === 'progress' ? '#fff' : COLORS.muted, fontWeight: '700', fontSize: 13 }}>📈 Kehitys</Text>
+            <Text style={{ color: tab === 'progress' ? '#fff' : COLORS.muted, fontWeight: '700', fontSize: 13 }}>{t('progress.tabProgress')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setTab('leaderboard')}
             style={{ flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: tab === 'leaderboard' ? COLORS.accent : COLORS.card }}
           >
-            <Text style={{ color: tab === 'leaderboard' ? '#fff' : COLORS.muted, fontWeight: '700', fontSize: 13 }}>🏆 Leaderboard</Text>
+            <Text style={{ color: tab === 'leaderboard' ? '#fff' : COLORS.muted, fontWeight: '700', fontSize: 13 }}>{t('progress.tabLeaderboard')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -143,7 +145,7 @@ export default function ProgressScreen() {
           <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 32 }}>
             {exercises.length === 0 ? (
               <View style={{ backgroundColor: COLORS.card, borderRadius: 16, padding: 24, alignItems: 'center', margin: 16 }}>
-                <Text style={{ color: COLORS.muted }}>Ei vielä harjoituksia.</Text>
+                <Text style={{ color: COLORS.muted }}>{t('progress.noWorkouts')}</Text>
               </View>
             ) : (() => {
               const filtered = progressFilter === 'sbd'
@@ -173,7 +175,7 @@ export default function ProgressScreen() {
                         }}
                       >
                         <Text style={{ color: progressFilter === f ? '#fff' : COLORS.muted, fontSize: 12, fontWeight: '700' }}>
-                          {f === 'sbd' ? '🏋️ SBD' : '📋 Kaikki'}
+                          {f === 'sbd' ? t('progress.filterSBD') : t('progress.filterAll')}
                         </Text>
                       </TouchableOpacity>
                     ))}
@@ -285,7 +287,7 @@ export default function ProgressScreen() {
                             <Text style={{ color: '#fff', fontWeight: '900', fontSize: 20 }}>{ex.current}<Text style={{ color: COLORS.muted, fontSize: 12, fontWeight: '400' }}> kg</Text></Text>
                             <Text style={{ color: trendColor, fontSize: 15, fontWeight: '700' }}>{trend}{Math.abs(imp) > 0 ? ` ${Math.abs(imp)}` : ''}</Text>
                           </View>
-                          <Text style={{ color: COLORS.muted, fontSize: 10, marginTop: 4 }}>{ex.points.length} krt</Text>
+                          <Text style={{ color: COLORS.muted, fontSize: 10, marginTop: 4 }}>{ex.points.length} {t('progress.timesShort')}</Text>
                         </TouchableOpacity>
                       )
                     })}
@@ -302,13 +304,13 @@ export default function ProgressScreen() {
                 onPress={() => setLbScope('all')}
                 style={{ flex: 1, paddingVertical: 8, borderRadius: 10, alignItems: 'center', backgroundColor: lbScope === 'all' ? COLORS.accent : COLORS.card }}
               >
-                <Text style={{ color: lbScope === 'all' ? '#fff' : COLORS.muted, fontSize: 12, fontWeight: '700' }}>🌍 Kaikki</Text>
+                <Text style={{ color: lbScope === 'all' ? '#fff' : COLORS.muted, fontSize: 12, fontWeight: '700' }}>{t('lb.scopeAll')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => setLbScope('friends')}
                 style={{ flex: 1, paddingVertical: 8, borderRadius: 10, alignItems: 'center', backgroundColor: lbScope === 'friends' ? COLORS.accent : COLORS.card }}
               >
-                <Text style={{ color: lbScope === 'friends' ? '#fff' : COLORS.muted, fontSize: 12, fontWeight: '700' }}>👥 Kaverit</Text>
+                <Text style={{ color: lbScope === 'friends' ? '#fff' : COLORS.muted, fontSize: 12, fontWeight: '700' }}>{t('lb.scopeFriends')}</Text>
               </TouchableOpacity>
             </View>
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
@@ -316,18 +318,18 @@ export default function ProgressScreen() {
                 onPress={() => setLbFilter('sbd')}
                 style={{ flex: 1, paddingVertical: 7, borderRadius: 10, alignItems: 'center', backgroundColor: lbFilter === 'sbd' ? COLORS.card2 : COLORS.card, borderWidth: lbFilter === 'sbd' ? 1 : 0, borderColor: COLORS.accent }}
               >
-                <Text style={{ color: lbFilter === 'sbd' ? '#fff' : COLORS.muted, fontSize: 12, fontWeight: '700' }}>🏋️ SBD Rank</Text>
+                <Text style={{ color: lbFilter === 'sbd' ? '#fff' : COLORS.muted, fontSize: 12, fontWeight: '700' }}>{t('lb.filterSBD')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => setLbFilter('xp')}
                 style={{ flex: 1, paddingVertical: 7, borderRadius: 10, alignItems: 'center', backgroundColor: lbFilter === 'xp' ? COLORS.card2 : COLORS.card, borderWidth: lbFilter === 'xp' ? 1 : 0, borderColor: COLORS.accent }}
               >
-                <Text style={{ color: lbFilter === 'xp' ? '#fff' : COLORS.muted, fontSize: 12, fontWeight: '700' }}>⭐ XP Taso</Text>
+                <Text style={{ color: lbFilter === 'xp' ? '#fff' : COLORS.muted, fontSize: 12, fontWeight: '700' }}>{t('lb.filterXP')}</Text>
               </TouchableOpacity>
             </View>
 
             <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 12 }}>
-              {lbFilter === 'sbd' ? 'RANKING — SBD / PAINO-SUHDE' : 'RANKING — TASO'}
+              {lbFilter === 'sbd' ? t('lb.titleSBD') : t('lb.titleXP')}
             </Text>
 
             {loadingLB ? (
@@ -347,7 +349,7 @@ export default function ProgressScreen() {
                 : [...base].sort((a, b) => (b.xp ?? 0) - (a.xp ?? 0))
               if (sorted.length === 0) return (
                 <View style={{ backgroundColor: COLORS.card, borderRadius: 16, padding: 24, alignItems: 'center' }}>
-                  <Text style={{ color: COLORS.muted }}>Ei tuloksia vielä.</Text>
+                  <Text style={{ color: COLORS.muted }}>{t('lb.empty')}</Text>
                 </View>
               )
               return sorted.map((entry, i) => {
@@ -357,7 +359,7 @@ export default function ProgressScreen() {
                   ? entry.bodyweight_kg && entry.sbd_total > 0
                     ? `${(entry.sbd_total / entry.bodyweight_kg).toFixed(2)}×`
                     : entry.sbd_total > 0 ? `${entry.sbd_total} kg` : '—'
-                  : `Taso ${getLevel(entry.xp ?? 0)}`
+                  : t('lb.level', { n: String(getLevel(entry.xp ?? 0)) })
                 const rightSub = lbFilter === 'sbd' && entry.bodyweight_kg && entry.sbd_total > 0
                   ? `${entry.sbd_total} kg`
                   : null
@@ -378,9 +380,9 @@ export default function ProgressScreen() {
                       </Text>
                       <View style={{ flex: 1 }}>
                         <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>
-                          {entry.username}{isMe ? ' (sinä)' : ''}
+                          {entry.username}{isMe ? t('lb.youTag') : ''}
                         </Text>
-                        <Text style={{ color: rd.color, fontSize: 12, marginTop: 1 }}>{entry.sbd_rank}</Text>
+                        <Text style={{ color: rd.color, fontSize: 12, marginTop: 1 }}>{t(`rank.${entry.sbd_rank}` as any)}</Text>
                       </View>
                       <View style={{ alignItems: 'flex-end' }}>
                         <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16 }}>{rightTop}</Text>

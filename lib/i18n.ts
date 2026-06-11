@@ -1,7 +1,11 @@
 import { getLocales } from 'expo-localization'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { create } from 'zustand'
 
 export type Locale = 'fi' | 'en'
+export type LocalePref = 'fi' | 'en' | 'system'
+
+const STORAGE_KEY = 'locale_pref'
 
 function detectLocale(): Locale {
   const locales = getLocales()
@@ -9,14 +13,30 @@ function detectLocale(): Locale {
   return primary === 'fi' ? 'fi' : 'en'
 }
 
+function resolveLocale(pref: LocalePref): Locale {
+  return pref === 'system' ? detectLocale() : pref
+}
+
 interface LocaleState {
   locale: Locale
-  setLocale: (l: Locale) => void
+  pref: LocalePref
+  setPref: (p: LocalePref) => void
+  hydrate: () => Promise<void>
 }
 
 export const useLocaleStore = create<LocaleState>((set) => ({
   locale: detectLocale(),
-  setLocale: (l) => set({ locale: l }),
+  pref: 'system',
+  setPref: (p) => {
+    AsyncStorage.setItem(STORAGE_KEY, p).catch(() => {})
+    set({ pref: p, locale: resolveLocale(p) })
+  },
+  hydrate: async () => {
+    const stored = await AsyncStorage.getItem(STORAGE_KEY)
+    if (stored === 'fi' || stored === 'en' || stored === 'system') {
+      set({ pref: stored, locale: resolveLocale(stored) })
+    }
+  },
 }))
 
 const STRINGS = {
@@ -188,6 +208,85 @@ const STRINGS = {
   'profile.deleteFailed':     { fi: 'Tilin poistaminen epäonnistui. Yritä uudelleen.', en: 'Account deletion failed. Try again.' },
   'profile.enterValidWeight': { fi: 'Syötä kelvollinen paino', en: 'Enter a valid weight' },
   'profile.newUsername':      { fi: 'Uusi käyttäjänimi', en: 'New username' },
+  'profile.workouts':         { fi: 'Treeniä', en: 'Workouts' },
+  'profile.streakLabel':      { fi: 'Putki', en: 'Streak' },
+  'profile.weightLabel':      { fi: 'Paino ✎', en: 'Weight ✎' },
+  'profile.updateWeight':     { fi: 'Päivitä paino', en: 'Update weight' },
+  'profile.changeUsername':   { fi: 'Vaihda käyttäjänimi', en: 'Change username' },
+  'profile.weightHint':       { fi: 'SBD-rankkisi päivitetään automaattisesti.', en: 'Your SBD rank will update automatically.' },
+  'profile.weightPlaceholder':{ fi: 'esim. 82.5', en: 'e.g. 82.5' },
+
+  // Progress & leaderboard
+  'progress.tabProgress':     { fi: '📈 Kehitys', en: '📈 Progress' },
+  'progress.tabLeaderboard':  { fi: '🏆 Leaderboard', en: '🏆 Leaderboard' },
+  'progress.noWorkouts':      { fi: 'Ei vielä harjoituksia.', en: 'No workouts yet.' },
+  'progress.filterSBD':       { fi: '🏋️ SBD', en: '🏋️ SBD' },
+  'progress.filterAll':       { fi: '📋 Kaikki', en: '📋 All' },
+  'progress.timesShort':      { fi: 'krt', en: 'logs' },
+  'lb.scopeAll':              { fi: '🌍 Kaikki', en: '🌍 Everyone' },
+  'lb.scopeFriends':          { fi: '👥 Kaverit', en: '👥 Friends' },
+  'lb.filterSBD':             { fi: '🏋️ SBD Rank', en: '🏋️ SBD Rank' },
+  'lb.filterXP':              { fi: '⭐ XP Taso', en: '⭐ XP Level' },
+  'lb.titleSBD':              { fi: 'RANKING — SBD / PAINO-SUHDE', en: 'RANKING — SBD / BODYWEIGHT RATIO' },
+  'lb.titleXP':               { fi: 'RANKING — TASO', en: 'RANKING — LEVEL' },
+  'lb.empty':                 { fi: 'Ei tuloksia vielä.', en: 'No results yet.' },
+  'lb.level':                 { fi: 'Taso {n}', en: 'Level {n}' },
+  'lb.youTag':                { fi: ' (sinä)', en: ' (you)' },
+
+  // Template creation & exercise picker
+  'template.namePlaceholder': { fi: 'Ohjelman nimi...', en: 'Program name...' },
+  'template.exercisesLabel':  { fi: 'LIIKKEET', en: 'EXERCISES' },
+  'template.noExercises':     { fi: 'Ei vielä liikkeitä. Lisää alta.', en: 'No exercises yet. Add below.' },
+  'template.addExercise':     { fi: 'Lisää liike', en: 'Add exercise' },
+  'template.saveFailed':      { fi: 'Tallennus epäonnistui', en: 'Save failed' },
+  'template.exerciseError':   { fi: 'Virhe liikkeissä', en: 'Error with exercises' },
+  'template.searchPlaceholder':{ fi: 'Hae liike...', en: 'Search exercise...' },
+  'common.other':             { fi: 'Muut', en: 'Other' },
+
+  // SBD edit modal
+  'sbd.editTitle':            { fi: 'Muokkaa SBD-tuloksia', en: 'Edit SBD results' },
+  'sbd.editHint':             { fi: 'Päivitä parhaat 1RM-tulokset. Rank lasketaan uudelleen.', en: 'Update your best 1RM results. Rank recalculates.' },
+  'sbd.squatKg':              { fi: 'KYYKKY (kg)', en: 'SQUAT (kg)' },
+  'sbd.benchKg':              { fi: 'PENKKIPUNNERRUS (kg)', en: 'BENCH PRESS (kg)' },
+  'sbd.deadliftKg':           { fi: 'MAASTAVETO (kg)', en: 'DEADLIFT (kg)' },
+
+  // User profile (other users)
+  'user.weight':              { fi: 'Paino', en: 'Weight' },
+  'user.verifyAction':        { fi: '🤝 Vahvista', en: '🤝 Verify' },
+  'user.programs':            { fi: 'Ohjelmat', en: 'Programs' },
+  'user.programsCount':       { fi: '{n} ohjelmaa', en: '{n} programs' },
+  'user.usersPrograms':       { fi: '{name} — ohjelmat', en: '{name} — programs' },
+  'user.challenge':           { fi: '⚔️ Haasta', en: '⚔️ Challenge' },
+  'user.challengeUser':       { fi: 'Haasta {name}', en: 'Challenge {name}' },
+  'user.challengeType':       { fi: 'HAASTEEN TYYPPI', en: 'CHALLENGE TYPE' },
+  'user.typePR':              { fi: '🏆 PR', en: '🏆 PR' },
+  'user.typePRDesc':          { fi: 'Nosta paino', en: 'Lift the weight' },
+  'user.typeVolume':          { fi: '⚡ Volyymi', en: '⚡ Volume' },
+  'user.typeVolumeDesc':      { fi: 'Enemmän kg', en: 'More kg' },
+  'user.typeWorkouts':        { fi: '📅 Treenit', en: '📅 Workouts' },
+  'user.typeWorkoutsDesc':    { fi: 'Enemmän kertoja', en: 'More sessions' },
+  'user.exerciseLabel':       { fi: 'LIIKE', en: 'EXERCISE' },
+  'user.exercisePlaceholder': { fi: 'esim. Squat', en: 'e.g. Squat' },
+  'user.targetWeight':        { fi: 'TAVOITEPAINO (kg)', en: 'TARGET WEIGHT (kg)' },
+  'user.targetPlaceholder':   { fi: 'esim. 140', en: 'e.g. 140' },
+  'user.volumeDesc':          { fi: '⚡ Kumpi nostaa enemmän kiloja yhteensä aikarajan sisällä?', en: '⚡ Who lifts more total kg within the time limit?' },
+  'user.workoutsDesc':        { fi: '📅 Kumpi tekee enemmän treenejä aikarajan sisällä?', en: '📅 Who does more workouts within the time limit?' },
+  'user.duration':            { fi: 'KESTO', en: 'DURATION' },
+  'user.days':                { fi: '{n} pv', en: '{n}d' },
+  'user.messageLabel':        { fi: 'VIESTI (valinnainen)', en: 'MESSAGE (optional)' },
+  'user.messagePlaceholder':  { fi: 'esim. Uskallatko yrittää?', en: 'e.g. Dare to try?' },
+  'user.sendChallenge':       { fi: '⚔️ LÄHETÄ HAASTE', en: '⚔️ SEND CHALLENGE' },
+  'user.sending':             { fi: 'Lähetetään...', en: 'Sending...' },
+  'user.copyProgram':         { fi: 'Kopioi ohjelma', en: 'Copy program' },
+  'user.copying':             { fi: 'Kopioidaan...', en: 'Copying...' },
+  'user.enterExercise':       { fi: 'Kirjoita liike', en: 'Enter an exercise' },
+  'user.challengeSent':       { fi: 'Haaste lähetetty! 💪', en: 'Challenge sent! 💪' },
+
+  // Language selector
+  'language.section':         { fi: 'KIELI', en: 'LANGUAGE' },
+  'language.system':          { fi: 'Järjestelmä', en: 'System' },
+  'language.fi':              { fi: 'Suomi', en: 'Finnish' },
+  'language.en':              { fi: 'Englanti', en: 'English' },
 
   // Ranks (proper nouns - kept similar but with English translations)
   'rank.Aloittelija':         { fi: 'Aloittelija', en: 'Beginner' },

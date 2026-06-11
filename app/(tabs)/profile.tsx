@@ -14,7 +14,7 @@ import { SBDEditModal } from '../../components/profile/SBDEditModal'
 import { getSBDSubRank, getSBDRank } from '../../lib/xp'
 import { estimateOneRepMax, shouldShowEstimatedOneRepMax } from '../../lib/pr'
 import { getNewlyCompleted } from '../../lib/challenges'
-import { useT } from '../../lib/i18n'
+import { useT, useLocaleStore } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
 import { COLORS } from '../../lib/constants'
 
@@ -30,6 +30,8 @@ interface PRRecord {
 
 export default function ProfileScreen() {
   const t = useT()
+  const localePref = useLocaleStore(s => s.pref)
+  const setLocalePref = useLocaleStore(s => s.setPref)
   const { profile, signOut, loading, fetchProfile } = useUserStore()
   const [sbd, setSBD] = useState<PRMap>({ squat: 0, bench: 0, deadlift: 0 })
   const [totalWorkouts, setTotalWorkouts] = useState(0)
@@ -201,11 +203,11 @@ export default function ProfileScreen() {
         <View className="flex-row gap-3 mb-4">
           <View className="flex-1 bg-card rounded-2xl p-3 items-center">
             <Text className="text-white font-bold text-xl">{totalWorkouts}</Text>
-            <Text className="text-muted text-xs">Treeniä</Text>
+            <Text className="text-muted text-xs">{t('profile.workouts')}</Text>
           </View>
           <View className="flex-1 bg-card rounded-2xl p-3 items-center">
             <Text className="text-accent font-bold text-xl">🔥{profile.streak}</Text>
-            <Text className="text-muted text-xs">Putki</Text>
+            <Text className="text-muted text-xs">{t('profile.streakLabel')}</Text>
           </View>
           <TouchableOpacity
             className="flex-1 bg-card rounded-2xl p-3 items-center"
@@ -214,7 +216,7 @@ export default function ProfileScreen() {
             <Text className="text-white font-bold text-xl">
               {profile.bodyweight_kg ? `${profile.bodyweight_kg}kg` : '—'}
             </Text>
-            <Text className="text-muted text-xs">Paino ✎</Text>
+            <Text className="text-muted text-xs">{t('profile.weightLabel')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -325,6 +327,24 @@ export default function ProfileScreen() {
           ))}
         </View>
 
+        <View style={{ marginTop: 24, backgroundColor: COLORS.card, borderRadius: 16, padding: 16 }}>
+          <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, marginBottom: 12 }}>{t('language.section')}</Text>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            {(['system', 'fi', 'en'] as const).map(opt => {
+              const active = localePref === opt
+              return (
+                <TouchableOpacity
+                  key={opt}
+                  onPress={() => setLocalePref(opt)}
+                  style={{ flex: 1, backgroundColor: active ? COLORS.accent : COLORS.card2, borderRadius: 10, paddingVertical: 10, alignItems: 'center' }}
+                >
+                  <Text style={{ color: active ? '#fff' : COLORS.muted, fontWeight: '700', fontSize: 13 }}>{t(`language.${opt}` as any)}</Text>
+                </TouchableOpacity>
+              )
+            })}
+          </View>
+        </View>
+
         <View style={{ marginTop: 24, backgroundColor: COLORS.card, borderRadius: 16, padding: 20, alignItems: 'center', marginBottom: 12 }}>
           <Text style={{ fontSize: 24, marginBottom: 6 }}>☕</Text>
           <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16, marginBottom: 4 }}>{t('profile.supportTitle')}</Text>
@@ -370,7 +390,7 @@ export default function ProfileScreen() {
       <Modal visible={usernameVisible} transparent animationType="fade" onRequestClose={() => setUsernameVisible(false)}>
         <View className="flex-1 bg-black/70 justify-center px-8">
           <View className="bg-card rounded-2xl p-6">
-            <Text className="text-white font-black text-lg mb-4">Vaihda käyttäjänimi</Text>
+            <Text className="text-white font-black text-lg mb-4">{t('profile.changeUsername')}</Text>
             <TextInput
               className="bg-bg rounded-xl px-4 py-3 text-white mb-4"
               placeholder={t('profile.newUsername')}
@@ -383,14 +403,14 @@ export default function ProfileScreen() {
             />
             <View className="flex-row gap-3">
               <TouchableOpacity className="flex-1 bg-bg rounded-xl py-3 items-center" onPress={() => setUsernameVisible(false)}>
-                <Text className="text-muted">Peruuta</Text>
+                <Text className="text-muted">{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 className={`flex-1 bg-accent rounded-xl py-3 items-center ${saving ? 'opacity-50' : ''}`}
                 onPress={saveUsername}
                 disabled={saving}
               >
-                <Text className="text-white font-bold">Tallenna</Text>
+                <Text className="text-white font-bold">{t('common.save')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -400,27 +420,27 @@ export default function ProfileScreen() {
       <Modal visible={editVisible} transparent animationType="fade" onRequestClose={() => setEditVisible(false)}>
         <View className="flex-1 bg-black/70 justify-center px-8">
           <View className="bg-card rounded-2xl p-6">
-            <Text className="text-white font-black text-lg mb-4">Päivitä paino</Text>
+            <Text className="text-white font-black text-lg mb-4">{t('profile.updateWeight')}</Text>
             <TextInput
               className="bg-bg rounded-xl px-4 py-3 text-white mb-4"
-              placeholder="esim. 82.5"
+              placeholder={t('profile.weightPlaceholder')}
               placeholderTextColor="#888"
               value={bwInput}
               onChangeText={setBwInput}
               keyboardType="decimal-pad"
               autoFocus
             />
-            <Text className="text-muted text-xs mb-4">SBD-rankkisi päivitetään automaattisesti.</Text>
+            <Text className="text-muted text-xs mb-4">{t('profile.weightHint')}</Text>
             <View className="flex-row gap-3">
               <TouchableOpacity className="flex-1 bg-bg rounded-xl py-3 items-center" onPress={() => setEditVisible(false)}>
-                <Text className="text-muted">Peruuta</Text>
+                <Text className="text-muted">{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 className={`flex-1 bg-accent rounded-xl py-3 items-center ${saving ? 'opacity-50' : ''}`}
                 onPress={saveBodyweight}
                 disabled={saving}
               >
-                <Text className="text-white font-bold">Tallenna</Text>
+                <Text className="text-white font-bold">{t('common.save')}</Text>
               </TouchableOpacity>
             </View>
           </View>

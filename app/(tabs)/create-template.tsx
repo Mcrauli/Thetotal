@@ -7,8 +7,10 @@ import { supabase } from '../../lib/supabase'
 import { useUserStore } from '../../store/userStore'
 import { ExercisePicker } from '../../components/workout/ExercisePicker'
 import { COLORS } from '../../lib/constants'
+import { useT } from '../../lib/i18n'
 
 export default function CreateTemplateScreen() {
+  const t = useT()
   const { profile } = useUserStore()
   const [name, setName] = useState('')
   const [exercises, setExercises] = useState<{ id: string; name: string }[]>([])
@@ -25,7 +27,7 @@ export default function CreateTemplateScreen() {
       .single()
     if (error || !tmpl) {
       setSaving(false)
-      Alert.alert('Virhe', error?.message ?? 'Tallennus epäonnistui')
+      Alert.alert(t('common.error'), error?.message ?? t('template.saveFailed'))
       return
     }
     if (exercises.length > 0) {
@@ -33,7 +35,7 @@ export default function CreateTemplateScreen() {
         exercises.map((ex, i) => ({ template_id: tmpl.id, exercise_id: ex.id, order_index: i }))
       )
       if (exError) {
-        Alert.alert('Virhe liikkeissä', exError.message)
+        Alert.alert(t('template.exerciseError'), exError.message)
       }
     }
     setSaving(false)
@@ -50,14 +52,14 @@ export default function CreateTemplateScreen() {
           style={{ borderBottomWidth: 1, borderBottomColor: COLORS.cardEdge }}>
           <TouchableOpacity onPress={() => router.back()} className="flex-row items-center gap-1">
             <Ionicons name="chevron-back" size={22} color={COLORS.muted} />
-            <Text className="text-muted">Takaisin</Text>
+            <Text className="text-muted">{t('common.back')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={save}
             disabled={!name.trim() || saving}
             style={{ opacity: !name.trim() || saving ? 0.4 : 1 }}
           >
-            <Text className="text-accent font-bold text-base">Tallenna</Text>
+            <Text className="text-accent font-bold text-base">{t('common.save')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -69,7 +71,7 @@ export default function CreateTemplateScreen() {
           <TextInput
             className="text-white font-black mb-1"
             style={{ fontSize: 26 }}
-            placeholder="Ohjelman nimi..."
+            placeholder={t('template.namePlaceholder')}
             placeholderTextColor="#333"
             value={name}
             onChangeText={setName}
@@ -78,10 +80,10 @@ export default function CreateTemplateScreen() {
           />
           <View style={{ height: 2, backgroundColor: COLORS.accent, width: 48, marginBottom: 28 }} />
 
-          <Text className="text-muted text-xs tracking-widest mb-4">LIIKKEET</Text>
+          <Text className="text-muted text-xs tracking-widest mb-4">{t('template.exercisesLabel')}</Text>
 
           {exercises.length === 0 && (
-            <Text className="text-muted text-sm mb-4">Ei vielä liikkeitä. Lisää alta.</Text>
+            <Text className="text-muted text-sm mb-4">{t('template.noExercises')}</Text>
           )}
 
           {exercises.map((ex, i) => (
@@ -115,7 +117,7 @@ export default function CreateTemplateScreen() {
             >
               <Ionicons name="add" size={20} color="#fff" />
             </View>
-            <Text className="text-accent font-bold">Lisää liike</Text>
+            <Text className="text-accent font-bold">{t('template.addExercise')}</Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
