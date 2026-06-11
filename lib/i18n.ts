@@ -282,6 +282,13 @@ const STRINGS = {
   'user.enterExercise':       { fi: 'Kirjoita liike', en: 'Enter an exercise' },
   'user.challengeSent':       { fi: 'Haaste lähetetty! 💪', en: 'Challenge sent! 💪' },
 
+  // Share rank card
+  'share.button':             { fi: '📸 Jaa rank', en: '📸 Share rank' },
+  'share.shareButton':        { fi: 'Jaa', en: 'Share' },
+  'share.cta':                { fi: 'Haasta minut TheTotal-sovelluksessa 💪', en: 'Challenge me on the TheTotal app 💪' },
+  'share.winsLabel':          { fi: 'Voittoa', en: 'Wins' },
+  'share.dialogTitle':        { fi: 'Jaa rankisi', en: 'Share your rank' },
+
   // Language selector
   'language.section':         { fi: 'KIELI', en: 'LANGUAGE' },
   'language.system':          { fi: 'Järjestelmä', en: 'System' },

@@ -11,6 +11,7 @@ import { RanksModal } from '../../components/ui/RanksModal'
 import { ScreenBackground } from '../../components/ui/ScreenBackground'
 import { ChallengesSection } from '../../components/profile/ChallengesSection'
 import { SBDEditModal } from '../../components/profile/SBDEditModal'
+import { ShareRankModal } from '../../components/profile/ShareRankModal'
 import { getSBDSubRank, getSBDRank } from '../../lib/xp'
 import { estimateOneRepMax, shouldShowEstimatedOneRepMax } from '../../lib/pr'
 import { getNewlyCompleted } from '../../lib/challenges'
@@ -40,6 +41,7 @@ export default function ProfileScreen() {
   const [editVisible, setEditVisible] = useState(false)
   const [completedChallenges, setCompletedChallenges] = useState<string[]>([])
   const [duelWins, setDuelWins] = useState(0)
+  const [shareVisible, setShareVisible] = useState(false)
   const [sbdEditVisible, setSbdEditVisible] = useState(false)
   const [bwInput, setBwInput] = useState('')
   const [usernameVisible, setUsernameVisible] = useState(false)
@@ -165,7 +167,7 @@ export default function ProfileScreen() {
   if (!profile) return (
     <SafeAreaView className="flex-1 bg-bg items-center justify-center">
       <TouchableOpacity onPress={signOut} className="py-3 px-6">
-        <Text className="text-muted">Kirjaudu ulos</Text>
+        <Text className="text-muted">{t('profile.signOut')}</Text>
       </TouchableOpacity>
     </SafeAreaView>
   )
@@ -190,6 +192,26 @@ export default function ProfileScreen() {
           currentRank={profile.sbd_rank}
           currentTier={subRank.tier}
           ratio={subRank.ratio}
+        />
+
+        <TouchableOpacity
+          onPress={() => setShareVisible(true)}
+          style={{ backgroundColor: COLORS.card, borderRadius: 14, paddingVertical: 12, alignItems: 'center', marginBottom: 16 }}
+        >
+          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>{t('share.button')}</Text>
+        </TouchableOpacity>
+
+        <ShareRankModal
+          visible={shareVisible}
+          onClose={() => setShareVisible(false)}
+          username={profile.username}
+          sbdRank={profile.sbd_rank}
+          tier={subRank.tier}
+          ratio={subRank.ratio}
+          sbdTotal={sbdTotal}
+          streak={profile.streak}
+          totalWorkouts={totalWorkouts}
+          duelWins={duelWins}
         />
 
         <TouchableOpacity
