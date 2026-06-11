@@ -77,7 +77,7 @@ export default function StartWorkoutScreen() {
       .select('id, name, muscle_group')
       .in('name', p.exerciseNames)
     if (!exData || exData.length === 0) {
-      Alert.alert('Virhe', 'Liikkeitä ei löytynyt')
+      Alert.alert(t('common.error'), t('start.noExercises'))
       return null
     }
     const byName: Record<string, any> = {}
@@ -89,7 +89,7 @@ export default function StartWorkoutScreen() {
         exerciseName: byName[n].name,
         muscleGroup: byName[n].muscle_group,
       }))
-    return { id: p.id, name: p.name, exercises }
+    return { id: p.id, name: t(`preset.${p.id}.name` as any), exercises }
   }
 
   async function handlePresetStart(p: PresetTemplate) {
@@ -217,8 +217,8 @@ export default function StartWorkoutScreen() {
               marginBottom: 10,
             }}
           >
-            <Text className="text-white font-bold text-base mb-1">{p.name}</Text>
-            <Text className="text-muted text-xs mb-2">{p.description}</Text>
+            <Text className="text-white font-bold text-base mb-1">{t(`preset.${p.id}.name` as any)}</Text>
+            <Text className="text-muted text-xs mb-2">{t(`preset.${p.id}.desc` as any)}</Text>
             <Text className="text-muted text-xs mb-3" numberOfLines={2}>
               {p.exerciseNames.join(' · ')}
             </Text>

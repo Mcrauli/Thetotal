@@ -154,6 +154,7 @@ const STRINGS = {
   'start.blankDesc':          { fi: 'Lisää liikkeet itse', en: 'Add exercises yourself' },
   'start.myPrograms':         { fi: 'OMAT OHJELMAT', en: 'MY PROGRAMS' },
   'start.presets':            { fi: 'ESIMERKKIOHJELMAT', en: 'PRESET PROGRAMS' },
+  'start.noExercises':        { fi: 'Liikkeitä ei löytynyt', en: 'No exercises found' },
   'start.startProgram':       { fi: '▶ Aloita', en: '▶ Start' },
   'start.saveAsOwn':          { fi: '+ Tallenna omaksi', en: '+ Save as own' },
   'start.saved':              { fi: 'Tallennettu', en: 'Saved' },
@@ -161,6 +162,8 @@ const STRINGS = {
 
   // Profile
   'profile.records':          { fi: 'ENNÄTYKSET', en: 'PERSONAL RECORDS' },
+  'profile.duelWins':         { fi: 'VOITETUT HAASTEET', en: 'DUELS WON' },
+  'profile.duelWinsValue':    { fi: '{n} voittoa', en: '{n} wins' },
   'profile.sbdRecords':       { fi: 'SBD ENNÄTYKSET', en: 'SBD RECORDS' },
   'profile.editPin':          { fi: 'Muokkaa ✎', en: 'Edit ✎' },
   'profile.verified':         { fi: '✓ Vahvistettu', en: '✓ Verified' },
@@ -197,6 +200,16 @@ const STRINGS = {
   'rank.Mestari':             { fi: 'Mestari', en: 'Master' },
   'rank.Maailmaluokka':       { fi: 'Maailmaluokka', en: 'World Class' },
   'rank.Legenda':             { fi: 'Legenda', en: 'Legend' },
+  'rankDesc.Aloittelija':     { fi: 'Kaikki alkaa täältä. Perusliikeradat kuntoon.', en: 'Everyone starts here. Nail the basic movement patterns.' },
+  'rankDesc.Harrastaja':      { fi: 'Perusvoima alkaa kehittyä. Säännöllinen harjoittelu näkyy tuloksissa.', en: 'Base strength is developing. Consistent training shows in results.' },
+  'rankDesc.Kilpailija':      { fi: 'Selkeästi yli keskivertotason. Vahva harjoittelija.', en: 'Clearly above average. A strong lifter.' },
+  'rankDesc.Alueellinen':     { fi: 'Huomattava voimataso. Kuulut vahvimpaan 20 %:iin harjoittelijoista.', en: 'Notable strength. You\'re in the top 20% of lifters.' },
+  'rankDesc.Kansallinen':     { fi: 'Poikkeuksellinen voima. Top 10 % harjoittelijoista.', en: 'Exceptional strength. Top 10% of lifters.' },
+  'rankDesc.Kansainvälinen':  { fi: 'Harvinainen voimataso. Vain harva yltää tähän.', en: 'Rare strength level. Few ever reach this.' },
+  'rankDesc.Eliitti':         { fi: 'Äärimmäinen voimataso. Top 1 % harjoittelijoista.', en: 'Extreme strength. Top 1% of lifters.' },
+  'rankDesc.Mestari':         { fi: 'Vuosien kurinalaisuuden tulos. Poikkeuksellinen suoritus.', en: 'The result of years of discipline. Exceptional.' },
+  'rankDesc.Maailmaluokka':   { fi: 'Maailman kärkeä lähestyvä voimataso.', en: 'Strength approaching the world\'s best.' },
+  'rankDesc.Legenda':         { fi: 'Maailman huippu. Harva koskaan saavuttaa tämän.', en: 'The world\'s peak. Few ever achieve this.' },
 
   // Social / Friends
   'friends.title':            { fi: 'Kaverit', en: 'Friends' },
@@ -276,6 +289,20 @@ const STRINGS = {
   'friends.duel.youWon':      { fi: '🏆 Sinä voitit!', en: '🏆 You won!' },
   'friends.duel.theyWon':     { fi: '😤 {name} voitti', en: '😤 {name} won' },
   'friends.duel.tie':         { fi: '🤝 Tasapeli', en: '🤝 Tie' },
+
+  // Preset programs (start-workout)
+  'preset.full-body.name':    { fi: 'Full Body — Aloittelija', en: 'Full Body — Beginner' },
+  'preset.full-body.desc':    { fi: 'Koko kehon treeni 3× viikossa. Yksinkertaisin tapa aloittaa.', en: 'Full-body workout 3× a week. The simplest way to start.' },
+  'preset.sl-5x5-a.name':     { fi: '5×5 — A', en: '5×5 — A' },
+  'preset.sl-5x5-a.desc':     { fi: 'StrongLifts A-treeni. Vuorottele B:n kanssa 3× viikossa.', en: 'StrongLifts workout A. Alternate with B 3× a week.' },
+  'preset.sl-5x5-b.name':     { fi: '5×5 — B', en: '5×5 — B' },
+  'preset.sl-5x5-b.desc':     { fi: 'StrongLifts B-treeni. Vuorottele A:n kanssa 3× viikossa.', en: 'StrongLifts workout B. Alternate with A 3× a week.' },
+  'preset.push.name':         { fi: 'Push (työntö)', en: 'Push' },
+  'preset.push.desc':         { fi: 'Rinta, hartiat ja ojentajat. Osa PPL-splittiä.', en: 'Chest, shoulders and triceps. Part of a PPL split.' },
+  'preset.pull.name':         { fi: 'Pull (veto)', en: 'Pull' },
+  'preset.pull.desc':         { fi: 'Selkä ja hauikset. Osa PPL-splittiä.', en: 'Back and biceps. Part of a PPL split.' },
+  'preset.legs.name':         { fi: 'Legs (jalat)', en: 'Legs' },
+  'preset.legs.desc':         { fi: 'Jalkapäivä — kyykky, takareidet ja pohkeet. Osa PPL-splittiä.', en: 'Leg day — squats, hamstrings and calves. Part of a PPL split.' },
 }
 
 type StringKey = keyof typeof STRINGS

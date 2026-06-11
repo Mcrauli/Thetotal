@@ -3,6 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { XPBar } from '../ui/XPBar'
 import { RankBarbellIcon } from '../ui/RankBarbellIcon'
 import { getRankData, TIER_ROMAN } from '../../lib/xp'
+import { useT } from '../../lib/i18n'
 import type { RankName } from '../../lib/constants'
 import { COLORS } from '../../lib/constants'
 
@@ -27,6 +28,7 @@ interface RankBannerProps {
 }
 
 export function RankBanner({ xp, sbdRank, sbdTier, onPressRank }: RankBannerProps) {
+  const t = useT()
   const rankData = getRankData(sbdRank)
   const tierLabel = sbdTier ? ` ${TIER_ROMAN[sbdTier]}` : ''
   const gradientColors = RANK_GRADIENTS[sbdRank] ?? [rankData.color + '28', COLORS.card2, COLORS.card]
@@ -50,7 +52,7 @@ export function RankBanner({ xp, sbdRank, sbdTier, onPressRank }: RankBannerProp
       <TouchableOpacity className="items-center mb-4" onPress={onPressRank} activeOpacity={onPressRank ? 0.7 : 1}>
         <RankBarbellIcon rank={sbdRank} width={100} height={100} />
         <Text className="text-2xl font-black tracking-widest mt-3" style={{ color: rankData.color }}>
-          {sbdRank.toUpperCase()}{tierLabel}
+          {t(`rank.${sbdRank}` as any).toUpperCase()}{tierLabel}
         </Text>
         <Text className="text-muted text-xs mt-1">SBD RANK{onPressRank ? '  ›' : ''}</Text>
       </TouchableOpacity>

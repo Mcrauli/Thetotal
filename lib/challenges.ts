@@ -56,6 +56,11 @@ export const CHALLENGES: Challenge[] = [
   { id: 'bench_bw',     icon: '💪', name: 'Penkkipunnerrus oma paino', description: 'Penkkipunnerrus vähintään oma kehonpaino', xp: 500 },
   { id: 'squat_2bw',    icon: '🦵', name: 'Kaksinkertainen paino',     description: 'Kyykky 2× oma kehonpaino',                xp: 1000 },
   { id: 'deadlift_2bw', icon: '⚔',  name: 'Maastaveto 2× paino',      description: 'Maastaveto 2× oma kehonpaino',             xp: 800 },
+
+  { id: 'duel_win_1',   icon: '🥊', name: 'Ensimmäinen voitto',   description: 'Voita kaverihaaste',          xp: 200 },
+  { id: 'duel_win_5',   icon: '🥊', name: '5 voittoa',            description: 'Voita 5 kaverihaastetta',     xp: 500 },
+  { id: 'duel_win_10',  icon: '🥊', name: '10 voittoa',           description: 'Voita 10 kaverihaastetta',    xp: 1200 },
+  { id: 'duel_win_25',  icon: '🥊', name: '25 voittoa',           description: 'Voita 25 kaverihaastetta',    xp: 3000 },
 ]
 
 export interface ChallengeCheckInput {
@@ -65,6 +70,7 @@ export interface ChallengeCheckInput {
   bench: number
   deadlift: number
   bodyweight?: number
+  duelWins?: number
 }
 
 export function getNewlyCompleted(input: ChallengeCheckInput, alreadyDone: string[]): Challenge[] {
@@ -119,6 +125,10 @@ export function getNewlyCompleted(input: ChallengeCheckInput, alreadyDone: strin
     if (c.id === 'bench_bw')     return input.bodyweight ? input.bench >= input.bodyweight : false
     if (c.id === 'squat_2bw')    return input.bodyweight ? input.squat >= input.bodyweight * 2 : false
     if (c.id === 'deadlift_2bw') return input.bodyweight ? input.deadlift >= input.bodyweight * 2 : false
+    if (c.id === 'duel_win_1')   return (input.duelWins ?? 0) >= 1
+    if (c.id === 'duel_win_5')   return (input.duelWins ?? 0) >= 5
+    if (c.id === 'duel_win_10')  return (input.duelWins ?? 0) >= 10
+    if (c.id === 'duel_win_25')  return (input.duelWins ?? 0) >= 25
     return false
   })
 }

@@ -1,6 +1,7 @@
 import { View, Text, Modal, ScrollView, TouchableOpacity } from 'react-native'
 import { RANKS, SBD_RANK_THRESHOLDS, type RankName } from '../../lib/constants'
 import { TIER_ROMAN } from '../../lib/xp'
+import { useT } from '../../lib/i18n'
 import { RankBarbellIcon } from './RankBarbellIcon'
 
 interface RanksModalProps {
@@ -9,19 +10,6 @@ interface RanksModalProps {
   currentRank: RankName
   currentTier?: 1 | 2 | 3 | 4
   ratio?: number
-}
-
-const RANK_DESC: Record<RankName, string> = {
-  Aloittelija:    'Kaikki alkaa täältä. Perusliikeradat kuntoon.',
-  Harrastaja:     'Perusvoima alkaa kehittyä. Säännöllinen harjoittelu näkyy tuloksissa.',
-  Kilpailija:     'Selkeästi yli keskivertotason. Vahva harjoittelija.',
-  Alueellinen:    'Huomattava voimataso. Kuulut vahvimpaan 20 %:iin harjoittelijoista.',
-  Kansallinen:    'Poikkeuksellinen voima. Top 10 % harjoittelijoista.',
-  Kansainvälinen: 'Harvinainen voimataso. Vain harva yltää tähän.',
-  Eliitti:        'Äärimmäinen voimataso. Top 1 % harjoittelijoista.',
-  Mestari:        'Vuosien kurinalaisuuden tulos. Poikkeuksellinen suoritus.',
-  Maailmaluokka:  'Maailman kärkeä lähestyvä voimataso.',
-  Legenda:        'Maailman huippu. Harva koskaan saavuttaa tämän.',
 }
 
 function getTierThresholds(rankIdx: number): { tier: 1|2|3|4; min: number; max: number }[] {
@@ -36,13 +24,14 @@ function getTierThresholds(rankIdx: number): { tier: 1|2|3|4; min: number; max: 
 }
 
 export function RanksModal({ visible, onClose, currentRank, currentTier, ratio }: RanksModalProps) {
+  const t = useT()
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <View className="flex-1 bg-bg">
         <View className="flex-row justify-between items-center px-6 pt-6 pb-2">
           <Text className="text-white text-xl font-black">SBD Ranks</Text>
           <TouchableOpacity onPress={onClose}>
-            <Text className="text-muted text-base">Sulje</Text>
+            <Text className="text-muted text-base">{t('common.close')}</Text>
           </TouchableOpacity>
         </View>
         {ratio !== undefined && ratio > 0 && (
@@ -67,7 +56,7 @@ export function RanksModal({ visible, onClose, currentRank, currentTier, ratio }
                 </View>
                 <View className="flex-row items-center justify-between mb-1">
                   <Text className="text-lg font-black" style={{ color: rank.color }}>
-                    {rank.name.toUpperCase()}
+                    {t(`rank.${rank.name}` as any).toUpperCase()}
                   </Text>
                   <Text className="text-muted text-xs">
                     {isLegend
@@ -76,7 +65,7 @@ export function RanksModal({ visible, onClose, currentRank, currentTier, ratio }
                   </Text>
                 </View>
 
-                <Text className="text-muted text-xs mb-3">{RANK_DESC[rank.name]}</Text>
+                <Text className="text-muted text-xs mb-3">{t(`rankDesc.${rank.name}` as any)}</Text>
 
                 {!isLegend && (
                   <View className="gap-1">
@@ -93,7 +82,7 @@ export function RanksModal({ visible, onClose, currentRank, currentTier, ratio }
                           }}
                         >
                           <Text className="text-sm font-bold" style={{ color: isActive ? rank.color : '#666' }}>
-                            {rank.name} {TIER_ROMAN[tier]}
+                            {t(`rank.${rank.name}` as any)} {TIER_ROMAN[tier]}
                             {isActive ? '  ← sinä' : ''}
                           </Text>
                           <Text className="text-xs" style={{ color: isActive ? rank.color : '#555' }}>

@@ -13,6 +13,7 @@ import { ChallengesSection } from '../../components/profile/ChallengesSection'
 import { SBDEditModal } from '../../components/profile/SBDEditModal'
 import { getSBDSubRank, getSBDRank } from '../../lib/xp'
 import { estimateOneRepMax, shouldShowEstimatedOneRepMax } from '../../lib/pr'
+import { getNewlyCompleted } from '../../lib/challenges'
 import { useT } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
 import { COLORS } from '../../lib/constants'
@@ -36,6 +37,7 @@ export default function ProfileScreen() {
   const [ranksVisible, setRanksVisible] = useState(false)
   const [editVisible, setEditVisible] = useState(false)
   const [completedChallenges, setCompletedChallenges] = useState<string[]>([])
+  const [duelWins, setDuelWins] = useState(0)
   const [sbdEditVisible, setSbdEditVisible] = useState(false)
   const [bwInput, setBwInput] = useState('')
   const [usernameVisible, setUsernameVisible] = useState(false)
@@ -89,7 +91,34 @@ export default function ProfileScreen() {
     setTotalWorkouts(count ?? 0)
     const { data: challengeData } = await supabase
       .from('user_challenges').select('challenge_id').eq('user_id', userId)
-    setCompletedChallenges((challengeData ?? []).map((r: any) => r.challenge_id))
+    const alreadyDone = (challengeData ?? []).map((r: any) => r.challenge_id)
+
+    const { data: duels } = await supabase
+      .from('friend_challenges')
+      .select('challenger_id, challenged_id, challenger_value, challenged_value')
+      .eq('status', 'beaten')
+      .in('challenge_type', ['volume', 'workouts'])
+      .or(`challenger_id.eq.${userId},challenged_id.eq.${userId}`)
+    const wins = (duels ?? []).filter((d: any) => {
+      const cv = d.challenger_value ?? 0, dv = d.challenged_value ?? 0
+      if (cv === dv) return false
+      const winnerId = cv > dv ? d.challenger_id : d.challenged_id
+      return winnerId === userId
+    }).length
+    setDuelWins(wins)
+
+    const newDuelChallenges = getNewlyCompleted(
+      { totalWorkouts: 0, streak: 0, squat: 0, bench: 0, deadlift: 0, duelWins: wins },
+      alreadyDone
+    ).filter(c => c.id.startsWith('duel_win_'))
+    if (newDuelChallenges.length > 0) {
+      await supabase.from('user_challenges').insert(
+        newDuelChallenges.map(c => ({ user_id: userId, challenge_id: c.id }))
+      )
+      setCompletedChallenges([...alreadyDone, ...newDuelChallenges.map(c => c.id)])
+    } else {
+      setCompletedChallenges(alreadyDone)
+    }
   }
 
   async function saveUsername() {
@@ -244,6 +273,16 @@ export default function ProfileScreen() {
             </View>
           )
         })()}
+
+        {duelWins > 0 && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.card, borderRadius: 16, padding: 16, marginBottom: 16 }}>
+            <Text style={{ fontSize: 28, marginRight: 12 }}>🥊</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2 }}>{t('profile.duelWins')}</Text>
+              <Text style={{ color: '#fff', fontSize: 18, fontWeight: '900', marginTop: 2 }}>{t('profile.duelWinsValue', { n: String(duelWins) })}</Text>
+            </View>
+          </View>
+        )}
 
         <ChallengesSection completedIds={completedChallenges} />
 
