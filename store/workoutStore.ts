@@ -11,6 +11,7 @@ export interface WorkoutSet {
   reps: number
   rpe?: number
   isPR: boolean
+  done?: boolean
 }
 
 export interface WorkoutExercise {
@@ -37,6 +38,7 @@ interface WorkoutState {
   removeExercise: (exerciseId: string) => void
   removeSet: (exerciseId: string, setId: string) => void
   updateSet: (exerciseId: string, setId: string, field: 'weightKg' | 'reps' | 'rpe', value: number | undefined) => void
+  toggleSetDone: (exerciseId: string, setId: string) => void
   clearWorkout: () => void
 }
 
@@ -114,6 +116,15 @@ export const useWorkoutStore = create<WorkoutState>()(
           ex.exerciseId !== exerciseId ? ex : {
             ...ex,
             sets: ex.sets.map(s => s.id !== setId ? s : { ...s, [field]: value }),
+          }
+        ),
+      })),
+
+      toggleSetDone: (exerciseId, setId) => set(state => ({
+        exercises: state.exercises.map(ex =>
+          ex.exerciseId !== exerciseId ? ex : {
+            ...ex,
+            sets: ex.sets.map(s => s.id !== setId ? s : { ...s, done: !s.done }),
           }
         ),
       })),

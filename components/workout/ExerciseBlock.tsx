@@ -9,10 +9,11 @@ interface ExerciseBlockProps {
   lastBest: string | null
   defaultWeight?: number
   defaultReps?: number
+  prWeight?: number
   onMount?: () => void
 }
 
-export function ExerciseBlock({ exercise, lastBest, defaultWeight, defaultReps, onMount }: ExerciseBlockProps) {
+export function ExerciseBlock({ exercise, lastBest, defaultWeight, defaultReps, prWeight, onMount }: ExerciseBlockProps) {
   useEffect(() => { onMount?.() }, [])
   const t = useT()
   const { addSet, copyLastSet, removeExercise } = useWorkoutStore()
@@ -58,7 +59,7 @@ export function ExerciseBlock({ exercise, lastBest, defaultWeight, defaultReps, 
       )}
 
       {exercise.sets.map(set => (
-        <SetRow key={set.id} set={set} exerciseId={exercise.exerciseId} isCardio={isCardio} />
+        <SetRow key={set.id} set={set} exerciseId={exercise.exerciseId} isCardio={isCardio} prWeight={prWeight} />
       ))}
 
       <View className="flex-row gap-2 mt-2">

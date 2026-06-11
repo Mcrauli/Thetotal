@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { View, Text, TextInput, TouchableOpacity, Modal } from 'react-native'
+import { useState, useEffect, useRef } from 'react'
+import { View, Text, TextInput, TouchableOpacity, Modal, Animated } from 'react-native'
+import * as Haptics from 'expo-haptics'
 import { useWorkoutStore, type WorkoutSet } from '../../store/workoutStore'
 import { COLORS } from '../../lib/constants'
 import { useT } from '../../lib/i18n'
@@ -8,6 +9,7 @@ interface SetRowProps {
   set: WorkoutSet
   exerciseId: string
   isCardio?: boolean
+  prWeight?: number
 }
 
 function rpeColor(rpe: number) {
@@ -16,12 +18,38 @@ function rpeColor(rpe: number) {
   return '#ef4444'
 }
 
-export function SetRow({ set, exerciseId, isCardio }: SetRowProps) {
+export function SetRow({ set, exerciseId, isCardio, prWeight }: SetRowProps) {
   const t = useT()
-  const { updateSet, removeSet } = useWorkoutStore()
+  const { updateSet, removeSet, toggleSetDone } = useWorkoutStore()
   const [rpePickerOpen, setRpePickerOpen] = useState(false)
   const weightStep = isCardio ? 5 : 0.5
   const repsStep = 1
+
+  const isNewPR = !isCardio && prWeight != null && set.weightKg > prWeight && set.weightKg > 0
+  const flash = useRef(new Animated.Value(0)).current
+  const wasPR = useRef(false)
+
+  useEffect(() => {
+    if (isNewPR && !wasPR.current) {
+      Animated.sequence([
+        Animated.timing(flash, { toValue: 1, duration: 180, useNativeDriver: false }),
+        Animated.timing(flash, { toValue: 0, duration: 700, useNativeDriver: false }),
+      ]).start()
+    }
+    wasPR.current = isNewPR
+  }, [isNewPR])
+
+  function handleToggleDone() {
+    const turningOn = !set.done
+    if (turningOn && isNewPR) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {})
+    } else {
+      Haptics.impactAsync(turningOn ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light).catch(() => {})
+    }
+    toggleSetDone(exerciseId, set.id)
+  }
+
+  const bg = flash.interpolate({ inputRange: [0, 1], outputRange: ['transparent', COLORS.gold + '40'] })
 
   function stepWeight(delta: number) {
     const next = Math.round((set.weightKg + delta) * 10) / 10
@@ -39,8 +67,21 @@ export function SetRow({ set, exerciseId, isCardio }: SetRowProps) {
   }
 
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-      <Text style={{ color: COLORS.muted, width: 22, textAlign: 'center', fontSize: 12 }}>{set.setNumber}</Text>
+    <Animated.View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8, borderRadius: 10, backgroundColor: bg, opacity: set.done ? 0.55 : 1, borderLeftWidth: isNewPR ? 3 : 0, borderLeftColor: COLORS.gold, paddingLeft: isNewPR ? 4 : 0 }}>
+      <TouchableOpacity
+        onPress={handleToggleDone}
+        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+        style={{
+          width: 24, height: 24, borderRadius: 12, marginRight: 2,
+          alignItems: 'center', justifyContent: 'center',
+          backgroundColor: set.done ? COLORS.green : 'transparent',
+          borderWidth: set.done ? 0 : 1, borderColor: COLORS.cardEdge,
+        }}
+      >
+        <Text style={{ color: set.done ? '#fff' : COLORS.muted, fontSize: set.done ? 13 : 12, fontWeight: '700' }}>
+          {set.done ? '✓' : set.setNumber}
+        </Text>
+      </TouchableOpacity>
 
       <View style={{ flex: 1.2, flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.bg, borderRadius: 10 }}>
         <TouchableOpacity onPress={() => stepWeight(-weightStep)} style={{ paddingHorizontal: 8, paddingVertical: 8 }}>
@@ -74,7 +115,7 @@ export function SetRow({ set, exerciseId, isCardio }: SetRowProps) {
         </TouchableOpacity>
       </View>
 
-      {set.isPR && <Text style={{ color: COLORS.gold, fontSize: 11, fontWeight: '700' }}>PR!</Text>}
+      {(set.isPR || isNewPR) && <Text style={{ color: COLORS.gold, fontSize: 11, fontWeight: '700' }}>PR!</Text>}
       {!isCardio && (
         <TouchableOpacity
           onPress={() => setRpePickerOpen(true)}
@@ -141,6 +182,6 @@ export function SetRow({ set, exerciseId, isCardio }: SetRowProps) {
           </View>
         </TouchableOpacity>
       </Modal>
-    </View>
+    </Animated.View>
   )
 }

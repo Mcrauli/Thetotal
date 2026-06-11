@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { View, Text, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
+import { useKeepAwake } from 'expo-keep-awake'
+import * as Haptics from 'expo-haptics'
 import { useWorkoutStore } from '../../store/workoutStore'
 import { useUserStore } from '../../store/userStore'
 import { ExerciseBlock } from '../../components/workout/ExerciseBlock'
@@ -17,6 +19,7 @@ import { calcDOTS } from '../../lib/dots'
 import { useT } from '../../lib/i18n'
 
 export default function ActiveWorkoutScreen() {
+  useKeepAwake()
   const t = useT()
   const { exercises, workoutName, startedAt, setWorkoutName, addExercise, clearWorkout } = useWorkoutStore()
   const { profile, fetchProfile } = useUserStore()
@@ -29,6 +32,16 @@ export default function ActiveWorkoutScreen() {
   const [shareVisible, setShareVisible] = useState(false)
   const [plateVisible, setPlateVisible] = useState(false)
   const [lastSets, setLastSets] = useState<Record<string, { text: string; weight: number; reps: number } | null>>({})
+  const [prWeights, setPrWeights] = useState<Record<string, number>>({})
+
+  useEffect(() => {
+    if (!profile) return
+    supabase.from('personal_records').select('exercise_id, weight_kg').eq('user_id', profile.id).then(({ data }) => {
+      const map: Record<string, number> = {}
+      for (const r of (data ?? []) as any[]) map[r.exercise_id] = r.weight_kg
+      setPrWeights(map)
+    })
+  }, [profile?.id])
 
   async function fetchLastSets(exerciseId: string) {
     if (!profile || exerciseId in lastSets) return
@@ -51,7 +64,7 @@ export default function ActiveWorkoutScreen() {
     setLastSets(prev => ({
       ...prev,
       [exerciseId]: {
-        text: 'Viimeksi: ' + recent.map((s: any) => isCardio ? `${s.weight_kg}min ${s.reps}km` : `${s.weight_kg}×${s.reps}`).join('  '),
+        text: t('active.lastTime') + ' ' + recent.map((s: any) => isCardio ? `${s.weight_kg}min ${s.reps}km` : `${s.weight_kg}×${s.reps}`).join('  '),
         weight: best.weight_kg,
         reps: best.reps,
       },
@@ -414,6 +427,7 @@ export default function ActiveWorkoutScreen() {
       setShareData(null)
     }
 
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {})
     setResults({ xpGain: displayXPGain, xpBreakdown: { base: xpBase, prBonus, streakBonus, challengeBonus }, improvements, challenges: challengeResults })
     } catch (e: any) {
       Alert.alert(t('active.savingError'), e?.message ?? '')
@@ -484,6 +498,7 @@ export default function ActiveWorkoutScreen() {
             lastBest={lastSets[ex.exerciseId]?.text ?? null}
             defaultWeight={lastSets[ex.exerciseId]?.weight ?? ex.defaultWeight}
             defaultReps={lastSets[ex.exerciseId]?.reps ?? ex.defaultReps}
+            prWeight={prWeights[ex.exerciseId]}
             onMount={() => fetchLastSets(ex.exerciseId)}
           />
         ))}
