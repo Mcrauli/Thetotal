@@ -15,6 +15,7 @@
     "expo-auth-session": "^55.0.16",
     "expo-constants": "~18.0.13",
     "expo-crypto": "^55.0.15",
+    "expo-file-system": "~19.0.23",
     "expo-linear-gradient": "^55.0.14",
     "expo-linking": "~8.0.12",
     "expo-localization": "~17.0.8",

@@ -3,8 +3,10 @@ import { View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, P
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
+import { useT } from '../../lib/i18n'
 
 export default function SignupScreen() {
+  const t = useT()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [username, setUsername] = useState('')
@@ -12,18 +14,18 @@ export default function SignupScreen() {
 
   async function handleSignup() {
     if (!email || !password || !username) {
-      Alert.alert('Error', 'Fill in all fields')
+      Alert.alert(t('common.error'), t('auth.fillAll'))
       return
     }
     setLoading(true)
     const { data, error } = await supabase.auth.signUp({ email, password })
-    if (error) { Alert.alert('Error', error.message); setLoading(false); return }
+    if (error) { Alert.alert(t('common.error'), error.message); setLoading(false); return }
 
     if (data.user) {
       const { error: profileError } = await supabase
         .from('users')
         .insert({ id: data.user.id, username: username.trim().toLowerCase() })
-      if (profileError) { Alert.alert('Error', profileError.message); setLoading(false); return }
+      if (profileError) { Alert.alert(t('common.error'), profileError.message); setLoading(false); return }
     }
     setLoading(false)
   }
@@ -34,9 +36,9 @@ export default function SignupScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1 px-6 justify-center"
       >
-        <Text className="text-white text-2xl font-black mb-8">Create Account</Text>
+        <Text className="text-white text-2xl font-black mb-8">{t('auth.createAccount')}</Text>
 
-        <Text className="text-muted text-xs mb-1 ml-1">USERNAME</Text>
+        <Text className="text-muted text-xs mb-1 ml-1">{t('auth.username')}</Text>
         <TextInput
           className="bg-card rounded-xl px-4 py-3 text-white mb-4"
           placeholder="mikko_lifts"
@@ -46,7 +48,7 @@ export default function SignupScreen() {
           autoCapitalize="none"
         />
 
-        <Text className="text-muted text-xs mb-1 ml-1">EMAIL</Text>
+        <Text className="text-muted text-xs mb-1 ml-1">{t('auth.email')}</Text>
         <TextInput
           className="bg-card rounded-xl px-4 py-3 text-white mb-4"
           placeholder="you@example.com"
@@ -57,10 +59,10 @@ export default function SignupScreen() {
           autoCapitalize="none"
         />
 
-        <Text className="text-muted text-xs mb-1 ml-1">PASSWORD</Text>
+        <Text className="text-muted text-xs mb-1 ml-1">{t('auth.password')}</Text>
         <TextInput
           className="bg-card rounded-xl px-4 py-3 text-white mb-8"
-          placeholder="Min. 6 characters"
+          placeholder={t('auth.minChars')}
           placeholderTextColor="#888"
           value={password}
           onChangeText={setPassword}
@@ -73,12 +75,12 @@ export default function SignupScreen() {
           disabled={loading}
         >
           <Text className="text-white font-bold text-base">
-            {loading ? 'Creating account...' : 'Create Account'}
+            {loading ? t('auth.creatingAccount') : t('auth.createAccount')}
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity className="mt-4 items-center" onPress={() => router.back()}>
-          <Text className="text-muted">← Back</Text>
+          <Text className="text-muted">← {t('common.back')}</Text>
         </TouchableOpacity>
       </KeyboardAvoidingView>
     </SafeAreaView>

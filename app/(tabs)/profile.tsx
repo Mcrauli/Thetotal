@@ -19,6 +19,7 @@ import { getNewlyCompleted } from '../../lib/challenges'
 import { useT, useLocaleStore } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
 import { unblockUser } from '../../lib/moderation'
+import { exportUserData } from '../../lib/dataExport'
 import { COLORS } from '../../lib/constants'
 
 interface PRMap { squat: number; bench: number; deadlift: number }
@@ -46,6 +47,19 @@ export default function ProfileScreen() {
   const [shareVisible, setShareVisible] = useState(false)
   const [blockedVisible, setBlockedVisible] = useState(false)
   const [blockedList, setBlockedList] = useState<{ id: string; username: string }[]>([])
+  const [exporting, setExporting] = useState(false)
+
+  async function handleExport() {
+    if (!profile || exporting) return
+    setExporting(true)
+    try {
+      await exportUserData(profile.id)
+    } catch {
+      Alert.alert(t('data.exportFailed'))
+    } finally {
+      setExporting(false)
+    }
+  }
 
   async function loadBlocked() {
     if (!profile) return
@@ -458,6 +472,10 @@ export default function ProfileScreen() {
             <Text style={{ color: COLORS.muted, fontSize: 12 }}>{t('profile.privacy')}</Text>
           </TouchableOpacity>
         </View>
+
+        <TouchableOpacity className="items-center py-3" onPress={handleExport} disabled={exporting}>
+          <Text style={{ color: COLORS.muted, fontSize: 13 }}>{exporting ? t('data.exporting') : t('data.export')}</Text>
+        </TouchableOpacity>
 
         <TouchableOpacity
           className="mb-8 items-center py-3"

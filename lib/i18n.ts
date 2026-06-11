@@ -311,6 +311,25 @@ const STRINGS = {
   'lb.filterDOTS':            { fi: '📊 DOTS', en: '📊 DOTS' },
   'lb.titleDOTS':             { fi: 'RANKING — DOTS', en: 'RANKING — DOTS' },
 
+  // Auth screens
+  'auth.tagline':             { fi: 'NOSTA. NOUSE RANKISSA. KILPAILE.', en: 'TRACK LIFTS. EARN RANK. COMPETE.' },
+  'auth.getStarted':          { fi: 'ALOITA', en: 'GET STARTED' },
+  'auth.haveAccount':         { fi: 'Minulla on jo tili', en: 'Already have an account' },
+  'auth.welcomeBack':         { fi: 'Tervetuloa takaisin', en: 'Welcome back' },
+  'auth.loginFailed':         { fi: 'Kirjautuminen epäonnistui', en: 'Login failed' },
+  'auth.logIn':               { fi: 'Kirjaudu', en: 'Log In' },
+  'auth.loggingIn':           { fi: 'Kirjaudutaan...', en: 'Logging in...' },
+  'auth.passwordPlaceholder': { fi: 'Salasana', en: 'Password' },
+  'auth.createAccount':       { fi: 'Luo tili', en: 'Create Account' },
+  'auth.creatingAccount':     { fi: 'Luodaan tiliä...', en: 'Creating account...' },
+  'auth.fillAll':             { fi: 'Täytä kaikki kentät', en: 'Fill in all fields' },
+  'auth.minChars':            { fi: 'Väh. 6 merkkiä', en: 'Min. 6 characters' },
+
+  // Data export (GDPR)
+  'data.export':              { fi: 'Lataa tietoni', en: 'Download my data' },
+  'data.exporting':           { fi: 'Kerätään tietoja...', en: 'Collecting data...' },
+  'data.exportFailed':        { fi: 'Vienti epäonnistui', en: 'Export failed' },
+
   // Language selector
   'language.section':         { fi: 'KIELI', en: 'LANGUAGE' },
   'language.system':          { fi: 'Järjestelmä', en: 'System' },

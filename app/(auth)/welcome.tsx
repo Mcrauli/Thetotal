@@ -1,8 +1,10 @@
 import { View, Text, TouchableOpacity } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { useT } from '../../lib/i18n'
 
 export default function WelcomeScreen() {
+  const t = useT()
   return (
     <SafeAreaView className="flex-1 bg-bg">
       <View className="flex-1 items-center justify-center px-6">
@@ -10,7 +12,7 @@ export default function WelcomeScreen() {
           THE TOTAL
         </Text>
         <Text className="text-muted text-sm tracking-widest mb-16">
-          TRACK LIFTS. EARN RANK. COMPETE.
+          {t('auth.tagline')}
         </Text>
 
         <TouchableOpacity
@@ -18,7 +20,7 @@ export default function WelcomeScreen() {
           onPress={() => router.push('/(auth)/signup')}
         >
           <Text className="text-white font-bold text-base tracking-wider">
-            GET STARTED
+            {t('auth.getStarted')}
           </Text>
         </TouchableOpacity>
 
@@ -27,7 +29,7 @@ export default function WelcomeScreen() {
           onPress={() => router.push('/(auth)/login')}
         >
           <Text className="text-muted font-semibold text-base">
-            Already have an account
+            {t('auth.haveAccount')}
           </Text>
         </TouchableOpacity>
       </View>
