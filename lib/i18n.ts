@@ -194,6 +194,7 @@ const STRINGS = {
   'profile.deleteBody':       { fi: 'Kaikki tietosi poistetaan pysyvästi. Tätä ei voi peruuttaa.', en: 'All your data will be permanently deleted. This cannot be undone.' },
   'profile.terms':            { fi: 'Käyttöehdot', en: 'Terms' },
   'profile.privacy':          { fi: 'Tietosuoja', en: 'Privacy' },
+  'profile.replayTutorial':   { fi: 'Katso opastus uudelleen', en: 'Replay tutorial' },
   'profile.repsLabel':        { fi: 'toistoa', en: 'reps' },
   'profile.support':          { fi: 'Tue kehitystä', en: 'Support development' },
   'profile.privacySection':   { fi: 'YKSITYISYYS', en: 'PRIVACY' },

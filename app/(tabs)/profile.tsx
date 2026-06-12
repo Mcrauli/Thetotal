@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, Modal, Switch, FlatList, Linking, Platform } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useFocusEffect } from 'expo-router'
+import { useFocusEffect, router } from 'expo-router'
 import { useUserStore } from '../../store/userStore'
 import { RankBanner } from '../../components/profile/RankBanner'
 import { SBDRow } from '../../components/profile/SBDRow'
@@ -14,6 +14,7 @@ import { SBDEditModal } from '../../components/profile/SBDEditModal'
 import { ShareRankModal } from '../../components/profile/ShareRankModal'
 import { getSBDSubRank, getSBDRank } from '../../lib/xp'
 import { calcDOTS } from '../../lib/dots'
+import { StatNumber } from '../../components/ui/StatNumber'
 import { estimateOneRepMax, shouldShowEstimatedOneRepMax } from '../../lib/pr'
 import { getNewlyCompleted } from '../../lib/challenges'
 import { useT, useLocaleStore } from '../../lib/i18n'
@@ -236,7 +237,7 @@ export default function ProfileScreen() {
         {dots > 0 && (
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: COLORS.card, borderRadius: 14, paddingVertical: 12, marginBottom: 8 }}>
             <Text style={{ color: COLORS.muted, fontSize: 11, letterSpacing: 2 }}>{t('dots.label')}</Text>
-            <Text style={{ color: COLORS.gold, fontWeight: '900', fontSize: 18 }}>{dots}</Text>
+            <StatNumber value={dots} size={22} color={COLORS.gold} />
           </View>
         )}
 
@@ -294,20 +295,22 @@ export default function ProfileScreen() {
 
         <View className="flex-row gap-3 mb-4">
           <View className="flex-1 bg-card rounded-2xl p-3 items-center">
-            <Text className="text-white font-bold text-xl">{totalWorkouts}</Text>
+            <StatNumber value={totalWorkouts} size={22} />
             <Text className="text-muted text-xs">{t('profile.workouts')}</Text>
           </View>
           <View className="flex-1 bg-card rounded-2xl p-3 items-center">
-            <Text className="text-accent font-bold text-xl">🔥{profile.streak}</Text>
-            <Text className="text-muted text-xs">{t('profile.streakLabel')}</Text>
+            <StatNumber value={profile.streak} size={22} color={COLORS.accent} style={{ marginLeft: 2 }} unit="" />
+            <Text className="text-muted text-xs">🔥 {t('profile.streakLabel')}</Text>
           </View>
           <TouchableOpacity
             className="flex-1 bg-card rounded-2xl p-3 items-center"
             onPress={() => { setBwInput(profile.bodyweight_kg?.toString() ?? ''); setEditVisible(true) }}
           >
-            <Text className="text-white font-bold text-xl">
-              {profile.bodyweight_kg ? `${profile.bodyweight_kg}kg` : '—'}
-            </Text>
+            {profile.bodyweight_kg ? (
+              <StatNumber value={profile.bodyweight_kg} unit="kg" size={22} unitColor={COLORS.muted} />
+            ) : (
+              <Text className="text-white font-bold text-xl">—</Text>
+            )}
             <Text className="text-muted text-xs">{t('profile.weightLabel')}</Text>
           </TouchableOpacity>
         </View>
@@ -347,7 +350,7 @@ export default function ProfileScreen() {
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   {pinned.map(pr => (
                     <View key={pr.exercises?.name} style={{ flex: 1, backgroundColor: COLORS.card2, borderRadius: 12, padding: 12, alignItems: 'center' }}>
-                      <Text style={{ color: COLORS.gold, fontWeight: '900', fontSize: 22 }}>{pr.weight_kg}<Text style={{ fontSize: 13, fontWeight: '400' }}>kg</Text></Text>
+                      <StatNumber value={pr.weight_kg} unit="kg" size={24} color={COLORS.gold} unitColor={COLORS.muted} />
                       {pr.reps > 1 && (
                         <Text style={{ color: COLORS.muted, fontSize: 10 }}>{pr.reps} {t('profile.repsLabel')}</Text>
                       )}
@@ -443,6 +446,14 @@ export default function ProfileScreen() {
             })}
           </View>
         </View>
+
+        <TouchableOpacity
+          onPress={() => router.push('/(auth)/tutorial')}
+          style={{ marginTop: 16, backgroundColor: COLORS.card, borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+        >
+          <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>📖 {t('profile.replayTutorial')}</Text>
+          <Text style={{ color: COLORS.muted, fontSize: 16 }}>›</Text>
+        </TouchableOpacity>
 
         {Platform.OS !== 'ios' && (
           <View style={{ marginTop: 24, backgroundColor: COLORS.card, borderRadius: 16, padding: 20, alignItems: 'center', marginBottom: 12 }}>

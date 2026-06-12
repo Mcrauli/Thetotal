@@ -1,5 +1,7 @@
 import { View, Text, TouchableOpacity } from 'react-native'
 import { useT } from '../../lib/i18n'
+import { StatNumber } from '../ui/StatNumber'
+import { COLORS } from '../../lib/constants'
 
 interface SBDRowProps {
   squat: number
@@ -33,9 +35,11 @@ export function SBDRow({ squat, bench, deadlift, squatVerified, benchVerified, d
             className={`flex-1 rounded-xl p-3 items-center ${highlight ? 'bg-card2 border border-gold' : 'bg-card border border-cardEdge'}`}
           >
             <Text className={`text-xs ${highlight ? 'text-gold' : 'text-muted'}`}>{label}</Text>
-            <Text className={`font-bold text-lg ${highlight ? 'text-gold' : 'text-white'}`}>
-              {value > 0 ? `${value}kg` : '—'}
-            </Text>
+            {value > 0 ? (
+              <StatNumber value={value} unit="kg" size={highlight ? 26 : 22} color={highlight ? COLORS.gold : '#fff'} unitColor={COLORS.muted} style={{ marginTop: 2 }} />
+            ) : (
+              <Text className={`font-bold text-lg ${highlight ? 'text-gold' : 'text-white'}`} style={{ marginTop: 2 }}>—</Text>
+            )}
             {value > 0 && verified !== undefined && (
               verified
                 ? <Text style={{ color: '#4ade80', fontSize: 9, marginTop: 2, fontWeight: '700' }}>✓</Text>

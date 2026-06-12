@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Dimensions } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, Dimensions } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect, router } from 'expo-router'
 import { LineChart } from 'react-native-gifted-charts'
@@ -9,6 +9,7 @@ import { getRankData, getLevel } from '../../lib/xp'
 import { COLORS } from '../../lib/constants'
 import type { RankName } from '../../lib/constants'
 import { ScreenBackground } from '../../components/ui/ScreenBackground'
+import { LeaderboardSkeleton } from '../../components/ui/Skeleton'
 import { useT } from '../../lib/i18n'
 import { calcDOTS } from '../../lib/dots'
 
@@ -374,7 +375,7 @@ export default function ProgressScreen() {
             </Text>
 
             {loadingLB ? (
-              <ActivityIndicator color={COLORS.accent} style={{ marginTop: 40 }} />
+              <LeaderboardSkeleton />
             ) : (() => {
               const base = lbScope === 'friends'
                 ? leaderboard.filter(e => friendIds.has(e.id))
@@ -460,7 +461,7 @@ export default function ProgressScreen() {
             })()}
 
             {loadingWeekly ? (
-              <ActivityIndicator color={COLORS.accent} style={{ marginTop: 40 }} />
+              <LeaderboardSkeleton />
             ) : (() => {
               const userMap: Record<string, LeaderboardEntry> = {}
               for (const e of leaderboard) userMap[e.id] = e
