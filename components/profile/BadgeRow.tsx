@@ -1,4 +1,4 @@
-import { View, Text } from 'react-native'
+import { View, Text, TouchableOpacity } from 'react-native'
 
 export const ALL_BADGES = [
   { id: 'first_workout', icon: '🏋️', label: 'First Workout' },
@@ -19,6 +19,8 @@ interface BadgeRowProps {
   hasDeadliftPR: boolean
   totalWorkouts: number
   featured?: string[]
+  onEditPress?: () => void
+  editLabel?: string
 }
 
 export function getUnlockedBadgeIds(props: BadgeRowProps): string[] {
@@ -44,7 +46,14 @@ export function BadgeRow(props: BadgeRowProps) {
 
   return (
     <View className="bg-card rounded-2xl p-4 mb-4">
-      <Text className="text-muted text-xs tracking-widest mb-3">BADGES</Text>
+      <View className="flex-row justify-between items-center mb-3">
+        <Text className="text-muted text-xs tracking-widest">BADGES</Text>
+        {props.onEditPress && (
+          <TouchableOpacity onPress={props.onEditPress} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Text className="text-accent" style={{ fontSize: 12 }}>{props.editLabel}</Text>
+          </TouchableOpacity>
+        )}
+      </View>
       <View className="flex-row flex-wrap gap-2">
         {toShow.map(b => (
           <View key={b.id} className="bg-card2 rounded-xl px-3 py-2 items-center" style={{ minWidth: 72 }}>

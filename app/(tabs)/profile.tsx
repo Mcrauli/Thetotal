@@ -383,23 +383,17 @@ export default function ProfileScreen() {
 
         <ChallengesSection completedIds={completedChallenges} />
 
-        <View style={{ marginBottom: 16 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: -12, paddingHorizontal: 4, zIndex: 1 }}>
-            <View />
-            <TouchableOpacity onPress={() => setBadgeModalVisible(true)}>
-              <Text style={{ color: COLORS.accent, fontSize: 12 }}>{t('profile.editPin')}</Text>
-            </TouchableOpacity>
-          </View>
-          <BadgeRow
-            xp={profile.xp}
-            streak={profile.streak}
-            hasBenchPR={sbd.bench > 0}
-            hasSquatPR={sbd.squat > 0}
-            hasDeadliftPR={sbd.deadlift > 0}
-            totalWorkouts={totalWorkouts}
-            featured={pinnedBadges}
-          />
-        </View>
+        <BadgeRow
+          xp={profile.xp}
+          streak={profile.streak}
+          hasBenchPR={sbd.bench > 0}
+          hasSquatPR={sbd.squat > 0}
+          hasDeadliftPR={sbd.deadlift > 0}
+          totalWorkouts={totalWorkouts}
+          featured={pinnedBadges}
+          onEditPress={() => setBadgeModalVisible(true)}
+          editLabel={t('profile.editPin')}
+        />
 
         <View style={{ marginTop: 24, backgroundColor: COLORS.card, borderRadius: 16, overflow: 'hidden' }}>
           <Text style={{ color: COLORS.muted, fontSize: 10, letterSpacing: 2, padding: 16, paddingBottom: 8 }}>{t('profile.privacySection')}</Text>
