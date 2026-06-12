@@ -36,7 +36,7 @@ export function SBDRow({ squat, bench, deadlift, squatVerified, benchVerified, d
           >
             <Text className={`text-xs ${highlight ? 'text-gold' : 'text-muted'}`}>{label}</Text>
             {value > 0 ? (
-              <StatNumber value={value} unit="kg" size={highlight ? 26 : 22} color={highlight ? COLORS.gold : '#fff'} unitColor={COLORS.muted} style={{ marginTop: 2 }} />
+              <StatNumber value={value} unit="kg" size={highlight ? 20 : 18} color={highlight ? COLORS.gold : '#fff'} unitColor={COLORS.muted} style={{ marginTop: 2 }} numberOfLines={1} adjustsFontSizeToFit />
             ) : (
               <Text className={`font-bold text-lg ${highlight ? 'text-gold' : 'text-white'}`} style={{ marginTop: 2 }}>—</Text>
             )}
