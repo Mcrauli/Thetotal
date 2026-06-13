@@ -54,8 +54,11 @@ export default function ActiveWorkoutScreen() {
       .order('workouts.started_at', { ascending: false })
       .limit(20)
     if (!data?.length) { setLastSets(prev => ({ ...prev, [exerciseId]: null })); return }
-    const recentId = (data[0] as any).workout_id
-    const recent = (data as any[])
+    const rows = (data as any[]).slice().sort((a, b) =>
+      new Date(b.workouts?.started_at ?? 0).getTime() - new Date(a.workouts?.started_at ?? 0).getTime()
+    )
+    const recentId = rows[0].workout_id
+    const recent = rows
       .filter(s => s.workout_id === recentId)
       .sort((a, b) => a.set_number - b.set_number)
     const best = recent.reduce((b: any, s: any) =>

@@ -58,12 +58,18 @@ export default function StartWorkoutScreen() {
         .order('workouts.started_at', { ascending: false })
         .limit(ids.length * 10)
 
-      const seen = new Set<string>()
+      const byExercise: Record<string, any[]> = {}
       for (const s of (data ?? []) as any[]) {
-        if (!seen.has(s.exercise_id)) {
-          seen.add(s.exercise_id)
-          lastWeights[s.exercise_id] = { weight: s.weight_kg, reps: s.reps }
-        }
+        ;(byExercise[s.exercise_id] ??= []).push(s)
+      }
+      for (const [exId, sets] of Object.entries(byExercise)) {
+        sets.sort((a, b) => new Date(b.workouts?.started_at ?? 0).getTime() - new Date(a.workouts?.started_at ?? 0).getTime())
+        const recentId = sets[0].workout_id
+        const recent = sets.filter(s => s.workout_id === recentId)
+        const best = recent.reduce((b, s) =>
+          s.weight_kg > b.weight_kg || (s.weight_kg === b.weight_kg && s.reps > b.reps) ? s : b
+        , recent[0])
+        lastWeights[exId] = { weight: best.weight_kg, reps: best.reps }
       }
     }
 
