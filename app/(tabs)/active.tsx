@@ -47,20 +47,15 @@ export default function ActiveWorkoutScreen() {
   async function fetchLastSets(exerciseId: string) {
     if (!profile || exerciseId in lastSets) return
     const { data } = await supabase
-      .from('workout_sets')
-      .select('weight_kg, reps, set_number, workout_id, workouts!inner(started_at, user_id)')
-      .eq('exercise_id', exerciseId)
-      .eq('workouts.user_id', profile.id)
-      .order('workouts.started_at', { ascending: false })
-      .limit(20)
-    if (!data?.length) { setLastSets(prev => ({ ...prev, [exerciseId]: null })); return }
-    const rows = (data as any[]).slice().sort((a, b) =>
-      new Date(b.workouts?.started_at ?? 0).getTime() - new Date(a.workouts?.started_at ?? 0).getTime()
-    )
-    const recentId = rows[0].workout_id
-    const recent = rows
-      .filter(s => s.workout_id === recentId)
-      .sort((a, b) => a.set_number - b.set_number)
+      .from('workouts')
+      .select('started_at, workout_sets!inner(weight_kg, reps, set_number, exercise_id)')
+      .eq('user_id', profile.id)
+      .eq('workout_sets.exercise_id', exerciseId)
+      .order('started_at', { ascending: false })
+      .limit(1)
+    const recentRaw = (data?.[0] as any)?.workout_sets as any[] | undefined
+    if (!recentRaw?.length) { setLastSets(prev => ({ ...prev, [exerciseId]: null })); return }
+    const recent = recentRaw.slice().sort((a, b) => a.set_number - b.set_number)
     const best = recent.reduce((b: any, s: any) =>
       s.weight_kg > b.weight_kg || (s.weight_kg === b.weight_kg && s.reps > b.reps) ? s : b
     , recent[0])

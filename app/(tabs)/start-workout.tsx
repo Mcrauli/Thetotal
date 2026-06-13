@@ -50,26 +50,26 @@ export default function StartWorkoutScreen() {
     const lastWeights: Record<string, { weight: number; reps: number }> = {}
 
     if (ids.length > 0 && profile) {
+      const idSet = new Set(ids)
       const { data } = await supabase
-        .from('workout_sets')
-        .select('weight_kg, reps, exercise_id, workout_id, workouts!inner(started_at, user_id)')
-        .in('exercise_id', ids)
-        .eq('workouts.user_id', profile.id)
-        .order('workouts.started_at', { ascending: false })
-        .limit(ids.length * 10)
+        .from('workouts')
+        .select('started_at, workout_sets(exercise_id, weight_kg, reps)')
+        .eq('user_id', profile.id)
+        .order('started_at', { ascending: false })
+        .limit(30)
 
-      const byExercise: Record<string, any[]> = {}
-      for (const s of (data ?? []) as any[]) {
-        ;(byExercise[s.exercise_id] ??= []).push(s)
-      }
-      for (const [exId, sets] of Object.entries(byExercise)) {
-        sets.sort((a, b) => new Date(b.workouts?.started_at ?? 0).getTime() - new Date(a.workouts?.started_at ?? 0).getTime())
-        const recentId = sets[0].workout_id
-        const recent = sets.filter(s => s.workout_id === recentId)
-        const best = recent.reduce((b, s) =>
-          s.weight_kg > b.weight_kg || (s.weight_kg === b.weight_kg && s.reps > b.reps) ? s : b
-        , recent[0])
-        lastWeights[exId] = { weight: best.weight_kg, reps: best.reps }
+      for (const w of (data ?? []) as any[]) {
+        const byEx: Record<string, any[]> = {}
+        for (const s of (w.workout_sets ?? []) as any[]) {
+          if (idSet.has(s.exercise_id)) (byEx[s.exercise_id] ??= []).push(s)
+        }
+        for (const [exId, sets] of Object.entries(byEx)) {
+          if (lastWeights[exId]) continue
+          const best = sets.reduce((b, s) =>
+            s.weight_kg > b.weight_kg || (s.weight_kg === b.weight_kg && s.reps > b.reps) ? s : b
+          , sets[0])
+          lastWeights[exId] = { weight: best.weight_kg, reps: best.reps }
+        }
       }
     }
 
