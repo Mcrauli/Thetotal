@@ -2,7 +2,7 @@
 -- Idempotentti: ei lisää liikettä jos samanniminen on jo olemassa.
 
 insert into public.exercises (name, muscle_group, category, is_sbd)
-select v.name, 'Voimamies', 'strongman', false
+select v.name, 'Voimamies', 'accessory', false
 from (values
   ('Log Press'),
   ('Axle Press'),
