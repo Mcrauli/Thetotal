@@ -42,4 +42,10 @@ export const PRESET_TEMPLATES: PresetTemplate[] = [
     description: 'Jalkapäivä — kyykky, takareidet ja pohkeet. Osa PPL-splittiä.',
     exerciseNames: ['Squat', 'Romanian Deadlift', 'Leg Press', 'Leg Curl', 'Calf Raise'],
   },
+  {
+    id: 'strongman',
+    name: 'Voimamies',
+    description: 'Eventti-päivä: kanto, kivet ja prässi. Vaatii voimamiesvälineet.',
+    exerciseNames: ['Log Press', 'Axle Deadlift', 'Atlas Stone to Shoulder', 'Farmers Walk', 'Yoke Walk'],
+  },
 ]

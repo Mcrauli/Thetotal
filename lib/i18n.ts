@@ -455,6 +455,8 @@ const STRINGS = {
   'preset.pull.desc':         { fi: 'Selkä ja hauikset. Osa PPL-splittiä.', en: 'Back and biceps. Part of a PPL split.' },
   'preset.legs.name':         { fi: 'Legs (jalat)', en: 'Legs' },
   'preset.legs.desc':         { fi: 'Jalkapäivä — kyykky, takareidet ja pohkeet. Osa PPL-splittiä.', en: 'Leg day — squats, hamstrings and calves. Part of a PPL split.' },
+  'preset.strongman.name':    { fi: 'Voimamies', en: 'Strongman' },
+  'preset.strongman.desc':    { fi: 'Eventti-päivä: kanto, kivet ja prässi. Vaatii voimamiesvälineet.', en: 'Event day: carries, stones and presses. Requires strongman equipment.' },
 }
 
 type StringKey = keyof typeof STRINGS
