@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
 import { View, Text, TouchableOpacity, Modal, SectionList, TextInput } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { supabase } from '../../lib/supabase'
 import { useT } from '../../lib/i18n'
+
+const CACHE_KEY = 'cached_exercises'
 
 interface Exercise {
   id: string
@@ -24,9 +27,19 @@ export function ExercisePicker({ visible, onSelect, onClose }: ExercisePickerPro
 
   useEffect(() => {
     if (!visible) return
+    let cancelled = false
+    if (exercises.length === 0) {
+      AsyncStorage.getItem(CACHE_KEY).then(raw => {
+        if (cancelled || !raw) return
+        try { setExercises(JSON.parse(raw)) } catch {}
+      })
+    }
     supabase.from('exercises').select('id, name, muscle_group, is_sbd').order('name').then(({ data }) => {
-      setExercises(data ?? [])
+      if (cancelled || !data || data.length === 0) return
+      setExercises(data)
+      AsyncStorage.setItem(CACHE_KEY, JSON.stringify(data)).catch(() => {})
     })
+    return () => { cancelled = true }
   }, [visible])
 
   const filtered = exercises.filter(e =>

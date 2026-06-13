@@ -16,6 +16,7 @@ import { detectPRs } from '../../lib/pr'
 import { calculateXPGain, getRankForXP, getSBDRank, getSBDSubRank } from '../../lib/xp'
 import { getNewlyCompleted } from '../../lib/challenges'
 import { calcDOTS } from '../../lib/dots'
+import { withTimeout } from '../../lib/withTimeout'
 import { useT } from '../../lib/i18n'
 
 export default function ActiveWorkoutScreen() {
@@ -99,17 +100,26 @@ export default function ActiveWorkoutScreen() {
       .flatMap(e => e.sets)
       .reduce((sum, s) => sum + s.weightKg * s.reps, 0)
 
-    const { data: workout, error: workoutError } = await supabase
-      .from('workouts')
-      .insert({
-        user_id: profile.id,
-        name: workoutName,
-        started_at: startedAtISO,
-        finished_at: finishedAt.toISOString(),
-        total_volume_kg: totalVolume,
-      })
-      .select()
-      .single()
+    let workout: any = null, workoutError: any = null
+    try {
+      const res = await withTimeout(
+        supabase
+          .from('workouts')
+          .insert({
+            user_id: profile.id,
+            name: workoutName,
+            started_at: startedAtISO,
+            finished_at: finishedAt.toISOString(),
+            total_volume_kg: totalVolume,
+          })
+          .select()
+          .single(),
+        15000
+      )
+      workout = res.data; workoutError = res.error
+    } catch {
+      workoutError = { message: t('active.networkError') }
+    }
 
     if (workoutError || !workout) {
       Alert.alert(t('common.error'), workoutError?.message)
@@ -131,12 +141,12 @@ export default function ActiveWorkoutScreen() {
     )
 
     const [{ error: setsError }, { data: existingPRData }, { count: workoutCount }, { data: doneData }] =
-      await Promise.all([
+      await withTimeout(Promise.all([
         supabase.from('workout_sets').insert(allSets),
         supabase.from('personal_records').select('exercise_id, weight_kg, reps, exercises(name, is_sbd)').eq('user_id', profile.id),
         supabase.from('workouts').select('id', { count: 'exact', head: true }).eq('user_id', profile.id),
         supabase.from('user_challenges').select('challenge_id').eq('user_id', profile.id),
-      ])
+      ]), 15000)
 
     if (setsError) {
       Alert.alert(t('active.setsError'), setsError.message)
@@ -234,7 +244,7 @@ export default function ActiveWorkoutScreen() {
           const tokens = (friendProfiles ?? []).map((u: any) => u.push_token).filter(Boolean)
           if (tokens.length > 0) {
             const prName = exerciseNameById[sbdPRs[0].exerciseId] ?? 'SBD'
-            await fetch('https://exp.host/--/api/v2/push/send', {
+            await withTimeout(fetch('https://exp.host/--/api/v2/push/send', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(tokens.map((to: string) => ({
@@ -242,7 +252,7 @@ export default function ActiveWorkoutScreen() {
                 title: `${profile.username} löi ennätyksen! 💪`,
                 body: `${prName}: ${sbdPRs[0].weight} kg`,
               }))),
-            })
+            }), 8000)
           }
         }
       }
@@ -286,7 +296,7 @@ export default function ActiveWorkoutScreen() {
               .from('users').select('push_token').in('id', overtaken).not('push_token', 'is', null)
             const tokens = (tokenRows ?? []).map((u: any) => u.push_token).filter(Boolean)
             if (tokens.length > 0) {
-              await fetch('https://exp.host/--/api/v2/push/send', {
+              await withTimeout(fetch('https://exp.host/--/api/v2/push/send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(tokens.map((to: string) => ({
@@ -294,7 +304,7 @@ export default function ActiveWorkoutScreen() {
                   title: `🔥 ${profile.username} ohitti sinut viikkohaasteessa!`,
                   body: `${myCount} treeniä tällä viikolla. Sinun vuorosi 💪`,
                 }))),
-              })
+              }), 8000)
             }
           }
         }
@@ -321,19 +331,21 @@ export default function ActiveWorkoutScreen() {
       }
     } catch {}
 
-    await Promise.all([
-      supabase.from('users').update({
-        xp: totalXP, rank: finalRank, sbd_rank: newSBDRank,
-        streak: newStreak, last_workout_date: today,
-        sbd_total: sbdTotal,
-      }).eq('id', profile.id),
-      newChallenges.length > 0
-        ? supabase.from('user_challenges').insert(newChallenges.map(c => ({ user_id: profile.id, challenge_id: c.id })))
-        : Promise.resolve(),
-      beatenIds.length > 0
-        ? supabase.from('friend_challenges').update({ status: 'beaten' }).in('id', beatenIds)
-        : Promise.resolve(),
-    ])
+    try {
+      await withTimeout(Promise.all([
+        supabase.from('users').update({
+          xp: totalXP, rank: finalRank, sbd_rank: newSBDRank,
+          streak: newStreak, last_workout_date: today,
+          sbd_total: sbdTotal,
+        }).eq('id', profile.id),
+        newChallenges.length > 0
+          ? supabase.from('user_challenges').insert(newChallenges.map(c => ({ user_id: profile.id, challenge_id: c.id })))
+          : Promise.resolve(),
+        beatenIds.length > 0
+          ? supabase.from('friend_challenges').update({ status: 'beaten' }).in('id', beatenIds)
+          : Promise.resolve(),
+      ]), 12000)
+    } catch {}
 
     const prExerciseIdSet = new Set(prs.map(pr => pr.exerciseId))
     const improvements: ImprovementResult[] = []
