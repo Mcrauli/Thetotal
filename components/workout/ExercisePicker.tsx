@@ -3,7 +3,8 @@ import { View, Text, TouchableOpacity, Modal, SectionList, TextInput } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { supabase } from '../../lib/supabase'
-import { useT } from '../../lib/i18n'
+import { useT, useLocaleStore } from '../../lib/i18n'
+import { muscleLabel } from '../../lib/muscleGroups'
 
 const CACHE_KEY = 'cached_exercises'
 
@@ -22,6 +23,7 @@ interface ExercisePickerProps {
 
 export function ExercisePicker({ visible, onSelect, onClose }: ExercisePickerProps) {
   const t = useT()
+  const locale = useLocaleStore(s => s.locale)
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [search, setSearch] = useState('')
 
@@ -47,16 +49,15 @@ export function ExercisePicker({ visible, onSelect, onClose }: ExercisePickerPro
   )
 
   const grouped = filtered.reduce<Record<string, Exercise[]>>((acc, e) => {
-    const group = e.muscle_group ?? t('common.other')
+    const group = e.muscle_group ?? 'Muut'
     if (!acc[group]) acc[group] = []
     acc[group].push(e)
     return acc
   }, {})
 
-  const sections = Object.keys(grouped).sort().map(key => ({
-    title: key,
-    data: grouped[key],
-  }))
+  const sections = Object.keys(grouped)
+    .map(key => ({ title: muscleLabel(key, locale), data: grouped[key] }))
+    .sort((a, b) => a.title.localeCompare(b.title))
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
