@@ -296,6 +296,9 @@ const STRINGS = {
   'share.cta':                { fi: 'Haasta minut TheTotal-sovelluksessa 💪', en: 'Challenge me on the TheTotal app 💪' },
   'share.winsLabel':          { fi: 'Voittoa', en: 'Wins' },
   'share.dialogTitle':        { fi: 'Jaa rankisi', en: 'Share your rank' },
+  'share.prTitle':            { fi: 'UUSI ENNÄTYS 💪', en: 'NEW PR 💪' },
+  'share.prDialogTitle':      { fi: 'Jaa ennätyksesi', en: 'Share your PR' },
+  'share.prMore':             { fi: 'lisää ennätystä', en: 'more PRs' },
 
   // Plate calculator & warmup
   'plate.title':              { fi: 'Levylaskuri', en: 'Plate calculator' },

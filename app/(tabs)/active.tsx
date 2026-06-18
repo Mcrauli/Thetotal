@@ -9,13 +9,12 @@ import { useUserStore } from '../../store/userStore'
 import { ExerciseBlock } from '../../components/workout/ExerciseBlock'
 import { ExercisePicker } from '../../components/workout/ExercisePicker'
 import { WorkoutResults, type ImprovementResult, type ChallengeResult } from '../../components/workout/WorkoutResults'
-import { ShareRankModal } from '../../components/profile/ShareRankModal'
+import { PRShareModal, type PRShareItem } from '../../components/workout/PRShareModal'
 import { PlateModal } from '../../components/workout/PlateModal'
 import { supabase } from '../../lib/supabase'
 import { detectPRs } from '../../lib/pr'
-import { calculateXPGain, getRankForXP, getSBDRank, getSBDSubRank } from '../../lib/xp'
+import { calculateXPGain, getRankForXP, getSBDRank } from '../../lib/xp'
 import { getNewlyCompleted } from '../../lib/challenges'
-import { calcDOTS } from '../../lib/dots'
 import { withTimeout } from '../../lib/withTimeout'
 import { useT } from '../../lib/i18n'
 
@@ -29,7 +28,7 @@ export default function ActiveWorkoutScreen() {
   const savingRef = useRef(false)
   const [elapsed, setElapsed] = useState(0)
   const [results, setResults] = useState<{ xpGain: number; xpBreakdown: { base: number; prBonus: number; streakBonus: number; challengeBonus: number }; improvements: ImprovementResult[]; challenges: ChallengeResult[] } | null>(null)
-  const [shareData, setShareData] = useState<{ sbdRank: any; tier: 1 | 2 | 3 | 4; ratio: number; sbdTotal: number; streak: number; totalWorkouts: number; duelWins: number; dots: number } | null>(null)
+  const [prShare, setPrShare] = useState<{ prs: PRShareItem[]; dateLabel: string } | null>(null)
   const [shareVisible, setShareVisible] = useState(false)
   const [plateVisible, setPlateVisible] = useState(false)
   const [lastSets, setLastSets] = useState<Record<string, { text: string; weight: number; reps: number } | null>>({})
@@ -418,24 +417,14 @@ export default function ActiveWorkoutScreen() {
     const challengeBonus = challengeXP
     try { await fetchProfile() } catch {}
 
-    if (improvements.some(i => i.isAllTimePR)) {
-      try {
-        const sub = getSBDSubRank(sbdTotal, profile.bodyweight_kg ?? 0, profile.gender !== 'female')
-        const { data: duels } = await supabase
-          .from('friend_challenges')
-          .select('challenger_id, challenged_id, challenger_value, challenged_value')
-          .eq('status', 'beaten').in('challenge_type', ['volume', 'workouts'])
-          .or(`challenger_id.eq.${profile.id},challenged_id.eq.${profile.id}`)
-        const duelWins = (duels ?? []).filter((d: any) => {
-          const cv = d.challenger_value ?? 0, dv = d.challenged_value ?? 0
-          if (cv === dv) return false
-          return (cv > dv ? d.challenger_id : d.challenged_id) === profile.id
-        }).length
-        const dots = calcDOTS(sbdTotal, profile.bodyweight_kg ?? 0, profile.gender !== 'female')
-        setShareData({ sbdRank: newSBDRank, tier: sub.tier, ratio: sub.ratio, sbdTotal, streak: newStreak, totalWorkouts: workoutCount ?? 0, duelWins, dots })
-      } catch {}
+    const prItems: PRShareItem[] = improvements
+      .filter(i => i.isAllTimePR)
+      .sort((a, b) => b.newWeight - a.newWeight)
+      .map(i => ({ exerciseName: i.exerciseName, weight: i.newWeight, reps: i.newReps }))
+    if (prItems.length > 0) {
+      setPrShare({ prs: prItems, dateLabel: finishedAt.toLocaleDateString('fi-FI') })
     } else {
-      setShareData(null)
+      setPrShare(null)
     }
 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {})
@@ -456,23 +445,17 @@ export default function ActiveWorkoutScreen() {
         xpBreakdown={results?.xpBreakdown ?? { base: 0, prBonus: 0, streakBonus: 0, challengeBonus: 0 }}
         improvements={results?.improvements ?? []}
         challenges={results?.challenges ?? []}
-        onShare={shareData ? () => setShareVisible(true) : undefined}
+        onShare={prShare ? () => setShareVisible(true) : undefined}
         onDismiss={() => { clearWorkout(); setResults(null); router.replace('/(tabs)/') }}
       />
 
-      {shareData && profile && (
-        <ShareRankModal
+      {prShare && profile && (
+        <PRShareModal
           visible={shareVisible}
           onClose={() => setShareVisible(false)}
           username={profile.username}
-          sbdRank={shareData.sbdRank}
-          tier={shareData.tier}
-          ratio={shareData.ratio}
-          sbdTotal={shareData.sbdTotal}
-          streak={shareData.streak}
-          totalWorkouts={shareData.totalWorkouts}
-          duelWins={shareData.duelWins}
-          dots={shareData.dots}
+          dateLabel={prShare.dateLabel}
+          prs={prShare.prs}
         />
       )}
 
