@@ -39,8 +39,8 @@ export function ShareRankModal({
       const available = await Sharing.isAvailableAsync()
       if (!available) { Alert.alert(t('common.error')); return }
       await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: t('share.dialogTitle') })
-    } catch {
-      Alert.alert(t('common.error'))
+    } catch (e: any) {
+      Alert.alert(t('common.error'), e?.message ?? '')
     } finally {
       setSharing(false)
     }

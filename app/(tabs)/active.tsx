@@ -451,7 +451,7 @@ export default function ActiveWorkoutScreen() {
   return (
     <SafeAreaView className="flex-1 bg-bg">
       <WorkoutResults
-        visible={!!results}
+        visible={!!results && !shareVisible}
         xpGain={results?.xpGain ?? 0}
         xpBreakdown={results?.xpBreakdown ?? { base: 0, prBonus: 0, streakBonus: 0, challengeBonus: 0 }}
         improvements={results?.improvements ?? []}
