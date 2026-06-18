@@ -100,6 +100,7 @@ export default function ActiveWorkoutScreen() {
 
     let workout: any = null, workoutError: any = null
     try {
+      try { await withTimeout(supabase.auth.getSession(), 8000) } catch {}
       const res = await withTimeout(
         supabase
           .from('workouts')
