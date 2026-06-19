@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { timingSafeEqual } from 'https://deno.land/std@0.224.0/crypto/timing_safe_equal.ts'
 
 // RevenueCat webhook -> päivittää users.is_supporter palvelinpuolella.
 // Tämä on luotettava lähde: asiakas ei voi väärentää tukijastatusta.
@@ -17,7 +18,11 @@ const INACTIVE_TYPES = ['EXPIRATION', 'CANCELLATION', 'REFUND', 'SUBSCRIPTION_PA
 
 Deno.serve(async (req) => {
   const secret = Deno.env.get('REVENUECAT_WEBHOOK_SECRET')
-  if (secret && req.headers.get('Authorization') !== secret) {
+  if (!secret) return new Response('Server misconfigured', { status: 500 })
+  const header = req.headers.get('Authorization') ?? ''
+  const a = new TextEncoder().encode(header)
+  const b = new TextEncoder().encode(secret)
+  if (a.length !== b.length || !timingSafeEqual(a, b)) {
     return new Response('Unauthorized', { status: 401 })
   }
 

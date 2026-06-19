@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { View, Text, TouchableOpacity, ActivityIndicator, Alert } from 'react-native'
 import { useUserStore } from '../../store/userStore'
-import { supabase } from '../../lib/supabase'
 import { useT } from '../../lib/i18n'
 import { COLORS } from '../../lib/constants'
 import { initPurchases, getSupporterPackage, purchaseSupporter, restoreSupporter, purchasesAvailable } from '../../lib/purchases'
@@ -23,10 +22,14 @@ export function SupporterCard() {
     return () => { active = false }
   }, [profile?.id])
 
-  async function markSupporter() {
-    if (!profile) return
-    await supabase.from('users').update({ is_supporter: true }).eq('id', profile.id)
-    await fetchProfile()
+  // is_supporter asetetaan vain palvelimella (RevenueCat-webhook). Tässä vain
+  // odotetaan että webhook on ehtinyt päivittää statuksen ja haetaan profiili.
+  async function syncSupporter() {
+    for (let i = 0; i < 5; i++) {
+      await fetchProfile()
+      if (useUserStore.getState().profile?.is_supporter) return
+      await new Promise(r => setTimeout(r, 1500))
+    }
   }
 
   async function buy() {
@@ -34,7 +37,7 @@ export function SupporterCard() {
     if (!purchasesAvailable() || !pkg) { Alert.alert(t('supporter.unavailable')); return }
     setBusy(true)
     try {
-      if (await purchaseSupporter(pkg)) { await markSupporter(); Alert.alert(t('supporter.thanks')) }
+      if (await purchaseSupporter(pkg)) { Alert.alert(t('supporter.thanks')); await syncSupporter() }
     } catch (e: any) {
       if (!e?.userCancelled) Alert.alert(t('common.error'), e?.message ?? '')
     } finally {
@@ -46,7 +49,7 @@ export function SupporterCard() {
     if (busy) return
     setBusy(true)
     try {
-      if (await restoreSupporter()) { await markSupporter(); Alert.alert(t('supporter.restored')) }
+      if (await restoreSupporter()) { Alert.alert(t('supporter.restored')); await syncSupporter() }
       else Alert.alert(t('supporter.nothingToRestore'))
     } catch (e: any) {
       Alert.alert(t('common.error'), e?.message ?? '')
