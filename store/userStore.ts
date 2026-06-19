@@ -19,6 +19,7 @@ export interface UserProfile {
   gender: 'male' | 'female' | null
   hide_sbd: boolean
   hide_weight: boolean
+  is_supporter: boolean
 }
 
 interface UserState {

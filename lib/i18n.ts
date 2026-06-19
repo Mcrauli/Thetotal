@@ -299,6 +299,17 @@ const STRINGS = {
   'share.prTitle':            { fi: 'UUSI ENNÄTYS 💪', en: 'NEW PR 💪' },
   'share.prDialogTitle':      { fi: 'Jaa ennätyksesi', en: 'Share your PR' },
   'share.prMore':             { fi: 'lisää ennätystä', en: 'more PRs' },
+  'supporter.title':          { fi: 'Tue kehittäjää ⭐', en: 'Support the developer ⭐' },
+  'supporter.body':           { fi: 'Kertaosto pitää sovelluksen mainoksettomana ja avaa Supporter-badgen profiiliisi.', en: 'A one-time purchase keeps the app ad-free and unlocks the Supporter badge on your profile.' },
+  'supporter.buy':            { fi: 'Ryhdy tukijaksi', en: 'Become a supporter' },
+  'supporter.buyWithPrice':   { fi: 'Ryhdy tukijaksi · {price}', en: 'Become a supporter · {price}' },
+  'supporter.restore':        { fi: 'Palauta osto', en: 'Restore purchase' },
+  'supporter.unavailable':    { fi: 'Osto ei ole juuri nyt saatavilla. Kokeile julkaistussa sovelluksessa.', en: 'Purchase is not available right now. Try the published app.' },
+  'supporter.thanks':         { fi: 'Kiitos tuestasi! ⭐ Supporter-badge on nyt profiilissasi.', en: 'Thank you for your support! ⭐ The Supporter badge is now on your profile.' },
+  'supporter.restored':       { fi: 'Osto palautettu. ⭐', en: 'Purchase restored. ⭐' },
+  'supporter.nothingToRestore': { fi: 'Palautettavaa ostoa ei löytynyt.', en: 'No purchase found to restore.' },
+  'supporter.activeTitle':    { fi: 'Olet tukija ⭐', en: 'You are a supporter ⭐' },
+  'supporter.activeBody':     { fi: 'Kiitos että pidät TheTotalin pystyssä.', en: 'Thanks for keeping TheTotal running.' },
 
   // Plate calculator & warmup
   'plate.title':              { fi: 'Levylaskuri', en: 'Plate calculator' },

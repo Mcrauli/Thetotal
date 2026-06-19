@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, Modal, Switch, FlatList, Linking, Platform } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, Modal, Switch, FlatList, Linking } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect, router } from 'expo-router'
@@ -12,6 +12,7 @@ import { ScreenBackground } from '../../components/ui/ScreenBackground'
 import { ChallengesSection } from '../../components/profile/ChallengesSection'
 import { SBDEditModal } from '../../components/profile/SBDEditModal'
 import { ShareRankModal } from '../../components/profile/ShareRankModal'
+import { SupporterCard } from '../../components/profile/SupporterCard'
 import { getSBDSubRank, getSBDRank } from '../../lib/xp'
 import { calcDOTS } from '../../lib/dots'
 import { StatNumber } from '../../components/ui/StatNumber'
@@ -390,6 +391,7 @@ export default function ProfileScreen() {
           hasSquatPR={sbd.squat > 0}
           hasDeadliftPR={sbd.deadlift > 0}
           totalWorkouts={totalWorkouts}
+          isSupporter={profile.is_supporter}
           featured={pinnedBadges}
           onEditPress={() => setBadgeModalVisible(true)}
           editLabel={t('profile.editPin')}
@@ -449,21 +451,7 @@ export default function ProfileScreen() {
           <Text style={{ color: COLORS.muted, fontSize: 16 }}>›</Text>
         </TouchableOpacity>
 
-        {Platform.OS !== 'ios' && (
-          <View style={{ marginTop: 24, backgroundColor: COLORS.card, borderRadius: 16, padding: 20, alignItems: 'center', marginBottom: 12 }}>
-            <Text style={{ fontSize: 24, marginBottom: 6 }}>☕</Text>
-            <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16, marginBottom: 4 }}>{t('profile.supportTitle')}</Text>
-            <Text style={{ color: COLORS.muted, fontSize: 13, textAlign: 'center', marginBottom: 14 }}>
-              {t('profile.supportBody')}
-            </Text>
-            <TouchableOpacity
-              onPress={() => Linking.openURL('https://ko-fi.com/thetotal')}
-              style={{ backgroundColor: '#FF5E5B', borderRadius: 12, paddingVertical: 12, paddingHorizontal: 28 }}
-            >
-              <Text style={{ color: '#fff', fontWeight: '900', fontSize: 14 }}>{t('profile.supportButton')}</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        <SupporterCard />
 
         <TouchableOpacity className="mt-4 items-center py-3" onPress={signOut}>
           <Text className="text-muted text-sm">{t('profile.signOut')}</Text>
@@ -611,7 +599,7 @@ export default function ProfileScreen() {
               const unlockedIds = new Set(getUnlockedBadgeIds({
                 xp: profile.xp, streak: profile.streak,
                 hasBenchPR: sbd.bench > 0, hasSquatPR: sbd.squat > 0, hasDeadliftPR: sbd.deadlift > 0,
-                totalWorkouts,
+                totalWorkouts, isSupporter: profile.is_supporter,
               }))
               return ALL_BADGES.map(b => {
                 const unlocked = unlockedIds.has(b.id)

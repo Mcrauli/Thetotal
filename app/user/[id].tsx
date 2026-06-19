@@ -57,7 +57,7 @@ export default function UserProfileScreen() {
   useEffect(() => {
     if (!id) return
     Promise.all([
-      supabase.from('users').select('id, username, sbd_rank, xp, streak, bodyweight_kg, gender, hide_sbd, hide_weight').eq('id', id).single(),
+      supabase.from('users').select('id, username, sbd_rank, xp, streak, bodyweight_kg, gender, hide_sbd, hide_weight, is_supporter').eq('id', id).single(),
       supabase.from('personal_records').select('id, weight_kg, reps, verified, exercises(name, is_sbd)').eq('user_id', id),
       supabase.from('workouts').select('id', { count: 'exact', head: true }).eq('user_id', id),
       supabase.from('workout_templates').select('id, name, template_exercises(exercise_id, order_index, exercises(name))').eq('user_id', id).order('created_at'),
@@ -347,7 +347,7 @@ export default function UserProfileScreen() {
         <BadgeRow
           xp={user.xp} streak={user.streak}
           hasBenchPR={sbd.bench > 0} hasSquatPR={sbd.squat > 0} hasDeadliftPR={sbd.deadlift > 0}
-          totalWorkouts={totalWorkouts}
+          totalWorkouts={totalWorkouts} isSupporter={(user as any).is_supporter}
         />
       </ScrollView>
 
