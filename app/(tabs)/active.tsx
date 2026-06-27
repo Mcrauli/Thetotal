@@ -99,7 +99,14 @@ export default function ActiveWorkoutScreen() {
 
     let workout: any = null, workoutError: any = null
     try {
-      try { await withTimeout(supabase.auth.getSession(), 8000) } catch {}
+      // Varmista voimassa oleva istunto ennen tallennusta. Jos access token on
+      // vanhentunut (pitkä treeni > 1 h) ja sen automaattinen uusinta epäonnistuu,
+      // supabase-js putoaa anon-keyhyn -> RLS hylkää insertin. Pakota uusinta.
+      let session = (await withTimeout(supabase.auth.getSession(), 8000).catch(() => null))?.data?.session ?? null
+      if (!session) {
+        session = (await withTimeout(supabase.auth.refreshSession(), 8000).catch(() => null))?.data?.session ?? null
+      }
+      if (!session) throw new Error(t('active.sessionExpired'))
       const res = await withTimeout(
         supabase
           .from('workouts')
@@ -115,8 +122,8 @@ export default function ActiveWorkoutScreen() {
         15000
       )
       workout = res.data; workoutError = res.error
-    } catch {
-      workoutError = { message: t('active.networkError') }
+    } catch (e: any) {
+      workoutError = { message: e?.message ?? t('active.networkError') }
     }
 
     if (workoutError || !workout) {
