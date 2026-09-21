@@ -33,13 +33,18 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ sent: 0 }), { headers: { 'Content-Type': 'application/json' } })
   }
 
-  const { data: users } = await admin
+  const { data: devices } = await admin
+    .from('user_devices')
+    .select('user_id, push_token')
+    .in('user_id', activeIds)
+  const { data: streaks } = await admin
     .from('users')
-    .select('id, streak, push_token')
+    .select('id, streak')
     .in('id', activeIds)
-    .not('push_token', 'is', null)
+  const streakById = Object.fromEntries((streaks ?? []).map((u: any) => [u.id, u.streak]))
+  const users = (devices ?? []).map((d: any) => ({ id: d.user_id, push_token: d.push_token, streak: streakById[d.user_id] ?? 0 }))
 
-  const messages = (users ?? [])
+  const messages = users
     .filter((u: any) => u.push_token)
     .map((u: any) => {
       const s = stats[u.id]
