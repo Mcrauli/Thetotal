@@ -16,7 +16,10 @@ async function registerPushToken() {
     })).data
     const { data: { session } } = await supabase.auth.getSession()
     if (session) {
-      await supabase.from('users').update({ push_token: token }).eq('id', session.user.id)
+      await supabase.from('user_devices').upsert(
+        { user_id: session.user.id, push_token: token, updated_at: new Date().toISOString() },
+        { onConflict: 'user_id' }
+      )
     }
   } catch {
   }

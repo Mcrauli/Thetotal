@@ -56,7 +56,7 @@ EI HUIJAUSTA
 SBD-ennätykset vaativat aina kaverin vahvistuksen ennen kuin ne näkyvät julkisesti vahvistettuina. Manuaalisesti syötetyt arvot näytetään "Itse ilmoitettu" -merkinnällä.
 
 ILMAINEN, EI MAINOKSIA
-TheTotal on täysin ilmainen eikä sisällä mainoksia tai maksullisia ominaisuuksia. Voit halutessasi tukea kehitystä vapaaehtoisesti Ko-fissa.
+TheTotal on käytettävissä täysin ilmaiseksi eikä sisällä mainoksia. Kaikki ominaisuudet ovat maksutta käytössä. Halutessasi voit tukea kehitystä kertaostolla ("Supporter") ja saada tunnusmerkin profiiliisi.
 
 TIETOSUOJA
 • Kaikki data tallennetaan EU:n alueella
@@ -99,6 +99,7 @@ Vastaa rehellisesti:
 - **User content**: Workout data + comments. Linked to identity.
 - **Identifiers**: User ID. Linked to identity.
 - **Diagnostics**: Crash data via Expo. NOT linked to identity.
+- **Purchases**: Supporter-kertaosto käsitellään RevenueCatin kautta. Linked to identity.
 - **Tracking**: NONE — ei seuraa muiden appien yli.
 
 ### App Review Information

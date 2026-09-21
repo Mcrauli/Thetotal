@@ -16,6 +16,7 @@ import { detectPRs } from '../../lib/pr'
 import { calculateXPGain, getRankForXP, getSBDRank } from '../../lib/xp'
 import { getNewlyCompleted } from '../../lib/challenges'
 import { withTimeout } from '../../lib/withTimeout'
+import { sendPushToUsers } from '../../lib/notifications'
 import { useT } from '../../lib/i18n'
 
 export default function ActiveWorkoutScreen() {
@@ -244,21 +245,12 @@ export default function ActiveWorkoutScreen() {
           .eq('status', 'accepted')
         if (friends && friends.length > 0) {
           const friendIds = friends.map((f: any) => f.user_id === profile.id ? f.friend_id : f.user_id)
-          const { data: friendProfiles } = await supabase
-            .from('users').select('push_token').in('id', friendIds).not('push_token', 'is', null)
-          const tokens = (friendProfiles ?? []).map((u: any) => u.push_token).filter(Boolean)
-          if (tokens.length > 0) {
-            const prName = exerciseNameById[sbdPRs[0].exerciseId] ?? 'SBD'
-            await withTimeout(fetch('https://exp.host/--/api/v2/push/send', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(tokens.map((to: string) => ({
-                to,
-                title: `${profile.username} löi ennätyksen! 💪`,
-                body: `${prName}: ${sbdPRs[0].weight} kg`,
-              }))),
-            }), 8000)
-          }
+          const prName = exerciseNameById[sbdPRs[0].exerciseId] ?? 'SBD'
+          await sendPushToUsers({
+            toUserIds: friendIds,
+            title: `${profile.username} löi ennätyksen! 💪`,
+            body: `${prName}: ${sbdPRs[0].weight} kg`,
+          })
         }
       }
     } catch {}
@@ -297,20 +289,11 @@ export default function ActiveWorkoutScreen() {
           for (const w of (fw ?? []) as any[]) fcounts[w.user_id] = (fcounts[w.user_id] ?? 0) + 1
           const overtaken = friendIds.filter((fid: string) => (fcounts[fid] ?? 0) === myCount - 1)
           if (overtaken.length > 0) {
-            const { data: tokenRows } = await supabase
-              .from('users').select('push_token').in('id', overtaken).not('push_token', 'is', null)
-            const tokens = (tokenRows ?? []).map((u: any) => u.push_token).filter(Boolean)
-            if (tokens.length > 0) {
-              await withTimeout(fetch('https://exp.host/--/api/v2/push/send', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(tokens.map((to: string) => ({
-                  to,
-                  title: `🔥 ${profile.username} ohitti sinut viikkohaasteessa!`,
-                  body: `${myCount} treeniä tällä viikolla. Sinun vuorosi 💪`,
-                }))),
-              }), 8000)
-            }
+            await sendPushToUsers({
+              toUserIds: overtaken,
+              title: `🔥 ${profile.username} ohitti sinut viikkohaasteessa!`,
+              body: `${myCount} treeniä tällä viikolla. Sinun vuorosi 💪`,
+            })
           }
         }
       }
