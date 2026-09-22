@@ -13,23 +13,15 @@ alter table public.workout_sets
 alter table public.personal_records
   add column if not exists verified boolean not null default true;
 
--- users: push-token ja tukijastatus
+-- users: push-token
 alter table public.users
   add column if not exists push_token text;
 
-alter table public.users
-  add column if not exists is_supporter boolean not null default false;
-
--- is_supporter: luettavissa kaikille (badge), mutta vain service_role (RevenueCat-webhook)
--- saa muuttaa sitä. Korvaa 001:n väljä update-policy.
+-- Korvaa 001:n väljä update-policy.
 drop policy if exists "Users can update own profile" on public.users;
 create policy "Users can update own profile" on public.users for update
   using (auth.uid() = id)
-  with check (
-    auth.uid() = id
-    and is_supporter is not distinct from
-        (select u.is_supporter from public.users u where u.id = auth.uid())
-  );
+  with check (auth.uid() = id);
 
 -- muut käyttäjät näkevät profiilit (kaverit, leaderboard, PR-feed)
 drop policy if exists "Users can read own profile" on public.users;

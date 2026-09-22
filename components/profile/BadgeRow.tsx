@@ -9,7 +9,6 @@ export const ALL_BADGES = [
   { id: 'pr_deadlift',   icon: '⚔',  label: 'Deadlift PR' },
   { id: 'rank_bronze',   icon: '🥉', label: 'Bronze Rank' },
   { id: 'rank_gold',     icon: '🥇', label: 'Gold Rank' },
-  { id: 'supporter',     icon: '⭐', label: 'Supporter' },
 ]
 
 interface BadgeRowProps {
@@ -19,7 +18,6 @@ interface BadgeRowProps {
   hasSquatPR: boolean
   hasDeadliftPR: boolean
   totalWorkouts: number
-  isSupporter?: boolean
   featured?: string[]
   onEditPress?: () => void
   editLabel?: string
@@ -35,7 +33,6 @@ export function getUnlockedBadgeIds(props: BadgeRowProps): string[] {
   if (props.hasDeadliftPR)      badges.push('pr_deadlift')
   if (props.xp >= 1000)         badges.push('rank_bronze')
   if (props.xp >= 7000)         badges.push('rank_gold')
-  if (props.isSupporter)        badges.push('supporter')
   return badges
 }
 

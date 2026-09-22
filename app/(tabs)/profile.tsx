@@ -12,7 +12,6 @@ import { ScreenBackground } from '../../components/ui/ScreenBackground'
 import { ChallengesSection } from '../../components/profile/ChallengesSection'
 import { SBDEditModal } from '../../components/profile/SBDEditModal'
 import { ShareRankModal } from '../../components/profile/ShareRankModal'
-import { SupporterCard } from '../../components/profile/SupporterCard'
 import { getSBDSubRank, getSBDRank } from '../../lib/xp'
 import { calcDOTS } from '../../lib/dots'
 import { StatNumber } from '../../components/ui/StatNumber'
@@ -391,7 +390,6 @@ export default function ProfileScreen() {
           hasSquatPR={sbd.squat > 0}
           hasDeadliftPR={sbd.deadlift > 0}
           totalWorkouts={totalWorkouts}
-          isSupporter={profile.is_supporter}
           featured={pinnedBadges}
           onEditPress={() => setBadgeModalVisible(true)}
           editLabel={t('profile.editPin')}
@@ -450,8 +448,6 @@ export default function ProfileScreen() {
           <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>📖 {t('profile.replayTutorial')}</Text>
           <Text style={{ color: COLORS.muted, fontSize: 16 }}>›</Text>
         </TouchableOpacity>
-
-        <SupporterCard />
 
         <TouchableOpacity className="mt-4 items-center py-3" onPress={signOut}>
           <Text className="text-muted text-sm">{t('profile.signOut')}</Text>
@@ -599,7 +595,7 @@ export default function ProfileScreen() {
               const unlockedIds = new Set(getUnlockedBadgeIds({
                 xp: profile.xp, streak: profile.streak,
                 hasBenchPR: sbd.bench > 0, hasSquatPR: sbd.squat > 0, hasDeadliftPR: sbd.deadlift > 0,
-                totalWorkouts, isSupporter: profile.is_supporter,
+                totalWorkouts,
               }))
               return ALL_BADGES.map(b => {
                 const unlocked = unlockedIds.has(b.id)
