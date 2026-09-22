@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { sendWebPush } from '../_shared/webpush.ts'
 
 // Sends a weekly recap push to every user who trained this week.
 // Triggered by pg_cron (Sunday evening). Protected by service-role bearer.
@@ -70,5 +71,16 @@ Deno.serve(async (req) => {
     } catch (_) { /* non-critical */ }
   }
 
-  return new Response(JSON.stringify({ sent }), { headers: { 'Content-Type': 'application/json' } })
+  const web = await sendWebPush(admin, activeIds, (uid) => {
+    const s = stats[uid]
+    if (!s) return null
+    const vol = Math.round(s.volume).toLocaleString('fi-FI')
+    return {
+      title: '📊 Viikkokooste',
+      body: `Teit ${s.count} ${s.count === 1 ? 'treenin' : 'treeniä'} ja nostit ${vol} kg tällä viikolla. Putki: ${streakById[uid] ?? 0} 🔥`,
+      url: '/progress',
+    }
+  })
+
+  return new Response(JSON.stringify({ sent, web }), { headers: { 'Content-Type': 'application/json' } })
 })
