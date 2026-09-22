@@ -6,6 +6,8 @@ const cors = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+const ALLOWED_URLS = new Set(['/', '/social', '/progress', '/profile', '/log'])
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } })
 }
@@ -41,7 +43,7 @@ Deno.serve(async (req) => {
   const toUserIds = (payload.toUserIds ?? []).filter((x): x is string => typeof x === 'string')
   const title = String(payload.title ?? '')
   const body = String(payload.body ?? '')
-  const url = typeof payload.url === 'string' && payload.url.startsWith('/') ? payload.url : '/'
+  const url = typeof payload.url === 'string' && ALLOWED_URLS.has(payload.url) ? payload.url : '/'
   if (toUserIds.length === 0 || !title) return json({ sent: 0 })
 
   // Salli vain hyväksytyt kaverit (estä mielivaltainen push-spämmäys).

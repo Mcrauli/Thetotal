@@ -6,6 +6,18 @@ webpush.setVapidDetails(
   Deno.env.get('VAPID_PRIVATE_KEY')!,
 )
 
+const PUSH_HOST_SUFFIXES = ['fcm.googleapis.com', 'push.apple.com', 'push.services.mozilla.com', 'notify.windows.com']
+
+export function isPushEndpoint(endpoint: string): boolean {
+  try {
+    const u = new URL(endpoint)
+    const host = u.hostname.toLowerCase()
+    return u.protocol === 'https:' && !u.port && PUSH_HOST_SUFFIXES.some((s) => host === s || host.endsWith('.' + s))
+  } catch {
+    return false
+  }
+}
+
 export async function sendWebPush(
   admin: any,
   userIds: string[],
@@ -18,6 +30,10 @@ export async function sendWebPush(
     .in('user_id', userIds)
   let sent = 0
   for (const s of subs ?? []) {
+    if (!isPushEndpoint(s.endpoint)) {
+      await admin.from('web_push_subscriptions').delete().eq('id', s.id)
+      continue
+    }
     const m = message(s.user_id)
     if (!m) continue
     try {
