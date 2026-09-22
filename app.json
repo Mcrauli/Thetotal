@@ -8,7 +8,8 @@
     "userInterfaceStyle": "dark",
     "platforms": [
       "ios",
-      "android"
+      "android",
+      "web"
     ],
     "assetBundlePatterns": [
       "**/*"
@@ -28,6 +29,17 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0d0d1a"
       }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png",
+      "name": "TheTotal",
+      "shortName": "TheTotal",
+      "themeColor": "#0d0d1a",
+      "backgroundColor": "#0d0d1a",
+      "display": "standalone",
+      "orientation": "portrait"
     },
     "plugins": [
       "expo-router",

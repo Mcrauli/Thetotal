@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { View, Text, TextInput, TouchableOpacity, Modal, Animated } from 'react-native'
+import { View, Text, TextInput, TouchableOpacity, Modal, Animated, Platform } from 'react-native'
 import * as Haptics from 'expo-haptics'
 import { useWorkoutStore, type WorkoutSet } from '../../store/workoutStore'
 import { COLORS } from '../../lib/constants'
@@ -41,10 +41,12 @@ export function SetRow({ set, exerciseId, isCardio, prWeight }: SetRowProps) {
 
   function handleToggleDone() {
     const turningOn = !set.done
-    if (turningOn && isNewPR) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {})
-    } else {
-      Haptics.impactAsync(turningOn ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light).catch(() => {})
+    if (Platform.OS !== 'web') {
+      if (turningOn && isNewPR) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {})
+      } else {
+        Haptics.impactAsync(turningOn ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light).catch(() => {})
+      }
     }
     toggleSetDone(exerciseId, set.id)
   }

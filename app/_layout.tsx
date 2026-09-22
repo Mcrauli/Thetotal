@@ -1,14 +1,16 @@
 import '../global.css'
 import { useEffect } from 'react'
+import { Platform, View } from 'react-native'
 import { Slot, router, useSegments } from 'expo-router'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
-import * as Notifications from 'expo-notifications'
 import { supabase } from '../lib/supabase'
 import { useUserStore } from '../store/userStore'
 import { useLocaleStore } from '../lib/i18n'
 
 async function registerPushToken() {
+  if (Platform.OS === 'web') return
   try {
+    const Notifications = await import('expo-notifications')
     const { status } = await Notifications.requestPermissionsAsync()
     if (status !== 'granted') return
     const token = (await Notifications.getExpoPushTokenAsync({
@@ -64,6 +66,17 @@ function useAuthGuard() {
 export default function RootLayout() {
   useAuthGuard()
   useEffect(() => { useLocaleStore.getState().hydrate() }, [])
+  if (Platform.OS === 'web') {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#0d0d1a' }}>
+        <SafeAreaProvider>
+          <View style={{ flex: 1, width: '100%', maxWidth: 480, alignSelf: 'center' }}>
+            <Slot />
+          </View>
+        </SafeAreaProvider>
+      </View>
+    )
+  }
   return (
     <SafeAreaProvider>
       <Slot />
