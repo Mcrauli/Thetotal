@@ -1,6 +1,8 @@
+import { Platform } from 'react-native'
 import * as FileSystem from 'expo-file-system/legacy'
 import * as Sharing from 'expo-sharing'
 import { supabase } from './supabase'
+import { downloadText } from './download'
 
 // Kerää käyttäjän kaiken datan ja jakaa sen JSON-tiedostona (GDPR: oikeus tietoihin).
 export async function exportUserData(userId: string): Promise<boolean> {
@@ -32,6 +34,12 @@ export async function exportUserData(userId: string): Promise<boolean> {
   }
 
   const json = JSON.stringify(payload, null, 2)
+
+  if (Platform.OS === 'web') {
+    downloadText('thetotal-data.json', json, 'application/json')
+    return true
+  }
+
   const uri = `${FileSystem.cacheDirectory}thetotal-data.json`
   await FileSystem.writeAsStringAsync(uri, json)
 
