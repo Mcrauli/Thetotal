@@ -52,7 +52,7 @@ function useAuthGuard() {
         const profile = await fetchProfile()
         registerPushToken()
         if (inAuth) {
-          if (segments[1] === 'tutorial') return
+          if (segments[1] === 'tutorial' || segments[1] === 'reset-password') return
           if (profile?.onboarded) router.replace('/(tabs)/')
           else router.replace('/(auth)/onboarding')
         }

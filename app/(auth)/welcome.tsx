@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useT } from '../../lib/i18n'
+import { InstallHint } from '../../components/ui/InstallHint'
 
 export default function WelcomeScreen() {
   const t = useT()
@@ -32,6 +33,10 @@ export default function WelcomeScreen() {
             {t('auth.haveAccount')}
           </Text>
         </TouchableOpacity>
+
+        <View className="w-full mt-8">
+          <InstallHint />
+        </View>
       </View>
     </SafeAreaView>
   )

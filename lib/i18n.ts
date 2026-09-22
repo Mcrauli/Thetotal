@@ -459,6 +459,31 @@ const STRINGS = {
   'preset.legs.desc':         { fi: 'Jalkapäivä — kyykky, takareidet ja pohkeet. Osa PPL-splittiä.', en: 'Leg day — squats, hamstrings and calves. Part of a PPL split.' },
   'preset.strongman.name':    { fi: 'Voimamies', en: 'Strongman' },
   'preset.strongman.desc':    { fi: 'Eventti-päivä: kanto, kivet ja prässi. Vaatii voimamiesvälineet.', en: 'Event day: carries, stones and presses. Requires strongman equipment.' },
+
+  // Password reset
+  'auth.forgotPassword':      { fi: 'Unohtuiko salasana?', en: 'Forgot password?' },
+  'auth.resetPassword':       { fi: 'Salasanan palautus', en: 'Reset password' },
+  'auth.resetSendLink':       { fi: 'Lähetä linkki', en: 'Send link' },
+  'auth.resetSending':        { fi: 'Lähetetään...', en: 'Sending...' },
+  'auth.resetSent':           { fi: 'Jos osoitteella on tili, lähetimme siihen linkin salasanan vaihtoon. Avaa linkki tällä laitteella.', en: 'If an account exists for that address, we sent a link to reset the password. Open the link on this device.' },
+  'auth.resetLinkInvalid':    { fi: 'Linkki on vanhentunut tai virheellinen', en: 'The link is expired or invalid' },
+  'auth.resetRequestNew':     { fi: 'Pyydä uusi linkki', en: 'Request a new link' },
+  'auth.resetNewPassword':    { fi: 'Uusi salasana', en: 'New password' },
+  'auth.resetConfirmPassword':{ fi: 'Vahvista salasana', en: 'Confirm password' },
+  'auth.resetSubmit':         { fi: 'Vaihda salasana', en: 'Change password' },
+  'auth.resetSubmitting':     { fi: 'Vaihdetaan...', en: 'Changing...' },
+  'auth.resetSuccess':        { fi: 'Salasana vaihdettu', en: 'Password changed' },
+  'auth.resetPasswordsNoMatch': { fi: 'Salasanat eivät täsmää', en: 'Passwords do not match' },
+  'auth.resetOnNative':       { fi: 'Salasanan palautuslinkki avataan selaimessa.', en: 'The password reset link opens in your browser.' },
+
+  // PWA install hint
+  'pwa.installTitle':         { fi: 'Asenna TheTotal kotinäytölle', en: 'Install TheTotal to your home screen' },
+  'pwa.iosStep1':             { fi: '1. Napauta Safarin alareunan Jaa-painiketta (neliö ja nuoli ylös)', en: '1. Tap the Share button in Safari’s toolbar (square with an arrow up)' },
+  'pwa.iosStep2':             { fi: '2. Valitse "Lisää Koti-valikkoon"', en: '2. Choose "Add to Home Screen"' },
+  'pwa.iosStep3':             { fi: '3. Napauta "Lisää"', en: '3. Tap "Add"' },
+  'pwa.iosSafariOnly':        { fi: 'Avaa sivu Safarilla, jos käytät muuta selainta.', en: 'Open this page in Safari if you are using another browser.' },
+  'pwa.installButton':        { fi: 'Asenna sovellus', en: 'Install app' },
+  'pwa.androidHint':          { fi: 'Avaa selaimen valikko ⋮ ja valitse Asenna sovellus / Lisää aloitusnäyttöön.', en: 'Open the browser menu ⋮ and choose Install app / Add to Home screen.' },
 }
 
 type StringKey = keyof typeof STRINGS

@@ -11,6 +11,7 @@ import { BadgeRow, ALL_BADGES, getUnlockedBadgeIds } from '../../components/prof
 import { RanksModal } from '../../components/ui/RanksModal'
 import { ScreenBackground } from '../../components/ui/ScreenBackground'
 import { ChallengesSection } from '../../components/profile/ChallengesSection'
+import { InstallHint } from '../../components/ui/InstallHint'
 import { SBDEditModal } from '../../components/profile/SBDEditModal'
 import { ShareRankModal } from '../../components/profile/ShareRankModal'
 import { getSBDSubRank, getSBDRank } from '../../lib/xp'
@@ -221,6 +222,7 @@ export default function ProfileScreen() {
     <ScreenBackground variant="profile">
       <SafeAreaView className="flex-1">
       <ScrollView className="flex-1 px-4 pt-6" contentContainerStyle={{ paddingBottom: 32 }}>
+        <InstallHint />
         <RankBanner
           xp={profile.xp}
           sbdRank={profile.sbd_rank}
