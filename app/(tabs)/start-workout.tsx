@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native'
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { showAlert } from '../../lib/alert'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
@@ -83,7 +84,7 @@ export default function StartWorkoutScreen() {
       .select('id, name, muscle_group')
       .in('name', p.exerciseNames)
     if (!exData || exData.length === 0) {
-      Alert.alert(t('common.error'), t('start.noExercises'))
+      showAlert(t('common.error'), t('start.noExercises'))
       return null
     }
     const byName: Record<string, any> = {}
@@ -112,12 +113,12 @@ export default function StartWorkoutScreen() {
       .insert({ user_id: profile.id, name: tmpl.name })
       .select('id')
       .single()
-    if (error || !newTmpl) { Alert.alert(t('common.error'), ''); return }
+    if (error || !newTmpl) { showAlert(t('common.error'), ''); return }
     await supabase.from('template_exercises').insert(
       tmpl.exercises.map((ex, i) => ({ template_id: newTmpl.id, exercise_id: ex.exerciseId, order_index: i }))
     )
     setTemplates(prev => [...prev, { id: newTmpl.id, name: tmpl.name, exercises: tmpl.exercises }])
-    Alert.alert(t('start.saved'), t('start.savedBody', { name: tmpl.name }))
+    showAlert(t('start.saved'), t('start.savedBody', { name: tmpl.name }))
   }
 
   return (

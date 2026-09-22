@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, Modal, Switch, FlatList, Linking } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Switch, FlatList, Linking } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { showAlert } from '../../lib/alert'
 import { useFocusEffect, router } from 'expo-router'
 import { useUserStore } from '../../store/userStore'
 import { RankBanner } from '../../components/profile/RankBanner'
@@ -56,7 +57,7 @@ export default function ProfileScreen() {
     try {
       await exportUserData(profile.id)
     } catch {
-      Alert.alert(t('data.exportFailed'))
+      showAlert(t('data.exportFailed'))
     } finally {
       setExporting(false)
     }
@@ -167,10 +168,10 @@ export default function ProfileScreen() {
   async function saveUsername() {
     if (!profile) return
     const u = usernameInput.trim()
-    if (!u || u.length < 3) { Alert.alert(t('profile.usernameShort')); return }
+    if (!u || u.length < 3) { showAlert(t('profile.usernameShort')); return }
     setSaving(true)
     const { error } = await supabase.from('users').update({ username: u }).eq('id', profile.id)
-    if (error) { Alert.alert(t('common.error'), error.message.includes('unique') ? t('profile.usernameTaken') : error.message); setSaving(false); return }
+    if (error) { showAlert(t('common.error'), error.message.includes('unique') ? t('profile.usernameTaken') : error.message); setSaving(false); return }
     await fetchProfile()
     setSaving(false)
     setUsernameVisible(false)
@@ -184,14 +185,14 @@ export default function ProfileScreen() {
       })
       await supabase.auth.signOut()
     } catch {
-      Alert.alert(t('common.error'), t('profile.deleteFailed'))
+      showAlert(t('common.error'), t('profile.deleteFailed'))
     }
   }
 
   async function saveBodyweight() {
     if (!profile) return
     const bw = parseFloat(bwInput)
-    if (!bw || bw <= 0) { Alert.alert(t('profile.enterValidWeight')); return }
+    if (!bw || bw <= 0) { showAlert(t('profile.enterValidWeight')); return }
     setSaving(true)
     const total = sbd.squat + sbd.bench + sbd.deadlift
     const isMale = profile.gender !== 'female'
@@ -468,7 +469,7 @@ export default function ProfileScreen() {
 
         <TouchableOpacity
           className="mb-8 items-center py-3"
-          onPress={() => Alert.alert(
+          onPress={() => showAlert(
             t('profile.deleteTitle'),
             t('profile.deleteBody'),
             [

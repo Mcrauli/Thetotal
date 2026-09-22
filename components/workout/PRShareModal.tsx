@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
-import { View, Text, Modal, TouchableOpacity, ActivityIndicator, Alert } from 'react-native'
+import { View, Text, Modal, TouchableOpacity, ActivityIndicator } from 'react-native'
+import { showAlert } from '../../lib/alert'
 import { LinearGradient } from 'expo-linear-gradient'
 import { captureRef } from 'react-native-view-shot'
 import * as Sharing from 'expo-sharing'
@@ -33,10 +34,10 @@ export function PRShareModal({ visible, onClose, username, dateLabel, prs }: PRS
       setSharing(true)
       const uri = await captureRef(cardRef, { format: 'png', quality: 1, result: 'tmpfile' })
       const available = await Sharing.isAvailableAsync()
-      if (!available) { Alert.alert(t('common.error')); return }
+      if (!available) { showAlert(t('common.error')); return }
       await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: t('share.prDialogTitle') })
     } catch (e: any) {
-      Alert.alert(t('common.error'), e?.message ?? '')
+      showAlert(t('common.error'), e?.message ?? '')
     } finally {
       setSharing(false)
     }

@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Linking, Alert } from 'react-native'
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Linking } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { showAlert } from '../../lib/alert'
 import { router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
 import { useUserStore } from '../../store/userStore'
@@ -45,7 +46,7 @@ export default function OnboardingScreen() {
 
   async function handleFinish() {
     if (!profile) return
-    if (!accepted) { Alert.alert(t('onboarding.acceptRequired'), t('onboarding.acceptRequiredBody')); return }
+    if (!accepted) { showAlert(t('onboarding.acceptRequired'), t('onboarding.acceptRequiredBody')); return }
     setLoading(true)
 
     const { data: exercises } = await supabase
@@ -84,7 +85,7 @@ export default function OnboardingScreen() {
 
   async function handleSkip() {
     if (!profile) return
-    if (!accepted) { Alert.alert(t('onboarding.acceptRequired'), t('onboarding.acceptRequiredBody')); return }
+    if (!accepted) { showAlert(t('onboarding.acceptRequired'), t('onboarding.acceptRequiredBody')); return }
     await supabase.from('users').update({ onboarded: true }).eq('id', profile.id)
     await fetchProfile()
     router.replace('/(auth)/tutorial')

@@ -1,4 +1,4 @@
-import { Alert } from 'react-native'
+import { showAlert } from './alert'
 import { supabase } from './supabase'
 import { t } from './i18n'
 
@@ -15,7 +15,7 @@ export async function reportContent(params: {
     reason: params.reason.trim() || t('mod.reasonOther'),
   })
   if (error) {
-    Alert.alert(t('common.error'), error.message)
+    showAlert(t('common.error'), error.message)
     return false
   }
   return true
@@ -27,7 +27,7 @@ export async function blockUser(blockerId: string, blockedId: string) {
     blocked_id: blockedId,
   })
   if (error && !error.message.includes('duplicate')) {
-    Alert.alert(t('common.error'), error.message)
+    showAlert(t('common.error'), error.message)
     return false
   }
   return true
@@ -39,7 +39,7 @@ export async function unblockUser(blockerId: string, blockedId: string) {
     .eq('blocker_id', blockerId)
     .eq('blocked_id', blockedId)
   if (error) {
-    Alert.alert(t('common.error'), error.message)
+    showAlert(t('common.error'), error.message)
     return false
   }
   return true
@@ -55,7 +55,7 @@ const REPORT_REASON_KEYS = [
 ] as const
 
 export function promptReport(onSubmit: (reason: string) => void) {
-  Alert.alert(
+  showAlert(
     t('mod.report'),
     t('mod.reportBody'),
     [

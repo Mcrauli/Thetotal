@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { View, Text, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native'
+import { View, Text, TouchableOpacity, ScrollView, TextInput } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { showAlert } from '../../lib/alert'
 import { router } from 'expo-router'
 import { useKeepAwake } from 'expo-keep-awake'
 import * as Haptics from 'expo-haptics'
@@ -85,7 +86,7 @@ export default function ActiveWorkoutScreen() {
 
   async function handleFinish() {
     if (savingRef.current) return
-    if (exercises.length === 0) { Alert.alert(t('active.addExerciseFirst')); return }
+    if (exercises.length === 0) { showAlert(t('active.addExerciseFirst')); return }
     if (!profile) return
     savingRef.current = true
     setSaving(true)
@@ -128,7 +129,7 @@ export default function ActiveWorkoutScreen() {
     }
 
     if (workoutError || !workout) {
-      Alert.alert(t('common.error'), workoutError?.message)
+      showAlert(t('common.error'), workoutError?.message)
       setSaving(false)
       savingRef.current = false
       return
@@ -155,7 +156,7 @@ export default function ActiveWorkoutScreen() {
       ]), 15000)
 
     if (setsError) {
-      Alert.alert(t('active.setsError'), setsError.message)
+      showAlert(t('active.setsError'), setsError.message)
       setSaving(false)
       savingRef.current = false
       return
@@ -420,7 +421,7 @@ export default function ActiveWorkoutScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {})
     setResults({ xpGain: displayXPGain, xpBreakdown: { base: xpBase, prBonus, streakBonus, challengeBonus }, improvements, challenges: challengeResults })
     } catch (e: any) {
-      Alert.alert(t('active.savingError'), e?.message ?? '')
+      showAlert(t('active.savingError'), e?.message ?? '')
     } finally {
       setSaving(false)
       savingRef.current = false
@@ -460,7 +461,7 @@ export default function ActiveWorkoutScreen() {
           <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{t('plate.tool')}</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => Alert.alert(t('active.stopTitle'), t('active.stopBody'), [
+          onPress={() => showAlert(t('active.stopTitle'), t('active.stopBody'), [
             { text: t('common.cancel'), style: 'cancel' },
             { text: t('active.stopTitle'), style: 'destructive', onPress: () => { clearWorkout(); router.replace('/(tabs)/') } },
           ])}

@@ -42,6 +42,7 @@ export const useLocaleStore = create<LocaleState>((set) => ({
 const STRINGS = {
   // Common
   'common.cancel':            { fi: 'Peruuta', en: 'Cancel' },
+  'common.ok':                { fi: 'OK', en: 'OK' },
   'common.save':              { fi: 'Tallenna', en: 'Save' },
   'common.delete':            { fi: 'Poista', en: 'Delete' },
   'common.close':             { fi: 'Sulje', en: 'Close' },

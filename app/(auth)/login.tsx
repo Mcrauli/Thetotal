@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform } from 'react-native'
+import { Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { showAlert } from '../../lib/alert'
 import { router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
 import { useT } from '../../lib/i18n'
@@ -14,7 +15,7 @@ export default function LoginScreen() {
   async function handleLogin() {
     setLoading(true)
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) Alert.alert(t('auth.loginFailed'), error.message)
+    if (error) showAlert(t('auth.loginFailed'), error.message)
     setLoading(false)
   }
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Modal, Alert, TextInput } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Modal, TextInput } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { showAlert } from '../../lib/alert'
 import { useLocalSearchParams, router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
 import { getSBDSubRank } from '../../lib/xp'
@@ -112,7 +113,7 @@ export default function UserProfileScreen() {
     const { error } = await supabase.from('pr_verifications').insert({ pr_id: prId, verifier_id: me.id })
     if (error) {
       setMyVerifiedIds(prev => { const next = new Set(prev); next.delete(prId); return next })
-      Alert.alert(tr('common.error'), error.message)
+      showAlert(tr('common.error'), error.message)
       return
     }
     await sendPushToUsers({
@@ -126,9 +127,9 @@ export default function UserProfileScreen() {
     if (!me || !user) return
     setSending(true)
     if (chalType === 'pr') {
-      if (!chalExercise.trim()) { setSending(false); Alert.alert(tr('user.enterExercise')); return }
+      if (!chalExercise.trim()) { setSending(false); showAlert(tr('user.enterExercise')); return }
       const w = parseFloat(chalWeight)
-      if (!w || w <= 0) { setSending(false); Alert.alert(tr('profile.enterValidWeight')); return }
+      if (!w || w <= 0) { setSending(false); showAlert(tr('profile.enterValidWeight')); return }
       await supabase.from('friend_challenges').insert({
         challenger_id: me.id, challenged_id: user.id,
         challenge_type: 'pr', exercise_name: chalExercise.trim(),
@@ -148,7 +149,7 @@ export default function UserProfileScreen() {
     setChalExercise('')
     setChalWeight('')
     setChalMessage('')
-    Alert.alert(tr('user.challengeSent'))
+    showAlert(tr('user.challengeSent'))
   }
 
   async function copyTemplate(t: Template) {
@@ -159,14 +160,14 @@ export default function UserProfileScreen() {
       .insert({ user_id: me.id, name: t.name })
       .select()
       .single()
-    if (error || !newTmpl) { setCopying(null); Alert.alert('Virhe', 'Kopiointi epäonnistui'); return }
+    if (error || !newTmpl) { setCopying(null); showAlert('Virhe', 'Kopiointi epäonnistui'); return }
     if (t.exercises.length > 0) {
       await supabase.from('template_exercises').insert(
         t.exercises.map((ex, i) => ({ template_id: newTmpl.id, exercise_id: ex.id, order_index: i }))
       )
     }
     setCopying(null)
-    Alert.alert('Kopioitu!', `"${t.name}" lisätty omiin ohjelmiisi.`)
+    showAlert('Kopioitu!', `"${t.name}" lisätty omiin ohjelmiisi.`)
   }
 
   function handleReport() {
@@ -178,13 +179,13 @@ export default function UserProfileScreen() {
         targetId: id,
         reason,
       })
-      if (ok) Alert.alert('Kiitos', 'Ilmianto vastaanotettu. Käsittelemme sen 24 tunnin sisällä.')
+      if (ok) showAlert('Kiitos', 'Ilmianto vastaanotettu. Käsittelemme sen 24 tunnin sisällä.')
     })
   }
 
   function handleBlock() {
     if (!me || !id || !user) return
-    Alert.alert(
+    showAlert(
       'Estä käyttäjä',
       `Haluatko varmasti estää käyttäjän ${user.username}? Et näe enää hänen sisältöään etkä hän sinun. Mahdollinen kaveriyhteys poistetaan.`,
       [
@@ -195,7 +196,7 @@ export default function UserProfileScreen() {
           onPress: async () => {
             const ok = await blockUser(me.id, id)
             if (ok) {
-              Alert.alert('Estetty', `${user.username} on nyt estetty.`)
+              showAlert('Estetty', `${user.username} on nyt estetty.`)
               router.back()
             }
           },
@@ -225,7 +226,7 @@ export default function UserProfileScreen() {
         </TouchableOpacity>
         {me && me.id !== id && (
           <TouchableOpacity
-            onPress={() => Alert.alert(tr('mod.actions'), undefined, [
+            onPress={() => showAlert(tr('mod.actions'), undefined, [
               { text: tr('mod.reportUser'), onPress: handleReport },
               { text: tr('mod.blockUser'), style: 'destructive', onPress: handleBlock },
               { text: tr('common.cancel'), style: 'cancel' },

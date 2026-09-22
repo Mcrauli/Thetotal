@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform } from 'react-native'
+import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { showAlert } from '../../lib/alert'
 import { router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
 import { useT } from '../../lib/i18n'
@@ -14,18 +15,18 @@ export default function SignupScreen() {
 
   async function handleSignup() {
     if (!email || !password || !username) {
-      Alert.alert(t('common.error'), t('auth.fillAll'))
+      showAlert(t('common.error'), t('auth.fillAll'))
       return
     }
     setLoading(true)
     const { data, error } = await supabase.auth.signUp({ email, password })
-    if (error) { Alert.alert(t('common.error'), error.message); setLoading(false); return }
+    if (error) { showAlert(t('common.error'), error.message); setLoading(false); return }
 
     if (data.user) {
       const { error: profileError } = await supabase
         .from('users')
         .insert({ id: data.user.id, username: username.trim().toLowerCase() })
-      if (profileError) { Alert.alert(t('common.error'), profileError.message); setLoading(false); return }
+      if (profileError) { showAlert(t('common.error'), profileError.message); setLoading(false); return }
     }
     setLoading(false)
   }

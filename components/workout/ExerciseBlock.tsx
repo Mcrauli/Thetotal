@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { View, Text, TouchableOpacity, Alert } from 'react-native'
+import { View, Text, TouchableOpacity } from 'react-native'
+import { showAlert } from '../../lib/alert'
 import { useWorkoutStore, type WorkoutExercise } from '../../store/workoutStore'
 import { SetRow } from './SetRow'
 import { useT } from '../../lib/i18n'
@@ -20,7 +21,7 @@ export function ExerciseBlock({ exercise, lastBest, defaultWeight, defaultReps, 
   const isCardio = exercise.muscleGroup === 'Kardio'
 
   function handleRemove() {
-    Alert.alert(t('active.removeExercise'), t('active.removeExerciseBody', { name: exercise.exerciseName }), [
+    showAlert(t('active.removeExercise'), t('active.removeExerciseBody', { name: exercise.exerciseName }), [
       { text: t('common.cancel'), style: 'cancel' },
       { text: t('common.delete'), style: 'destructive', onPress: () => removeExercise(exercise.exerciseId) },
     ])

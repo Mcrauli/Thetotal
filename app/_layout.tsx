@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { supabase } from '../lib/supabase'
 import { useUserStore } from '../store/userStore'
 import { useLocaleStore } from '../lib/i18n'
+import { AlertHost } from '../components/ui/AlertHost'
 
 async function registerPushToken() {
   if (Platform.OS === 'web') return
@@ -72,6 +73,7 @@ export default function RootLayout() {
         <SafeAreaProvider>
           <View style={{ flex: 1, width: '100%', maxWidth: 480, alignSelf: 'center' }}>
             <Slot />
+            <AlertHost />
           </View>
         </SafeAreaProvider>
       </View>

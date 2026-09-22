@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { View, Text, TextInput, TouchableOpacity, Modal, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native'
+import { View, Text, TextInput, TouchableOpacity, Modal, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { showAlert } from '../../lib/alert'
 import { supabase } from '../../lib/supabase'
 import { useUserStore } from '../../store/userStore'
 import { sendPushToUsers } from '../../lib/notifications'
@@ -69,7 +70,7 @@ export function PRCommentsModal({ visible, prId, prLabel, prOwnerId, onClose }: 
     if (!profile || !prId) return
     const body = text.trim()
     if (!body) return
-    if (body.length > 500) { Alert.alert(t('comments.tooLong'), t('comments.maxChars')); return }
+    if (body.length > 500) { showAlert(t('comments.tooLong'), t('comments.maxChars')); return }
     setPosting(true)
     const { data, error } = await supabase
       .from('pr_comments')
@@ -77,7 +78,7 @@ export function PRCommentsModal({ visible, prId, prLabel, prOwnerId, onClose }: 
       .select('id, created_at')
       .single()
     setPosting(false)
-    if (error) { Alert.alert(t('common.error'), error.message); return }
+    if (error) { showAlert(t('common.error'), error.message); return }
     setComments(prev => [...prev, {
       id: data.id, user_id: profile.id, username: profile.username,
       body, created_at: data.created_at,
@@ -99,7 +100,7 @@ export function PRCommentsModal({ visible, prId, prLabel, prOwnerId, onClose }: 
   }
 
   async function deleteComment(id: string) {
-    Alert.alert(t('comments.deleteTitle'), t('comments.deleteBody'), [
+    showAlert(t('comments.deleteTitle'), t('comments.deleteBody'), [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('common.delete'), style: 'destructive', onPress: async () => {
@@ -119,7 +120,7 @@ export function PRCommentsModal({ visible, prId, prLabel, prOwnerId, onClose }: 
         targetId: commentId,
         reason,
       })
-      if (ok) Alert.alert(t('mod.thanks'), t('mod.thanksBody'))
+      if (ok) showAlert(t('mod.thanks'), t('mod.thanksBody'))
     })
   }
 

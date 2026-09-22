@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native'
+import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { showAlert } from '../../lib/alert'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../lib/supabase'
@@ -27,7 +28,7 @@ export default function CreateTemplateScreen() {
       .single()
     if (error || !tmpl) {
       setSaving(false)
-      Alert.alert(t('common.error'), error?.message ?? t('template.saveFailed'))
+      showAlert(t('common.error'), error?.message ?? t('template.saveFailed'))
       return
     }
     if (exercises.length > 0) {
@@ -35,7 +36,7 @@ export default function CreateTemplateScreen() {
         exercises.map((ex, i) => ({ template_id: tmpl.id, exercise_id: ex.id, order_index: i }))
       )
       if (exError) {
-        Alert.alert(t('template.exerciseError'), exError.message)
+        showAlert(t('template.exerciseError'), exError.message)
       }
     }
     setSaving(false)
