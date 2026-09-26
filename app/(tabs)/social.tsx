@@ -27,6 +27,9 @@ interface Challenge {
   challenged?: { username: string }
 }
 
+const WEIGHT_CHALLENGE_DAYS = 30
+const RESULT_VISIBLE_DAYS = 7
+
 const RANK_ORDER: RankName[] = ['Aloittelija','Harrastaja','Kilpailija','Alueellinen','Kansallinen','Kansainvälinen','Eliitti','Mestari','Maailmaluokka','Legenda']
 
 export default function SocialScreen() {
@@ -90,9 +93,21 @@ export default function SocialScreen() {
 
     // Resolve expired duel challenges
     const resolvedIds = new Set<string>()
+    const expiredIds = new Set<string>()
     for (const c of rawChallenges) {
       if (c.status !== 'pending') continue
-      if (c.challenge_type !== 'volume' && c.challenge_type !== 'workouts') continue
+      if (c.challenge_type !== 'volume' && c.challenge_type !== 'workouts') {
+        // Painohaaste raukeaa itsestään, jos sitä ei lyödä 30 päivässä.
+        if (new Date(c.created_at).getTime() + WEIGHT_CHALLENGE_DAYS * 86400000 > Date.now()) continue
+        const { data: closed } = await supabase
+          .from('friend_challenges')
+          .update({ status: 'expired' })
+          .eq('id', c.id)
+          .eq('status', 'pending')
+          .select('id')
+        if (closed && closed.length > 0) expiredIds.add(c.id)
+        continue
+      }
       if (!c.duration_days) continue
       if (new Date(c.created_at).getTime() + c.duration_days * 86400000 > Date.now()) continue
       const { data: updated } = await supabase
@@ -121,7 +136,7 @@ export default function SocialScreen() {
       }
     }
 
-    setChallenges(rawChallenges.map(c => ({
+    setChallenges(rawChallenges.filter(c => !expiredIds.has(c.id)).map(c => ({
       ...c,
       status: resolvedIds.has(c.id) ? 'beaten' : c.status,
       challenger: uMap[c.challenger_id],
@@ -172,8 +187,9 @@ export default function SocialScreen() {
     return ratioB - ratioA || RANK_ORDER.indexOf(b.sbd_rank) - RANK_ORDER.indexOf(a.sbd_rank)
   })
 
+  const isRecent = (c: Challenge) => Date.now() - new Date(c.created_at).getTime() < RESULT_VISIBLE_DAYS * 86400000 + (c.duration_days ?? 0) * 86400000
   const myChallenges = challenges.filter(c => c.challenged_id === profile?.id && c.status === 'pending')
-  const sentChallenges = challenges.filter(c => c.challenger_id === profile?.id && c.status !== 'declined')
+  const sentChallenges = challenges.filter(c => c.challenger_id === profile?.id && c.status !== 'declined' && (c.status === 'pending' || isRecent(c)))
 
   function getDuelResult(c: Challenge): string {
     const challVal = c.challenger_value ?? 0
