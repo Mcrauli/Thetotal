@@ -197,7 +197,7 @@ export default function SocialScreen() {
 
   return (
     <ScreenBackground variant="log">
-      <SafeAreaView style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: 32 }}>
           <Text style={{ color: '#fff', fontSize: 20, fontWeight: '900', marginBottom: 16 }}>{t('friends.title')}</Text>
 

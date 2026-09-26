@@ -154,7 +154,7 @@ export default function ProgressScreen() {
 
   return (
     <ScreenBackground variant="progress">
-      <SafeAreaView style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
         {/* Top tab switcher */}
         <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingTop: 24, paddingBottom: 12, gap: 8 }}>
           <TouchableOpacity

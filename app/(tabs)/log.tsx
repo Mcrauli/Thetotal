@@ -95,7 +95,7 @@ export default function LogScreen() {
 
   return (
     <ScreenBackground variant="log">
-      <SafeAreaView className="flex-1">
+      <SafeAreaView className="flex-1" edges={['top', 'left', 'right']}>
         <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 32 }}>
 
           {/* Ohjelmat */}

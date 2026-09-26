@@ -247,7 +247,7 @@ export default function ProfileScreen() {
 
   return (
     <ScreenBackground variant="profile">
-      <SafeAreaView className="flex-1">
+      <SafeAreaView className="flex-1" edges={['top', 'left', 'right']}>
       <ScrollView className="flex-1 px-4 pt-6" contentContainerStyle={{ paddingBottom: 32 }}>
         <InstallHint />
         <RankBanner

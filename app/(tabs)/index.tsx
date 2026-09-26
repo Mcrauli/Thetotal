@@ -264,7 +264,7 @@ export default function HomeScreen() {
 
   return (
     <ScreenBackground variant="home">
-      <SafeAreaView className="flex-1">
+      <SafeAreaView className="flex-1" edges={['top', 'left', 'right']}>
         <ScrollView className="flex-1 px-4 pt-6" contentContainerStyle={{ paddingBottom: 28 }}>
 
           <NotificationPrompt />
