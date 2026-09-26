@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Switch, FlatList, Linking, Platform } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { TopSafeArea } from '../../components/ui/TopSafeArea'
 import { showAlert } from '../../lib/alert'
 import { useFocusEffect, router } from 'expo-router'
 import { useUserStore } from '../../store/userStore'
@@ -247,7 +248,7 @@ export default function ProfileScreen() {
 
   return (
     <ScreenBackground variant="profile">
-      <SafeAreaView className="flex-1" edges={['top', 'left', 'right']}>
+      <TopSafeArea className="flex-1">
       <ScrollView className="flex-1 px-4 pt-6" contentContainerStyle={{ paddingBottom: 32 }}>
         <InstallHint />
         <RankBanner
@@ -696,7 +697,7 @@ export default function ProfileScreen() {
         </View>
       </Modal>
 
-      </SafeAreaView>
+      </TopSafeArea>
     </ScreenBackground>
   )
 }

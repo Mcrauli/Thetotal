@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { View, Text, ScrollView, TouchableOpacity, Dimensions } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { TopSafeArea } from '../../components/ui/TopSafeArea'
 import { useFocusEffect, router } from 'expo-router'
 import { LineChart } from 'react-native-gifted-charts'
 import { supabase } from '../../lib/supabase'
@@ -154,7 +154,7 @@ export default function ProgressScreen() {
 
   return (
     <ScreenBackground variant="progress">
-      <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+      <TopSafeArea style={{ flex: 1 }}>
         {/* Top tab switcher */}
         <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingTop: 24, paddingBottom: 12, gap: 8 }}>
           <TouchableOpacity
@@ -506,7 +506,7 @@ export default function ProgressScreen() {
             })()}
           </ScrollView>
         )}
-      </SafeAreaView>
+      </TopSafeArea>
     </ScreenBackground>
   )
 }

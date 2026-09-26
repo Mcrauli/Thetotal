@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { TopSafeArea } from '../../components/ui/TopSafeArea'
 import { useFocusEffect, router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
 import { useUserStore } from '../../store/userStore'
@@ -213,7 +213,7 @@ export default function SocialScreen() {
 
   return (
     <ScreenBackground variant="log">
-      <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+      <TopSafeArea style={{ flex: 1 }}>
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: 32 }}>
           <Text style={{ color: '#fff', fontSize: 20, fontWeight: '900', marginBottom: 16 }}>{t('friends.title')}</Text>
 
@@ -443,7 +443,7 @@ export default function SocialScreen() {
             })
           )}
         </ScrollView>
-      </SafeAreaView>
+      </TopSafeArea>
     </ScreenBackground>
   )
 }

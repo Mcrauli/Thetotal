@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { View, Text, TouchableOpacity, ScrollView, Animated } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { TopSafeArea } from '../../components/ui/TopSafeArea'
 import { router, useFocusEffect } from 'expo-router'
 import { useUserStore } from '../../store/userStore'
 import { XPBar } from '../../components/ui/XPBar'
@@ -260,7 +260,7 @@ export default function HomeScreen() {
   }, [rankProgress, profile?.id])
 
   if (!profile) return (
-    <SafeAreaView className="flex-1 bg-bg items-center justify-center px-8" edges={['top', 'left', 'right']}>
+    <TopSafeArea className="flex-1 bg-bg items-center justify-center px-8">
       <Text style={{ color: COLORS.muted, fontSize: 14, textAlign: 'center' }}>{t('home.loadFailed')}</Text>
       <TouchableOpacity
         onPress={() => fetchProfile()}
@@ -268,7 +268,7 @@ export default function HomeScreen() {
       >
         <Text style={{ color: '#fff', fontWeight: '700' }}>{t('home.retry')}</Text>
       </TouchableOpacity>
-    </SafeAreaView>
+    </TopSafeArea>
   )
 
   function card(idx: number) {
@@ -282,7 +282,7 @@ export default function HomeScreen() {
 
   return (
     <ScreenBackground variant="home">
-      <SafeAreaView className="flex-1" edges={['top', 'left', 'right']}>
+      <TopSafeArea className="flex-1">
         <ScrollView className="flex-1 px-4 pt-6" contentContainerStyle={{ paddingBottom: 28 }}>
 
           <NotificationPrompt />
@@ -524,7 +524,7 @@ export default function HomeScreen() {
           )}
 
         </ScrollView>
-      </SafeAreaView>
+      </TopSafeArea>
 
       <RanksModal
         visible={ranksVisible}
