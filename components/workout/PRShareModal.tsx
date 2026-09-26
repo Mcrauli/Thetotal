@@ -33,7 +33,7 @@ export function PRShareModal({ visible, onClose, username, dateLabel, prs }: PRS
       setSharing(true)
       await shareCapturedView(cardRef, 'thetotal-pr.png', t('share.prDialogTitle'))
     } catch (e: any) {
-      showAlert(t('common.error'), e?.message ?? '')
+      showAlert(t('common.error'), e?.message || undefined)
     } finally {
       setSharing(false)
     }

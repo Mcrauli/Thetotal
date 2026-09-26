@@ -3,13 +3,16 @@ import { captureRef } from 'react-native-view-shot'
 import * as Sharing from 'expo-sharing'
 import { shareCapturedView } from '../lib/shareImage'
 import { downloadDataUrl } from '../lib/download'
+import { captureElementAsDataUrl } from '../lib/html2canvasCapture'
 
 jest.mock('react-native-view-shot', () => ({ captureRef: jest.fn() }))
 jest.mock('expo-sharing', () => ({ isAvailableAsync: jest.fn(), shareAsync: jest.fn() }))
 jest.mock('../lib/download', () => ({ downloadDataUrl: jest.fn() }))
+jest.mock('../lib/html2canvasCapture', () => ({ captureElementAsDataUrl: jest.fn() }))
 
 const mockCaptureRef = captureRef as jest.Mock
 const mockDownloadDataUrl = downloadDataUrl as jest.Mock
+const mockCaptureElementAsDataUrl = captureElementAsDataUrl as jest.Mock
 const fakeRef = { current: {} } as any
 const dataUrl = 'data:image/png;base64,AAAA'
 
@@ -17,19 +20,21 @@ describe('shareCapturedView on web', () => {
   beforeEach(() => {
     Platform.OS = 'web'
     jest.clearAllMocks()
-    mockCaptureRef.mockResolvedValue(dataUrl)
+    mockCaptureElementAsDataUrl.mockResolvedValue(dataUrl)
+    ;(global as any).window = { devicePixelRatio: 2 }
     ;(global as any).fetch = jest.fn().mockResolvedValue({ blob: jest.fn().mockResolvedValue({ type: 'image/png' }) })
     ;(global as any).File = jest.fn().mockImplementation((parts: any, name: any, opts: any) => ({ parts, name, opts }))
   })
 
-  it('captures a data URI and shares it as a file when file sharing is supported', async () => {
+  it('captures the ref via html2canvas and shares it as a file when file sharing is supported', async () => {
     const share = jest.fn().mockResolvedValue(undefined)
     const canShare = jest.fn().mockReturnValue(true)
     ;(global as any).navigator = { share, canShare }
 
     await shareCapturedView(fakeRef, 'thetotal-rank.png')
 
-    expect(mockCaptureRef).toHaveBeenCalledWith(fakeRef, { format: 'png', quality: 1, result: 'data-uri' })
+    expect(mockCaptureElementAsDataUrl).toHaveBeenCalledWith(fakeRef.current, { backgroundColor: null, scale: 2 })
+    expect(mockCaptureRef).not.toHaveBeenCalled()
     expect(canShare).toHaveBeenCalledWith({ files: [expect.objectContaining({ name: 'thetotal-rank.png' })] })
     expect(share).toHaveBeenCalledWith({ files: [expect.objectContaining({ name: 'thetotal-rank.png' })] })
     expect(mockDownloadDataUrl).not.toHaveBeenCalled()
@@ -45,7 +50,26 @@ describe('shareCapturedView on web', () => {
     expect(mockDownloadDataUrl).not.toHaveBeenCalled()
   })
 
-  it('rethrows non-abort errors from navigator.share', async () => {
+  it('falls back to downloadDataUrl on NotAllowedError from navigator.share', async () => {
+    const notAllowed = Object.assign(new Error('gesture expired'), { name: 'NotAllowedError' })
+    const share = jest.fn().mockRejectedValue(notAllowed)
+    const canShare = jest.fn().mockReturnValue(true)
+    ;(global as any).navigator = { share, canShare }
+
+    await expect(shareCapturedView(fakeRef, 'thetotal-rank.png')).resolves.toBeUndefined()
+    expect(mockDownloadDataUrl).toHaveBeenCalledWith('thetotal-rank.png', dataUrl)
+  })
+
+  it('falls back to downloadDataUrl on a TypeError from navigator.share', async () => {
+    const share = jest.fn().mockRejectedValue(new TypeError('bad data'))
+    const canShare = jest.fn().mockReturnValue(true)
+    ;(global as any).navigator = { share, canShare }
+
+    await expect(shareCapturedView(fakeRef, 'thetotal-rank.png')).resolves.toBeUndefined()
+    expect(mockDownloadDataUrl).toHaveBeenCalledWith('thetotal-rank.png', dataUrl)
+  })
+
+  it('rethrows other errors from navigator.share', async () => {
     const share = jest.fn().mockRejectedValue(new Error('boom'))
     const canShare = jest.fn().mockReturnValue(true)
     ;(global as any).navigator = { share, canShare }
@@ -84,10 +108,17 @@ describe('shareCapturedView on native', () => {
     })
   })
 
-  it('throws when sharing is unavailable, without calling shareAsync', async () => {
+  it('throws with no message when sharing is unavailable, without calling shareAsync', async () => {
     mockIsAvailable.mockResolvedValue(false)
 
     await expect(shareCapturedView(fakeRef, 'thetotal-rank.png')).rejects.toThrow()
+    let caught: any
+    try {
+      await shareCapturedView(fakeRef, 'thetotal-rank.png')
+    } catch (e) {
+      caught = e
+    }
+    expect(caught.message).toBe('')
     expect(mockShareAsync).not.toHaveBeenCalled()
   })
 })

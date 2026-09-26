@@ -37,7 +37,7 @@ export function ShareRankModal({
       setSharing(true)
       await shareCapturedView(cardRef, 'thetotal-rank.png', t('share.dialogTitle'))
     } catch (e: any) {
-      showAlert(t('common.error'), e?.message ?? '')
+      showAlert(t('common.error'), e?.message || undefined)
     } finally {
       setSharing(false)
     }
