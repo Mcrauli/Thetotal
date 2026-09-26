@@ -84,7 +84,12 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   }
 
   return (
-    <View style={{ paddingBottom: insets.bottom }}>
+    <View style={{ paddingBottom: Platform.OS === 'web' ? ('env(safe-area-inset-bottom)' as unknown as number) : insets.bottom }}>
+      {Platform.OS === 'web' && (
+        <Text style={{ position: 'absolute', top: -14, left: 8, color: COLORS.muted, fontSize: 9 }}>
+          {`inset ${Math.round(insets.bottom)} / ${Math.round(insets.top)} · h ${typeof window !== 'undefined' ? Math.round(window.innerHeight) : 0}`}
+        </Text>
+      )}
       <LinearGradient
         colors={[COLORS.card, '#0a0a14']}
         start={{ x: 0, y: 0 }}

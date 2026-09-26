@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { View, Text, TouchableOpacity, ScrollView, Modal } from 'react-native'
 import { CHALLENGES } from '../../lib/challenges'
 import { useT } from '../../lib/i18n'
@@ -38,7 +39,7 @@ export function ChallengesSection({ completedIds }: ChallengesSectionProps) {
       </TouchableOpacity>
 
       <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setModalVisible(false)}>
-        <View className="flex-1 bg-bg">
+        <SafeAreaView className="flex-1 bg-bg">
           <View className="flex-row justify-between items-center px-6 pt-6 pb-4">
             <View>
               <Text className="text-white text-xl font-black">{t('challenges.title')}</Text>
@@ -77,7 +78,7 @@ export function ChallengesSection({ completedIds }: ChallengesSectionProps) {
               )
             })}
           </ScrollView>
-        </View>
+        </SafeAreaView>
       </Modal>
     </>
   )

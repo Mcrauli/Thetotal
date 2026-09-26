@@ -1,4 +1,5 @@
 import { View, Text, Modal, ScrollView, TouchableOpacity } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { RANKS, SBD_RANK_THRESHOLDS, type RankName } from '../../lib/constants'
 import { TIER_ROMAN } from '../../lib/xp'
 import { useT } from '../../lib/i18n'
@@ -27,7 +28,7 @@ export function RanksModal({ visible, onClose, currentRank, currentTier, ratio }
   const t = useT()
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <View className="flex-1 bg-bg">
+      <SafeAreaView className="flex-1 bg-bg">
         <View className="flex-row justify-between items-center px-6 pt-6 pb-2">
           <Text className="text-white text-xl font-black">SBD Ranks</Text>
           <TouchableOpacity onPress={onClose}>
@@ -97,7 +98,7 @@ export function RanksModal({ visible, onClose, currentRank, currentTier, ratio }
             )
           })}
         </ScrollView>
-      </View>
+      </SafeAreaView>
     </Modal>
   )
 }

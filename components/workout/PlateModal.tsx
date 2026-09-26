@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { View, Text, Modal, TextInput, TouchableOpacity, ScrollView } from 'react-native'
 import { calcPlates } from '../../lib/plates'
 import { calcWarmup } from '../../lib/warmup'
@@ -23,7 +24,7 @@ export function PlateModal({ visible, onClose }: PlateModalProps) {
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: COLORS.bg }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.bg }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingTop: 24, paddingBottom: 12 }}>
           <Text style={{ color: '#fff', fontSize: 20, fontWeight: '900' }}>{t('plate.title')}</Text>
           <TouchableOpacity onPress={onClose}>
@@ -91,7 +92,7 @@ export function PlateModal({ visible, onClose }: PlateModalProps) {
             </View>
           )}
         </ScrollView>
-      </View>
+      </SafeAreaView>
     </Modal>
   )
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { View, Text, Modal, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
 import { supabase } from '../../lib/supabase'
 import { COLORS } from '../../lib/constants'
@@ -42,7 +43,7 @@ export function WorkoutDetailModal({ workoutId, workoutName, startedAt, totalVol
 
   return (
     <Modal visible={!!workoutId} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: COLORS.bg }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.bg }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingTop: 24, paddingBottom: 8 }}>
           <View>
             <Text style={{ color: '#fff', fontSize: 20, fontWeight: '900' }}>{workoutName}</Text>
@@ -96,7 +97,7 @@ export function WorkoutDetailModal({ workoutId, workoutName, startedAt, totalVol
             })}
           </ScrollView>
         )}
-      </View>
+      </SafeAreaView>
     </Modal>
   )
 }
