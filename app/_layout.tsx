@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase'
 import { useUserStore } from '../store/userStore'
 import { useLocaleStore } from '../lib/i18n'
 import { AlertHost } from '../components/ui/AlertHost'
+import { registerServiceWorker, syncWebPush } from '../lib/webPush'
 
 async function registerPushToken() {
   if (Platform.OS === 'web') return
@@ -51,6 +52,7 @@ function useAuthGuard() {
         }
         const profile = await fetchProfile()
         registerPushToken()
+        if (Platform.OS === 'web' && session.user.id) syncWebPush(session.user.id)
         if (inAuth) {
           if (segments[1] === 'tutorial' || segments[1] === 'reset-password') return
           if (profile?.onboarded) router.replace('/(tabs)/')
@@ -67,6 +69,7 @@ function useAuthGuard() {
 export default function RootLayout() {
   useAuthGuard()
   useEffect(() => { useLocaleStore.getState().hydrate() }, [])
+  useEffect(() => { if (Platform.OS === 'web') registerServiceWorker() }, [])
   if (Platform.OS === 'web') {
     return (
       <View style={{ flex: 1, backgroundColor: '#0d0d1a' }}>

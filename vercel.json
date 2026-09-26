@@ -1,6 +1,9 @@
 {
   "buildCommand": "npm run build:web",
   "outputDirectory": "dist-web",
+  "headers": [
+    { "source": "/sw.js", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
+  ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]

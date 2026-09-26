@@ -115,6 +115,7 @@ export default function SocialScreen() {
           toUserIds: [c.challenger_id, c.challenged_id],
           title,
           body: `${c.challenge_type === 'volume' ? 'Volyymi' : 'Treeniputki'} ${c.duration_days}pv haaste päättyi`,
+          url: '/social',
         })
       }
     }

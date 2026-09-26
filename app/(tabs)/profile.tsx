@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Switch, FlatList, Linking } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Switch, FlatList, Linking, Platform } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { showAlert } from '../../lib/alert'
@@ -23,6 +23,7 @@ import { useT, useLocaleStore } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
 import { unblockUser } from '../../lib/moderation'
 import { exportUserData } from '../../lib/dataExport'
+import { webPushSupport, webPushPermission, enableWebPush, disableWebPush } from '../../lib/webPush'
 import { COLORS } from '../../lib/constants'
 
 interface PRMap { squat: number; bench: number; deadlift: number }
@@ -51,6 +52,32 @@ export default function ProfileScreen() {
   const [blockedVisible, setBlockedVisible] = useState(false)
   const [blockedList, setBlockedList] = useState<{ id: string; username: string }[]>([])
   const [exporting, setExporting] = useState(false)
+  const [notifSupport, setNotifSupport] = useState<'unsupported' | 'needs-install' | 'supported'>('unsupported')
+  const [notifPermission, setNotifPermission] = useState<'default' | 'granted' | 'denied' | 'unsupported'>('unsupported')
+  const [notifBusy, setNotifBusy] = useState(false)
+
+  useFocusEffect(useCallback(() => {
+    if (Platform.OS !== 'web') return
+    setNotifSupport(webPushSupport())
+    setNotifPermission(webPushPermission())
+  }, []))
+
+  async function handleNotifEnable() {
+    if (!profile || notifBusy) return
+    setNotifBusy(true)
+    const result = await enableWebPush(profile.id)
+    setNotifPermission(webPushPermission())
+    setNotifBusy(false)
+    if (result === 'error') showAlert(t('common.error'))
+  }
+
+  async function handleNotifDisable() {
+    if (notifBusy) return
+    setNotifBusy(true)
+    await disableWebPush()
+    setNotifPermission(webPushPermission())
+    setNotifBusy(false)
+  }
 
   async function handleExport() {
     if (!profile || exporting) return
@@ -417,6 +444,33 @@ export default function ProfileScreen() {
               />
             </View>
           ))}
+          {Platform.OS === 'web' && notifSupport !== 'unsupported' && (
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderTopWidth: 1, borderTopColor: COLORS.card2, gap: 12 }}>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={{ color: '#fff', fontSize: 14 }}>{t('notif.title')}</Text>
+                <Text style={{ color: COLORS.muted, fontSize: 11, marginTop: 2 }}>
+                  {notifSupport === 'needs-install'
+                    ? t('notif.needsInstall')
+                    : notifPermission === 'granted'
+                      ? t('notif.on')
+                      : notifPermission === 'denied'
+                        ? t('notif.blocked')
+                        : t('notif.off')}
+                </Text>
+              </View>
+              {notifSupport === 'supported' && notifPermission !== 'denied' && (
+                <TouchableOpacity
+                  onPress={notifPermission === 'granted' ? handleNotifDisable : handleNotifEnable}
+                  disabled={notifBusy}
+                  style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 14, borderRadius: 10, backgroundColor: notifPermission === 'granted' ? COLORS.card2 : COLORS.accent, opacity: notifBusy ? 0.6 : 1 }}
+                >
+                  <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>
+                    {notifPermission === 'granted' ? t('notif.disable') : t('notif.enable')}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
           <TouchableOpacity
             onPress={() => { loadBlocked(); setBlockedVisible(true) }}
             style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderTopWidth: 1, borderTopColor: COLORS.card2 }}

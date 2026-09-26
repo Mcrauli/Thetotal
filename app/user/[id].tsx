@@ -120,6 +120,7 @@ export default function UserProfileScreen() {
       toUserIds: [user.id],
       title: `🤝 ${me.username} vahvisti`,
       body: `${exerciseName} ${weight}kg PR:si on nyt vahvistettu`,
+      url: '/',
     })
   }
 

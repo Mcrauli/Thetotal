@@ -251,6 +251,7 @@ export default function ActiveWorkoutScreen() {
             toUserIds: friendIds,
             title: `${profile.username} löi ennätyksen! 💪`,
             body: `${prName}: ${sbdPRs[0].weight} kg`,
+            url: '/',
           })
         }
       }
@@ -294,6 +295,7 @@ export default function ActiveWorkoutScreen() {
               toUserIds: overtaken,
               title: `🔥 ${profile.username} ohitti sinut viikkohaasteessa!`,
               body: `${myCount} treeniä tällä viikolla. Sinun vuorosi 💪`,
+              url: '/social',
             })
           }
         }

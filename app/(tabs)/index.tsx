@@ -10,6 +10,7 @@ import { RanksModal } from '../../components/ui/RanksModal'
 import { RankBarbellIcon } from '../../components/ui/RankBarbellIcon'
 import { WorkoutDetailModal } from '../../components/workout/WorkoutDetailModal'
 import { PRCommentsModal } from '../../components/ui/PRCommentsModal'
+import { NotificationPrompt } from '../../components/ui/NotificationPrompt'
 import { sendPushToUsers } from '../../lib/notifications'
 import { useT } from '../../lib/i18n'
 import { getRankData, getSBDSubRank } from '../../lib/xp'
@@ -156,6 +157,7 @@ export default function HomeScreen() {
       toUserIds: [pr.user_id],
       title: `🤝 ${profile.username} vahvisti`,
       body: `${pr.exerciseName} ${pr.weight_kg}kg PR:si on nyt vahvistettu`,
+      url: '/',
     })
   }
 
@@ -186,6 +188,7 @@ export default function HomeScreen() {
           toUserIds: [pr.user_id],
           title: `${EMOJI_LABELS[emoji]} ${profile.username}`,
           body: `Reagoi ${pr.exerciseName} ${pr.weight_kg}kg PR:ääsi`,
+          url: '/',
         })
       }
     } else {
@@ -263,6 +266,8 @@ export default function HomeScreen() {
     <ScreenBackground variant="home">
       <SafeAreaView className="flex-1">
         <ScrollView className="flex-1 px-4 pt-6" contentContainerStyle={{ paddingBottom: 28 }}>
+
+          <NotificationPrompt />
 
           {/* Rank hero */}
           <Animated.View style={[card(0), { borderRadius: 24, marginBottom: 12, overflow: 'hidden' }]}>

@@ -95,6 +95,7 @@ export function PRCommentsModal({ visible, prId, prLabel, prOwnerId, onClose }: 
         toUserIds: [...notifyIds],
         title: `💬 ${profile.username}`,
         body: prLabel ? `${prLabel}: ${body}` : body,
+        url: '/',
       })
     }
   }

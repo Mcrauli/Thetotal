@@ -484,6 +484,27 @@ const STRINGS = {
   'pwa.iosSafariOnly':        { fi: 'Avaa sivu Safarilla, jos käytät muuta selainta.', en: 'Open this page in Safari if you are using another browser.' },
   'pwa.installButton':        { fi: 'Asenna sovellus', en: 'Install app' },
   'pwa.androidHint':          { fi: 'Avaa selaimen valikko ⋮ ja valitse Asenna sovellus / Lisää aloitusnäyttöön.', en: 'Open the browser menu ⋮ and choose Install app / Add to Home screen.' },
+
+  // Web push notifications
+  'notif.title':              { fi: 'Ilmoitukset', en: 'Notifications' },
+  'notif.on':                 { fi: 'Päällä', en: 'On' },
+  'notif.off':                { fi: 'Pois', en: 'Off' },
+  'notif.blocked':            { fi: 'Estetty selaimen asetuksissa', en: 'Blocked in browser settings' },
+  'notif.needsInstall':       { fi: 'Lisää TheTotal kotinäytölle ensin', en: 'Add TheTotal to your home screen first' },
+  'notif.enable':             { fi: 'Ota käyttöön', en: 'Enable' },
+  'notif.disable':            { fi: 'Poista', en: 'Turn off' },
+  'notif.promptTitle':        { fi: 'Ota ilmoitukset käyttöön', en: 'Enable notifications' },
+  'notif.promptBody':         { fi: 'Kuulet heti, kun kaveri lyö ennätyksen, reagoi, kommentoi tai ohittaa sinut viikkohaasteessa.', en: "Hear right away when a friend sets a PR, reacts, comments, or overtakes you in the weekly challenge." },
+  'notif.promptEnable':       { fi: 'Ota käyttöön', en: 'Enable' },
+  'notif.promptBlocked':      { fi: 'Ilmoitukset estetty selaimen asetuksissa', en: 'Notifications blocked in browser settings' },
+  'notif.promptNeedsInstall': { fi: 'Ilmoitukset toimivat iPhonessa, kun TheTotal on lisätty kotinäytölle.', en: 'Notifications work on iPhone once TheTotal is added to your home screen.' },
+  'profile.notifications':    { fi: 'Ilmoitukset', en: 'Notifications' },
+  'profile.notifOn':          { fi: 'Päällä', en: 'On' },
+  'profile.notifOff':         { fi: 'Pois', en: 'Off' },
+  'profile.notifBlocked':     { fi: 'Estetty selaimessa', en: 'Blocked in browser' },
+  'profile.notifNeedsInstall':{ fi: 'Vaatii kotinäytölle asennuksen', en: 'Requires home screen install' },
+  'profile.notifEnable':      { fi: 'Ota käyttöön', en: 'Enable' },
+  'profile.notifDisable':     { fi: 'Poista käytöstä', en: 'Disable' },
 }
 
 type StringKey = keyof typeof STRINGS
