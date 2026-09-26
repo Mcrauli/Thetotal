@@ -9,6 +9,9 @@ import { useLocaleStore } from '../lib/i18n'
 import { AlertHost } from '../components/ui/AlertHost'
 import { registerServiceWorker, syncWebPush } from '../lib/webPush'
 import { applyBottomGap } from '../lib/tabBarOffset'
+import { consumePendingInvite } from '../lib/invite'
+import { showAlert } from '../lib/alert'
+import { t as translate } from '../lib/i18n'
 
 async function registerPushToken() {
   if (Platform.OS === 'web') return
@@ -52,6 +55,9 @@ function useAuthGuard() {
           })
         }
         const profile = await fetchProfile()
+        consumePendingInvite().then(name => {
+          if (name) showAlert(translate('invite.acceptedTitle'), translate('invite.acceptedBody', { name }))
+        })
         registerPushToken()
         if (Platform.OS === 'web' && session.user.id) syncWebPush(session.user.id)
         if (inAuth) {
@@ -60,7 +66,7 @@ function useAuthGuard() {
           else router.replace('/(auth)/onboarding')
         }
       } else {
-        if (!inAuth) router.replace('/(auth)/welcome')
+        if (!inAuth && (segments[0] as string) !== 'invite') router.replace('/(auth)/welcome')
       }
     })
     return () => subscription.unsubscribe()

@@ -11,6 +11,7 @@ import type { RankName } from '../../lib/constants'
 import { showAlert } from '../../lib/alert'
 import { useT } from '../../lib/i18n'
 import { sendPushToUsers } from '../../lib/notifications'
+import { shareInvite } from '../../lib/invite'
 
 interface UserProfile {
   id: string; username: string; sbd_rank: RankName; xp: number
@@ -216,6 +217,17 @@ export default function SocialScreen() {
       <TopSafeArea style={{ flex: 1 }}>
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: 32 }}>
           <Text style={{ color: '#fff', fontSize: 20, fontWeight: '900', marginBottom: 16 }}>{t('friends.title')}</Text>
+
+          <TouchableOpacity
+            onPress={async () => {
+              const result = await shareInvite(t('invite.shareText'))
+              if (result === 'copied') showAlert(t('invite.copied'))
+              else if (result === 'failed') showAlert(t('common.error'))
+            }}
+            style={{ minHeight: 52, borderRadius: 14, backgroundColor: COLORS.accent, alignItems: 'center', justifyContent: 'center', marginBottom: 16, flexDirection: 'row', gap: 8 }}
+          >
+            <Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>{t('invite.button')}</Text>
+          </TouchableOpacity>
 
           {/* Search */}
           <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>

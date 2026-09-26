@@ -365,6 +365,17 @@ const STRINGS = {
   'rankDesc.Legenda':         { fi: 'Maailman huippu. Harva koskaan saavuttaa tämän.', en: 'The world\'s peak. Few ever achieve this.' },
 
   // Social / Friends
+  'invite.button':            { fi: '🔗 Kutsu kavereita', en: '🔗 Invite friends' },
+  'invite.shareText':         { fi: 'Nosta kanssani TheTotalissa – kisataan ranksista 💪', en: 'Lift with me on TheTotal – let us compete for ranks 💪' },
+  'invite.copied':            { fi: 'Kutsulinkki kopioitu. Liitä se viestiin kaverille.', en: 'Invite link copied. Paste it into a message to a friend.' },
+  'invite.title':             { fi: '{name} kutsui sinut TheTotaliin', en: '{name} invited you to TheTotal' },
+  'invite.body':              { fi: 'Luo tunnus, niin olette heti kavereita ja voitte haastaa toisianne.', en: 'Create an account and you will be friends right away, ready to challenge each other.' },
+  'invite.signup':            { fi: 'LUO TUNNUS', en: 'CREATE ACCOUNT' },
+  'invite.login':             { fi: 'Minulla on jo tunnus', en: 'I already have an account' },
+  'invite.invalid':           { fi: 'Kutsulinkki ei ole voimassa.', en: 'This invite link is not valid.' },
+  'invite.continue':          { fi: 'Jatka', en: 'Continue' },
+  'invite.acceptedTitle':     { fi: 'Olette nyt kavereita 🤝', en: 'You are now friends 🤝' },
+  'invite.acceptedBody':      { fi: '{name} on nyt kaverilistallasi.', en: '{name} is now on your friends list.' },
   'friends.title':            { fi: 'Kaverit', en: 'Friends' },
   'friends.searchPlaceholder':{ fi: 'Hae käyttäjänimellä...', en: 'Search by username...' },
   'friends.searchResults':    { fi: 'HAKUTULOKSET', en: 'SEARCH RESULTS' },
