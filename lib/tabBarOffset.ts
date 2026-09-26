@@ -1,23 +1,4 @@
-import { create } from 'zustand'
 import { Platform } from 'react-native'
-
-const KEY = 'thetotal:tabBarOffset:v3'
-
-function read(): number {
-  if (Platform.OS !== 'web') return 0
-  try {
-    const raw = window.localStorage.getItem(KEY)
-    const n = raw === null ? 0 : Number(raw)
-    return Number.isFinite(n) ? n : 0
-  } catch {
-    return 0
-  }
-}
-
-interface OffsetState {
-  offset: number
-  setOffset: (value: number) => void
-}
 
 function safeInset(side: 'top' | 'bottom'): number {
   const probe = document.createElement('div')
@@ -28,6 +9,8 @@ function safeInset(side: 'top' | 'bottom'): number {
   return value
 }
 
+// iPhonen kotinäyttösovelluksessa sivu voi olla ruutua lyhyempi: alareunan
+// kotipalkin kaista jää sivun ulkopuolelle. Palautetaan kaistan korkeus.
 export function autoBottomGap(): number {
   if (Platform.OS !== 'web') return 0
   const standalone = (window.navigator as any).standalone === true || window.matchMedia('(display-mode: standalone)').matches
@@ -38,39 +21,10 @@ export function autoBottomGap(): number {
   return Math.min(missing, Math.round(safeInset('bottom')))
 }
 
-export function applyOffset(value: number) {
+export function applyBottomGap() {
   if (Platform.OS !== 'web') return
   try {
-    document.documentElement.style.setProperty('--tt-bottom', `${autoBottomGap() + value}px`)
+    document.documentElement.style.setProperty('--tt-gap', `${autoBottomGap()}px`)
   } catch {
   }
-}
-
-export const useTabBarOffset = create<OffsetState>((set) => ({
-  offset: read(),
-  setOffset: (value: number) => {
-    const clamped = Math.max(-120, Math.min(120, Math.round(value)))
-    try {
-      window.localStorage.setItem(KEY, String(clamped))
-    } catch {
-    }
-    applyOffset(clamped)
-    set({ offset: clamped })
-  },
-}))
-
-export function layoutReport(insets: { top: number; bottom: number }): string {
-  if (Platform.OS !== 'web') return ''
-  const vv = window.visualViewport
-  const root = document.getElementById('root')?.getBoundingClientRect()
-  const standalone = (window.navigator as any).standalone === true || window.matchMedia('(display-mode: standalone)').matches
-  return [
-    `inset ${Math.round(insets.top)}/${Math.round(insets.bottom)}`,
-    `inner ${Math.round(window.innerHeight)}`,
-    `screen ${Math.round(window.screen.height)}`,
-    `vv ${vv ? Math.round(vv.height) : '-'}`,
-    `root ${root ? Math.round(root.height) : '-'}`,
-    `dvh ${Math.round(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tt-dvh') || '0'))}`,
-    standalone ? 'standalone' : 'browser',
-  ].join(' · ')
 }

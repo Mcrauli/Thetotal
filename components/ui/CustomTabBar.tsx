@@ -84,7 +84,7 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   }
 
   return (
-    <View style={{ backgroundColor: '#0a0a14', paddingBottom: Platform.OS === 'web' ? ('env(safe-area-inset-bottom)' as unknown as number) : insets.bottom }}>
+    <View style={{ backgroundColor: '#0a0a14', paddingBottom: Platform.OS === 'web' ? ('max(0px, calc(env(safe-area-inset-bottom) - var(--tt-gap, 0px)))' as unknown as number) : insets.bottom }}>
       <LinearGradient
         colors={[COLORS.card, '#0a0a14']}
         start={{ x: 0, y: 0 }}

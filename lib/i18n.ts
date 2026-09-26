@@ -493,9 +493,6 @@ const STRINGS = {
   // Web push notifications
   'home.loadFailed':          { fi: 'Tietojen haku ei onnistunut. Tarkista verkkoyhteys.', en: 'Could not load your data. Check your connection.' },
   'home.retry':               { fi: 'Yritä uudelleen', en: 'Try again' },
-  'layout.tabBarTitle':       { fi: 'Alapalkin hienosäätö', en: 'Tab bar fine-tuning' },
-  'layout.tabBarHint':        { fi: 'Jos alapalkin alle jää tyhjää tilaa, kasvata lukua kunnes palkki on ruudun alareunassa.', en: 'If there is empty space below the tab bar, increase the number until the bar sits at the bottom.' },
-  'layout.reset':             { fi: 'Nollaa', en: 'Reset' },
   'notif.title':              { fi: 'Ilmoitukset', en: 'Notifications' },
   'notif.on':                 { fi: 'Päällä', en: 'On' },
   'notif.off':                { fi: 'Pois', en: 'Off' },

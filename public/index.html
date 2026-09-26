@@ -25,6 +25,15 @@
         z-index: 2147483000;
         pointer-events: none;
       }
+      #bottom-skirt {
+        position: fixed;
+        left: 0;
+        right: 0;
+        top: 100%;
+        height: 160px;
+        background: #0a0a14;
+        pointer-events: none;
+      }
     </style>
     <style id="expo-reset">
       /* These styles make the body full-height */
@@ -49,7 +58,7 @@
         position: fixed;
         top: 0;
         right: 0;
-        bottom: calc(0px - var(--tt-bottom, 0px));
+        bottom: 0;
         left: 0;
         background-color: #0d0d1a;
         color-scheme: dark;
@@ -79,5 +88,6 @@
     <!-- The root element for your Expo app. -->
     <div id="root"></div>
     <div id="status-shield"></div>
+    <div id="bottom-skirt"></div>
   </body>
 </html>

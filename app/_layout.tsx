@@ -8,7 +8,7 @@ import { useUserStore } from '../store/userStore'
 import { useLocaleStore } from '../lib/i18n'
 import { AlertHost } from '../components/ui/AlertHost'
 import { registerServiceWorker, syncWebPush } from '../lib/webPush'
-import { useTabBarOffset, applyOffset } from '../lib/tabBarOffset'
+import { applyBottomGap } from '../lib/tabBarOffset'
 
 async function registerPushToken() {
   if (Platform.OS === 'web') return
@@ -73,10 +73,9 @@ export default function RootLayout() {
   useEffect(() => { if (Platform.OS === 'web') registerServiceWorker() }, [])
   useEffect(() => {
     if (Platform.OS !== 'web') return
-    const apply = () => applyOffset(useTabBarOffset.getState().offset)
-    apply()
-    window.addEventListener('resize', apply)
-    return () => window.removeEventListener('resize', apply)
+    applyBottomGap()
+    window.addEventListener('resize', applyBottomGap)
+    return () => window.removeEventListener('resize', applyBottomGap)
   }, [])
   if (Platform.OS === 'web') {
     return (
