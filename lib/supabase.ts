@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { AppState } from 'react-native'
+import { AppState, Platform } from 'react-native'
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!
@@ -21,3 +21,15 @@ AppState.addEventListener('change', state => {
   else supabase.auth.stopAutoRefresh()
 })
 if (AppState.currentState === 'active') supabase.auth.startAutoRefresh()
+
+// Webissä AppState ei aina herää kotinäyttösovelluksessa: kuunnellaan myös näkyvyyttä.
+if (Platform.OS === 'web' && typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      supabase.auth.startAutoRefresh()
+      supabase.auth.getSession()
+    } else {
+      supabase.auth.stopAutoRefresh()
+    }
+  })
+}

@@ -148,6 +148,8 @@ const STRINGS = {
   'active.addExerciseFirst':  { fi: 'Lisää ensin liike', en: 'Add an exercise first' },
   'active.savingError':       { fi: 'Tallennusvirhe', en: 'Save error' },
   'active.networkError':      { fi: 'Yhteys hidas tai poikki. Treeni säilyy — yritä tallentaa uudelleen.', en: 'Connection slow or down. Workout is kept — try saving again.' },
+  'active.saveRetryTitle':     { fi: 'Tallennus ei onnistunut', en: 'Saving did not go through' },
+  'active.saveRetryBody':      { fi: 'Treeni on tallessa. Yritämme automaattisesti uudelleen, tai paina Lopeta treeni uudestaan.', en: 'Your workout is safe. We keep retrying automatically, or tap Finish workout again.' },
   'active.sessionExpired':    { fi: 'Istunto vanhentui. Treeni säilyy — yritä tallentaa uudelleen, tai kirjaudu tarvittaessa uudelleen.', en: 'Session expired. Workout is kept — try saving again, or sign in again if needed.' },
   'active.setsError':         { fi: 'Sarjojen tallennus epäonnistui', en: 'Failed to save sets' },
 

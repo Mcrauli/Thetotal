@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { View, Text, TouchableOpacity, ScrollView, TextInput } from 'react-native'
+import { View, Text, TouchableOpacity, ScrollView, TextInput, Platform } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { showAlert } from '../../lib/alert'
 import { router } from 'expo-router'
@@ -17,6 +17,8 @@ import { detectPRs } from '../../lib/pr'
 import { calculateXPGain, getRankForXP, getSBDRank } from '../../lib/xp'
 import { getNewlyCompleted } from '../../lib/challenges'
 import { withTimeout } from '../../lib/withTimeout'
+import { ensureFreshSession } from '../../lib/session'
+import { randomUUID } from 'expo-crypto'
 import { sendPushToUsers } from '../../lib/notifications'
 import { useT } from '../../lib/i18n'
 
@@ -33,6 +35,10 @@ export default function ActiveWorkoutScreen() {
   const [prShare, setPrShare] = useState<{ prs: PRShareItem[]; dateLabel: string } | null>(null)
   const [shareVisible, setShareVisible] = useState(false)
   const [plateVisible, setPlateVisible] = useState(false)
+  const [saveFailed, setSaveFailed] = useState(false)
+  const [saveMessage, setSaveMessage] = useState('')
+  const workoutIdRef = useRef<string | null>(null)
+  const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [lastSets, setLastSets] = useState<Record<string, { text: string; weight: number; reps: number } | null>>({})
   const [prWeights, setPrWeights] = useState<Record<string, number>>({})
 
@@ -71,6 +77,19 @@ export default function ActiveWorkoutScreen() {
     }))
   }
 
+  useEffect(() => () => { if (retryTimer.current) clearTimeout(retryTimer.current) }, [])
+
+  useEffect(() => {
+    if (!saveFailed || Platform.OS !== 'web') return
+    const retry = () => { if (document.visibilityState === 'visible') handleFinish() }
+    document.addEventListener('visibilitychange', retry)
+    window.addEventListener('online', retry)
+    return () => {
+      document.removeEventListener('visibilitychange', retry)
+      window.removeEventListener('online', retry)
+    }
+  }, [saveFailed])
+
   useEffect(() => {
     const interval = setInterval(() => {
       if (startedAt) setElapsed(Math.floor((Date.now() - startedAt) / 1000))
@@ -90,6 +109,8 @@ export default function ActiveWorkoutScreen() {
     if (!profile) return
     savingRef.current = true
     setSaving(true)
+    setSaveFailed(false)
+    if (retryTimer.current) { clearTimeout(retryTimer.current); retryTimer.current = null }
 
     try {
     const finishedAt = new Date()
@@ -99,20 +120,21 @@ export default function ActiveWorkoutScreen() {
       .flatMap(e => e.sets)
       .reduce((sum, s) => sum + s.weightKg * s.reps, 0)
 
+    // Sama id joka yrityksellä: uusinta ei voi luoda kahta treeniä.
+    const workoutId = workoutIdRef.current ?? (workoutIdRef.current = randomUUID())
+
     let workout: any = null, workoutError: any = null
     try {
       // Varmista voimassa oleva istunto ennen tallennusta. Jos access token on
       // vanhentunut (pitkä treeni > 1 h) ja sen automaattinen uusinta epäonnistuu,
       // supabase-js putoaa anon-keyhyn -> RLS hylkää insertin. Pakota uusinta.
-      let session = (await withTimeout(supabase.auth.getSession(), 8000).catch(() => null))?.data?.session ?? null
-      if (!session) {
-        session = (await withTimeout(supabase.auth.refreshSession(), 8000).catch(() => null))?.data?.session ?? null
-      }
+      const session = await ensureFreshSession()
       if (!session) throw new Error(t('active.sessionExpired'))
       const res = await withTimeout(
         supabase
           .from('workouts')
           .insert({
+            id: workoutId,
             user_id: profile.id,
             name: workoutName,
             started_at: startedAtISO,
@@ -124,16 +146,22 @@ export default function ActiveWorkoutScreen() {
         15000
       )
       workout = res.data; workoutError = res.error
+      if (workoutError?.code === '23505') {
+        const again = await withTimeout(supabase.from('workouts').select().eq('id', workoutId).single(), 15000)
+        workout = again.data; workoutError = again.error
+      }
     } catch (e: any) {
       workoutError = { message: e?.message ?? t('active.networkError') }
     }
 
     if (workoutError || !workout) {
-      showAlert(t('common.error'), workoutError?.message)
+      scheduleSaveRetry(workoutError?.message)
       setSaving(false)
       savingRef.current = false
       return
     }
+
+    await supabase.from('workout_sets').delete().eq('workout_id', workoutId).then(() => undefined, () => undefined)
 
     const allSets = exercises.flatMap(ex =>
       ex.sets.map(s => ({
@@ -156,7 +184,7 @@ export default function ActiveWorkoutScreen() {
       ]), 15000)
 
     if (setsError) {
-      showAlert(t('active.setsError'), setsError.message)
+      scheduleSaveRetry(setsError.message)
       setSaving(false)
       savingRef.current = false
       return
@@ -423,11 +451,18 @@ export default function ActiveWorkoutScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {})
     setResults({ xpGain: displayXPGain, xpBreakdown: { base: xpBase, prBonus, streakBonus, challengeBonus }, improvements, challenges: challengeResults })
     } catch (e: any) {
-      showAlert(t('active.savingError'), e?.message ?? '')
+      scheduleSaveRetry(e?.message)
     } finally {
       setSaving(false)
       savingRef.current = false
     }
+  }
+
+  function scheduleSaveRetry(message?: string) {
+    setSaveFailed(true)
+    setSaveMessage(message ?? '')
+    if (retryTimer.current) clearTimeout(retryTimer.current)
+    retryTimer.current = setTimeout(() => { handleFinish() }, 15000)
   }
 
   return (
@@ -499,6 +534,13 @@ export default function ActiveWorkoutScreen() {
       </ScrollView>
 
       <View className="absolute bottom-0 left-0 right-0 px-4 pb-8 pt-2 bg-bg">
+        {saveFailed && (
+          <View style={{ backgroundColor: '#3a1a1f', borderRadius: 14, padding: 12, marginBottom: 10 }}>
+            <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{t('active.saveRetryTitle')}</Text>
+            <Text style={{ color: '#d0c0c4', fontSize: 12, marginTop: 4 }}>{t('active.saveRetryBody')}</Text>
+            {saveMessage ? <Text style={{ color: '#9a8a8e', fontSize: 11, marginTop: 4 }}>{saveMessage}</Text> : null}
+          </View>
+        )}
         <TouchableOpacity
           className={`bg-accent rounded-2xl py-4 items-center ${saving ? 'opacity-50' : ''}`}
           onPress={handleFinish}
