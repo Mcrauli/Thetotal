@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '../lib/supabase'
+import { ensureFreshSession } from '../lib/session'
 import { getRankForXP, getRankData } from '../lib/xp'
 import type { RankName } from '../lib/constants'
 
@@ -35,13 +36,14 @@ export const useUserStore = create<UserState>((set, get) => ({
 
   fetchProfile: async () => {
     set({ loading: true })
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { set({ loading: false }); return null }
+    const session = await ensureFreshSession()
+    const userId = session?.user?.id
+    if (!userId) { set({ loading: false }); return null }
 
     const { data } = await supabase
       .from('users')
       .select('*')
-      .eq('id', user.id)
+      .eq('id', userId)
       .single()
 
     set({ profile: data ?? null, loading: false })

@@ -71,7 +71,13 @@ export default function RootLayout() {
   useAuthGuard()
   useEffect(() => { useLocaleStore.getState().hydrate() }, [])
   useEffect(() => { if (Platform.OS === 'web') registerServiceWorker() }, [])
-  useEffect(() => { applyOffset(useTabBarOffset.getState().offset) }, [])
+  useEffect(() => {
+    if (Platform.OS !== 'web') return
+    const apply = () => applyOffset(useTabBarOffset.getState().offset)
+    apply()
+    window.addEventListener('resize', apply)
+    return () => window.removeEventListener('resize', apply)
+  }, [])
   if (Platform.OS === 'web') {
     return (
       <View style={{ flex: 1, backgroundColor: '#0d0d1a' }}>

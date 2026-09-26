@@ -27,7 +27,6 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
       supabase.auth.startAutoRefresh()
-      supabase.auth.getSession()
     } else {
       supabase.auth.stopAutoRefresh()
     }

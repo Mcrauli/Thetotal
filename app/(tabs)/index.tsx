@@ -251,7 +251,17 @@ export default function HomeScreen() {
     }).start()
   }, [rankProgress, profile?.id])
 
-  if (!profile) return <SafeAreaView className="flex-1 bg-bg" />
+  if (!profile) return (
+    <SafeAreaView className="flex-1 bg-bg items-center justify-center px-8" edges={['top', 'left', 'right']}>
+      <Text style={{ color: COLORS.muted, fontSize: 14, textAlign: 'center' }}>{t('home.loadFailed')}</Text>
+      <TouchableOpacity
+        onPress={() => fetchProfile()}
+        style={{ marginTop: 16, minHeight: 44, justifyContent: 'center', paddingHorizontal: 20, borderRadius: 12, backgroundColor: COLORS.accent }}
+      >
+        <Text style={{ color: '#fff', fontWeight: '700' }}>{t('home.retry')}</Text>
+      </TouchableOpacity>
+    </SafeAreaView>
+  )
 
   function card(idx: number) {
     return {

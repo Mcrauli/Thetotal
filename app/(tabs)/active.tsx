@@ -17,7 +17,7 @@ import { detectPRs } from '../../lib/pr'
 import { calculateXPGain, getRankForXP, getSBDRank } from '../../lib/xp'
 import { getNewlyCompleted } from '../../lib/challenges'
 import { withTimeout } from '../../lib/withTimeout'
-import { ensureFreshSession } from '../../lib/session'
+import { ensureFreshSession, lastSessionError } from '../../lib/session'
 import { randomUUID } from 'expo-crypto'
 import { sendPushToUsers } from '../../lib/notifications'
 import { useT } from '../../lib/i18n'
@@ -460,7 +460,8 @@ export default function ActiveWorkoutScreen() {
 
   function scheduleSaveRetry(message?: string) {
     setSaveFailed(true)
-    setSaveMessage(message ?? '')
+    const reason = lastSessionError()
+    setSaveMessage([message, reason].filter(Boolean).join(' · '))
     if (retryTimer.current) clearTimeout(retryTimer.current)
     retryTimer.current = setTimeout(() => { handleFinish() }, 15000)
   }
