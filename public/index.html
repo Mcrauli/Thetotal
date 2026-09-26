@@ -37,6 +37,20 @@
         flex: 1;
       }
     </style>
+      <script id="bundle-recover">
+      window.addEventListener("error", function (e) {
+        var el = e && e.target;
+        if (!el || el.tagName !== "SCRIPT") return;
+        try {
+          if (sessionStorage.getItem("tt-reloaded") === "1") return;
+          sessionStorage.setItem("tt-reloaded", "1");
+        } catch (err) {}
+        location.reload();
+      }, true);
+      window.addEventListener("load", function () {
+        try { sessionStorage.removeItem("tt-reloaded"); } catch (err) {}
+      });
+    </script>
   </head>
 
   <body>

@@ -8,6 +8,7 @@ import { ScreenBackground } from '../../components/ui/ScreenBackground'
 import { getRankData } from '../../lib/xp'
 import { COLORS } from '../../lib/constants'
 import type { RankName } from '../../lib/constants'
+import { showAlert } from '../../lib/alert'
 import { useT } from '../../lib/i18n'
 import { sendPushToUsers } from '../../lib/notifications'
 
@@ -156,7 +157,12 @@ export default function SocialScreen() {
   }
 
   async function declineChallenge(challengeId: string) {
-    await supabase.from('friend_challenges').delete().eq('id', challengeId)
+    const { error } = await supabase
+      .from('friend_challenges')
+      .update({ status: 'declined' })
+      .eq('id', challengeId)
+      .eq('challenged_id', profile?.id ?? '')
+    if (error) { showAlert(t('common.error'), error.message); return }
     setChallenges(prev => prev.filter(c => c.id !== challengeId))
   }
 
@@ -167,7 +173,7 @@ export default function SocialScreen() {
   })
 
   const myChallenges = challenges.filter(c => c.challenged_id === profile?.id && c.status === 'pending')
-  const sentChallenges = challenges.filter(c => c.challenger_id === profile?.id)
+  const sentChallenges = challenges.filter(c => c.challenger_id === profile?.id && c.status !== 'declined')
 
   function getDuelResult(c: Challenge): string {
     const challVal = c.challenger_value ?? 0
@@ -310,15 +316,25 @@ export default function SocialScreen() {
                           {c.exercise_name} › {c.target_weight} kg
                         </Text>
                         {c.message ? <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 4 }}>"{c.message}"</Text> : null}
-                        <Text style={{ color: COLORS.muted, fontSize: 11, marginTop: 6 }}>{t('friends.challengeHint')}</Text>
+                        <Text style={{ color: COLORS.muted, fontSize: 11, marginTop: 6 }}>
+                          {t('friends.challengeAuto', { kg: String(c.target_weight) })}
+                        </Text>
                       </>
                     )}
-                    <TouchableOpacity
-                      onPress={() => declineChallenge(c.id)}
-                      style={{ marginTop: 10, alignSelf: 'flex-end' }}
-                    >
-                      <Text style={{ color: COLORS.muted, fontSize: 12 }}>{t('friends.decline')} ✕</Text>
-                    </TouchableOpacity>
+                    {isDuel && (
+                      <Text style={{ color: COLORS.muted, fontSize: 11, marginTop: 6 }}>{t('friends.duelAuto')}</Text>
+                    )}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 12, marginTop: 10 }}>
+                      <TouchableOpacity onPress={() => declineChallenge(c.id)} style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 4 }}>
+                        <Text style={{ color: COLORS.muted, fontSize: 12 }}>{t('friends.decline')} ✕</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => router.push('/(tabs)/start-workout')}
+                        style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 14, borderRadius: 10, backgroundColor: COLORS.accent }}
+                      >
+                        <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{t('friends.startWorkout')}</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 )
               })}
