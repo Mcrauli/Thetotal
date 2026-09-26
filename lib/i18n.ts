@@ -491,6 +491,9 @@ const STRINGS = {
   'pwa.androidHint':          { fi: 'Avaa selaimen valikko ⋮ ja valitse Asenna sovellus / Lisää aloitusnäyttöön.', en: 'Open the browser menu ⋮ and choose Install app / Add to Home screen.' },
 
   // Web push notifications
+  'layout.tabBarTitle':       { fi: 'Alapalkin hienosäätö', en: 'Tab bar fine-tuning' },
+  'layout.tabBarHint':        { fi: 'Jos alapalkin alle jää tyhjää tilaa, kasvata lukua kunnes palkki on ruudun alareunassa.', en: 'If there is empty space below the tab bar, increase the number until the bar sits at the bottom.' },
+  'layout.reset':             { fi: 'Nollaa', en: 'Reset' },
   'notif.title':              { fi: 'Ilmoitukset', en: 'Notifications' },
   'notif.on':                 { fi: 'Päällä', en: 'On' },
   'notif.off':                { fi: 'Pois', en: 'Off' },

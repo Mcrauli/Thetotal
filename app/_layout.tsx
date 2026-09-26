@@ -8,6 +8,7 @@ import { useUserStore } from '../store/userStore'
 import { useLocaleStore } from '../lib/i18n'
 import { AlertHost } from '../components/ui/AlertHost'
 import { registerServiceWorker, syncWebPush } from '../lib/webPush'
+import { useTabBarOffset, applyOffset } from '../lib/tabBarOffset'
 
 async function registerPushToken() {
   if (Platform.OS === 'web') return
@@ -70,6 +71,7 @@ export default function RootLayout() {
   useAuthGuard()
   useEffect(() => { useLocaleStore.getState().hydrate() }, [])
   useEffect(() => { if (Platform.OS === 'web') registerServiceWorker() }, [])
+  useEffect(() => { applyOffset(useTabBarOffset.getState().offset) }, [])
   if (Platform.OS === 'web') {
     return (
       <View style={{ flex: 1, backgroundColor: '#0d0d1a' }}>

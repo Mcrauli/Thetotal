@@ -24,6 +24,8 @@ import { supabase } from '../../lib/supabase'
 import { unblockUser } from '../../lib/moderation'
 import { exportUserData } from '../../lib/dataExport'
 import { webPushSupport, webPushPermission, enableWebPush, disableWebPush } from '../../lib/webPush'
+import { useTabBarOffset, layoutReport } from '../../lib/tabBarOffset'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { COLORS } from '../../lib/constants'
 
 interface PRMap { squat: number; bench: number; deadlift: number }
@@ -55,6 +57,15 @@ export default function ProfileScreen() {
   const [notifSupport, setNotifSupport] = useState<'unsupported' | 'needs-install' | 'supported'>('unsupported')
   const [notifPermission, setNotifPermission] = useState<'default' | 'granted' | 'denied' | 'unsupported'>('unsupported')
   const [notifBusy, setNotifBusy] = useState(false)
+  const tabOffset = useTabBarOffset(s => s.offset)
+  const setTabOffset = useTabBarOffset(s => s.setOffset)
+  const insets = useSafeAreaInsets()
+  const [layoutInfo, setLayoutInfo] = useState('')
+
+  useFocusEffect(useCallback(() => {
+    if (Platform.OS !== 'web') return
+    setLayoutInfo(layoutReport(insets))
+  }, [insets.top, insets.bottom, tabOffset]))
 
   useFocusEffect(useCallback(() => {
     if (Platform.OS !== 'web') return
@@ -444,6 +455,34 @@ export default function ProfileScreen() {
               />
             </View>
           ))}
+          {Platform.OS === 'web' && (
+            <View style={{ paddingHorizontal: 16, paddingVertical: 14, borderTopWidth: 1, borderTopColor: COLORS.card2 }}>
+              <Text style={{ color: '#fff', fontSize: 14 }}>{t('layout.tabBarTitle')}</Text>
+              <Text style={{ color: COLORS.muted, fontSize: 11, marginTop: 2 }}>{t('layout.tabBarHint')}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10 }}>
+                <TouchableOpacity
+                  onPress={() => setTabOffset(tabOffset - 4)}
+                  style={{ minHeight: 44, minWidth: 56, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: COLORS.card2 }}
+                >
+                  <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700' }}>−</Text>
+                </TouchableOpacity>
+                <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700', minWidth: 48, textAlign: 'center' }}>{tabOffset}</Text>
+                <TouchableOpacity
+                  onPress={() => setTabOffset(tabOffset + 4)}
+                  style={{ minHeight: 44, minWidth: 56, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: COLORS.card2 }}
+                >
+                  <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700' }}>+</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setTabOffset(0)}
+                  style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 12 }}
+                >
+                  <Text style={{ color: COLORS.muted, fontSize: 13 }}>{t('layout.reset')}</Text>
+                </TouchableOpacity>
+              </View>
+              <Text selectable style={{ color: COLORS.muted, fontSize: 10, marginTop: 8 }}>{layoutInfo}</Text>
+            </View>
+          )}
           {Platform.OS === 'web' && notifSupport !== 'unsupported' && (
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderTopWidth: 1, borderTopColor: COLORS.card2, gap: 12 }}>
               <View style={{ flex: 1, minWidth: 0 }}>
