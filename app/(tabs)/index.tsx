@@ -223,7 +223,15 @@ export default function HomeScreen() {
     setLastWorkout(data?.[0] ?? null)
   }
 
-  useEffect(() => { if (!profile && !loading) fetchProfile() }, [])
+  useEffect(() => {
+    if (profile) return
+    let cancelled = false
+    const delays = [0, 1500, 4000, 8000]
+    const timers = delays.map(ms => setTimeout(() => {
+      if (!cancelled && !useUserStore.getState().profile && !useUserStore.getState().loading) fetchProfile()
+    }, ms))
+    return () => { cancelled = true; timers.forEach(clearTimeout) }
+  }, [profile])
 
   const sbdRankData = getRankData(profile?.sbd_rank ?? 'Aloittelija')
   const total = sbd.squat + sbd.bench + sbd.deadlift

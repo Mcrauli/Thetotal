@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { Platform } from 'react-native'
 
-const KEY = 'thetotal:tabBarOffset:v2'
+const KEY = 'thetotal:tabBarOffset:v3'
 
 function read(): number {
   if (Platform.OS !== 'web') return 0
@@ -19,9 +19,9 @@ interface OffsetState {
   setOffset: (value: number) => void
 }
 
-function safeTop(): number {
+function safeInset(side: 'top' | 'bottom'): number {
   const probe = document.createElement('div')
-  probe.style.cssText = 'position:fixed;top:0;left:0;visibility:hidden;padding-top:env(safe-area-inset-top)'
+  probe.style.cssText = `position:fixed;top:0;left:0;visibility:hidden;padding-top:env(safe-area-inset-${side})`
   document.body.appendChild(probe)
   const value = parseFloat(getComputedStyle(probe).paddingTop) || 0
   probe.remove()
@@ -34,7 +34,8 @@ export function autoBottomGap(): number {
   if (!standalone) return 0
   const missing = Math.round(window.screen.height - window.innerHeight)
   if (missing <= 0 || missing > 120) return 0
-  return safeTop() > 0 ? missing : 0
+  if (safeInset('top') <= 0) return 0
+  return Math.min(missing, Math.round(safeInset('bottom')))
 }
 
 export function applyOffset(value: number) {

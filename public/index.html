@@ -12,6 +12,20 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="theme-color" content="#0d0d1a" />
     <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
+    <style id="status-shield-style">
+      #status-shield {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: env(safe-area-inset-top);
+        background: rgba(13, 13, 26, 0.82);
+        -webkit-backdrop-filter: blur(18px);
+        backdrop-filter: blur(18px);
+        z-index: 2147483000;
+        pointer-events: none;
+      }
+    </style>
     <style id="expo-reset">
       /* These styles make the body full-height */
       html,
@@ -64,5 +78,6 @@
     </noscript>
     <!-- The root element for your Expo app. -->
     <div id="root"></div>
+    <div id="status-shield"></div>
   </body>
 </html>
