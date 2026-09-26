@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>Safe area</title>
+    <style>
+      :root { color-scheme: dark; }
+      html, body { height: 100%; margin: 0; background: #0d0d1a; color: #fff; font: 16px -apple-system, system-ui, sans-serif; }
+      #probe { position: fixed; inset: 0; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); pointer-events: none; }
+      #box { padding: 24px 16px; }
+      b { color: #ffd700; }
+      .row { padding: 4px 0; border-bottom: 1px solid #222; }
+      #top, #bottom { position: fixed; left: 0; right: 0; background: rgba(230,57,70,0.5); }
+      #top { top: 0; height: env(safe-area-inset-top); }
+      #bottom { bottom: 0; height: env(safe-area-inset-bottom); }
+    </style>
+  </head>
+  <body>
+    <div id="probe"></div>
+    <div id="top"></div>
+    <div id="bottom"></div>
+    <div id="box">Mitataan…</div>
+    <script>
+      function px(el, side) {
+        return Math.round(parseFloat(getComputedStyle(el)['padding' + side]) || 0);
+      }
+      function render() {
+        var p = document.getElementById('probe');
+        var rows = [
+          ['safe-area top', px(p, 'Top')],
+          ['safe-area bottom', px(p, 'Bottom')],
+          ['window.innerHeight', Math.round(window.innerHeight)],
+          ['document height', Math.round(document.documentElement.clientHeight)],
+          ['screen.height', Math.round(screen.height)],
+          ['devicePixelRatio', window.devicePixelRatio],
+          ['standalone', String(window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches)],
+          ['PushManager', String('PushManager' in window)],
+          ['Notification', String('Notification' in window)],
+          ['serviceWorker', String('serviceWorker' in navigator)],
+        ];
+        document.getElementById('box').innerHTML = rows
+          .map(function (r) { return '<div class="row">' + r[0] + ': <b>' + r[1] + '</b></div>'; })
+          .join('');
+      }
+      render();
+      window.addEventListener('resize', render);
+    </script>
+  </body>
+</html>
