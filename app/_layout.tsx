@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { Platform, View } from 'react-native'
 import { Slot, router, useSegments } from 'expo-router'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
+import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { useUserStore } from '../store/userStore'
 import { waitForWorkoutHydration, workoutInProgress } from '../store/workoutStore'
@@ -42,7 +43,7 @@ function useAuthGuard() {
   const { fetchProfile } = useUserStore()
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const handle = async (event: string, session: Session | null) => {
       const inAuth = segments[0] === '(auth)'
       if (session) {
         const { data: existingProfile } = await supabase
@@ -83,6 +84,12 @@ function useAuthGuard() {
       } else {
         if (!inAuth && (segments[0] as string) !== 'invite') router.replace('/(auth)/welcome')
       }
+    }
+    // Supabase: älä kutsu auth-metodeja suoraan kuuntelijan sisältä (jumittaa
+    // tunnuksen uusinnan). Käsitellään tapahtuma vasta kuuntelijan jälkeen.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'TOKEN_REFRESHED') return
+      setTimeout(() => { handle(event, session) }, 0)
     })
     return () => subscription.unsubscribe()
   }, [segments])
