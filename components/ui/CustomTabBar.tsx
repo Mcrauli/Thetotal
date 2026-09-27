@@ -6,6 +6,7 @@ import { router } from 'expo-router'
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import { COLORS } from '../../lib/constants'
 import { useT } from '../../lib/i18n'
+import { workoutInProgress } from '../../store/workoutStore'
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name']
 
@@ -33,6 +34,7 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   }
 
   function startNew() {
+    if (workoutInProgress()) { router.push('/(tabs)/active'); return }
     router.push('/(tabs)/start-workout')
   }
 

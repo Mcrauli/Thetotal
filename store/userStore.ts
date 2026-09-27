@@ -25,7 +25,7 @@ export interface UserProfile {
 interface UserState {
   profile: UserProfile | null
   loading: boolean
-  fetchProfile: () => Promise<void>
+  fetchProfile: () => Promise<UserProfile | null>
   updateXPAndRank: (newXP: number) => Promise<void>
   signOut: () => Promise<void>
 }

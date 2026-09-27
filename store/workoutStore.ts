@@ -143,3 +143,15 @@ export const useWorkoutStore = create<WorkoutState>()(
     }
   )
 )
+
+export function workoutInProgress(): boolean {
+  const s = useWorkoutStore.getState()
+  return s.isActive && s.startedAt != null
+}
+
+export function waitForWorkoutHydration(): Promise<void> {
+  if (useWorkoutStore.persist.hasHydrated()) return Promise.resolve()
+  return new Promise(resolve => {
+    const unsub = useWorkoutStore.persist.onFinishHydration(() => { unsub(); resolve() })
+  })
+}

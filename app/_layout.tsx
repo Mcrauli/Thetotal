@@ -5,6 +5,7 @@ import { Slot, router, useSegments } from 'expo-router'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { supabase } from '../lib/supabase'
 import { useUserStore } from '../store/userStore'
+import { waitForWorkoutHydration, workoutInProgress } from '../store/workoutStore'
 import { useLocaleStore } from '../lib/i18n'
 import { AlertHost } from '../components/ui/AlertHost'
 import { registerServiceWorker, syncWebPush } from '../lib/webPush'
@@ -33,6 +34,9 @@ async function registerPushToken() {
   }
 }
 
+// Keskeneräinen treeni avataan vain kerran käynnistyksessä, ei jokaisella navigoinnilla.
+let resumeChecked = false
+
 function useAuthGuard() {
   const segments = useSegments()
   const { fetchProfile } = useUserStore()
@@ -60,6 +64,17 @@ function useAuthGuard() {
         })
         registerPushToken()
         if (Platform.OS === 'web' && session.user.id) syncWebPush(session.user.id)
+        if (!resumeChecked) {
+          resumeChecked = true
+          await waitForWorkoutHydration()
+          const onActive = segments[0] === '(tabs)' && (segments as string[])[1] === 'active'
+          const special = segments[1] === 'reset-password' || (segments[0] as string) === 'invite'
+          const onboarded = profile ? profile.onboarded : true
+          if (onboarded && workoutInProgress() && !onActive && !special) {
+            router.replace('/(tabs)/active')
+            return
+          }
+        }
         if (inAuth) {
           if (segments[1] === 'tutorial' || segments[1] === 'reset-password') return
           if (profile?.onboarded) router.replace('/(tabs)/')

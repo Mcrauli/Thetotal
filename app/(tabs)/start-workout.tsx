@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
 import { useUserStore } from '../../store/userStore'
-import { useWorkoutStore } from '../../store/workoutStore'
+import { useWorkoutStore, waitForWorkoutHydration, workoutInProgress } from '../../store/workoutStore'
 import { PRESET_TEMPLATES, type PresetTemplate } from '../../lib/preset-templates'
 import { COLORS } from '../../lib/constants'
 import { useT } from '../../lib/i18n'
@@ -21,6 +21,12 @@ export default function StartWorkoutScreen() {
   const t = useT()
   const { profile } = useUserStore()
   const { startWorkout, startFromTemplate } = useWorkoutStore()
+
+  useEffect(() => {
+    waitForWorkoutHydration().then(() => {
+      if (workoutInProgress()) router.replace('/(tabs)/active')
+    })
+  }, [])
   const [templates, setTemplates] = useState<Template[]>([])
 
   useEffect(() => {
@@ -42,11 +48,13 @@ export default function StartWorkoutScreen() {
   }, [profile?.id])
 
   function handleBlank() {
+    if (workoutInProgress()) { router.replace('/(tabs)/active'); return }
     startWorkout()
     router.replace('/(tabs)/active')
   }
 
   async function handleTemplate(t: Template) {
+    if (workoutInProgress()) { router.replace('/(tabs)/active'); return }
     const ids = t.exercises.map(e => e.exerciseId)
     const lastWeights: Record<string, { weight: number; reps: number }> = {}
 
