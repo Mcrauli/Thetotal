@@ -365,6 +365,8 @@ const STRINGS = {
   'rankDesc.Legenda':         { fi: 'Maailman huippu. Harva koskaan saavuttaa tämän.', en: 'The world\'s peak. Few ever achieve this.' },
 
   // Social / Friends
+  'invite.joinedPushTitle':   { fi: '🎉 {name} liittyi kutsustasi', en: '🎉 {name} joined from your invite' },
+  'invite.joinedPushBody':    { fi: 'Olette nyt kavereita TheTotalissa. Haasta hänet!', en: 'You are now friends on TheTotal. Challenge them!' },
   'invite.button':            { fi: '🔗 Kutsu kavereita', en: '🔗 Invite friends' },
   'invite.shareText':         { fi: 'Nosta kanssani TheTotalissa – kisataan ranksista 💪', en: 'Lift with me on TheTotal – let us compete for ranks 💪' },
   'invite.copied':            { fi: 'Kutsulinkki kopioitu. Liitä se viestiin kaverille.', en: 'Invite link copied. Paste it into a message to a friend.' },
