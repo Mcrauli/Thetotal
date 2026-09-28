@@ -504,6 +504,11 @@ const STRINGS = {
   // Web push notifications
   'home.loadFailed':          { fi: 'Tietojen haku ei onnistunut. Tarkista verkkoyhteys.', en: 'Could not load your data. Check your connection.' },
   'home.retry':               { fi: 'Yritä uudelleen', en: 'Try again' },
+  'notif.test':               { fi: 'Testaa', en: 'Test' },
+  'notif.testSent':           { fi: 'Testi-ilmoitus lähetetty', en: 'Test notification sent' },
+  'notif.testSentBody':       { fi: 'Lähetetty {n} laitteeseen. Ilmoituksen pitäisi näkyä muutamassa sekunnissa.', en: 'Sent to {n} device(s). It should appear within a few seconds.' },
+  'notif.testFailed':         { fi: 'Ilmoitus ei mennyt perille', en: 'Notification was not delivered' },
+  'notif.noSubscription':     { fi: 'Puhelimen ilmoitustilausta ei löytynyt. Poista ilmoitukset käytöstä ja ota ne uudelleen käyttöön.', en: 'No subscription was found for this phone. Turn notifications off and on again.' },
   'notif.title':              { fi: 'Ilmoitukset', en: 'Notifications' },
   'notif.on':                 { fi: 'Päällä', en: 'On' },
   'notif.off':                { fi: 'Pois', en: 'Off' },

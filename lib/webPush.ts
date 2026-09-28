@@ -2,6 +2,25 @@ import { Platform } from 'react-native'
 import { supabase } from './supabase'
 import { isStandalone, installPlatform } from './pwa'
 
+let lastPushError = ''
+
+export function webPushError(): string {
+  return lastPushError
+}
+
+export type PushTestResult = { subscriptions: number; results: { host: string; ok: boolean; status?: number; detail?: string }[]; error?: string }
+
+export async function testWebPush(userId: string): Promise<PushTestResult> {
+  let { data, error } = await supabase.functions.invoke('push-test', { body: {} })
+  if (!error && data && (data as PushTestResult).subscriptions === 0 && webPushPermission() === 'granted') {
+    const again = await enableWebPush(userId)
+    if (again !== 'granted') return { subscriptions: 0, results: [], error: webPushError() || 'subscribe failed' }
+    ;({ data, error } = await supabase.functions.invoke('push-test', { body: {} }))
+  }
+  if (error) return { subscriptions: 0, results: [], error: error.message }
+  return data as PushTestResult
+}
+
 export function urlBase64ToUint8Array(base64: string): Uint8Array {
   const padding = '='.repeat((4 - (base64.length % 4)) % 4)
   const base64Safe = (base64 + padding).replace(/-/g, '+').replace(/_/g, '/')
@@ -58,9 +77,16 @@ export async function enableWebPush(userId: string): Promise<'granted' | 'denied
       })
     }
     const json = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } }
-    await supabase.from('web_push_subscriptions').upsert(subscriptionToRow(userId, json), { onConflict: 'endpoint' })
+    if (!json.keys?.p256dh || !json.keys?.auth) return 'error'
+    const { error } = await supabase.from('web_push_subscriptions').upsert(subscriptionToRow(userId, json), { onConflict: 'endpoint' })
+    if (error) {
+      lastPushError = error.message
+      return 'error'
+    }
+    lastPushError = ''
     return 'granted'
-  } catch {
+  } catch (e: any) {
+    lastPushError = e?.message ?? String(e)
     return 'error'
   }
 }

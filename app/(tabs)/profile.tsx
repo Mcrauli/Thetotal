@@ -24,7 +24,7 @@ import { useT, useLocaleStore } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
 import { unblockUser } from '../../lib/moderation'
 import { exportUserData } from '../../lib/dataExport'
-import { webPushSupport, webPushPermission, enableWebPush, disableWebPush } from '../../lib/webPush'
+import { webPushSupport, webPushPermission, enableWebPush, disableWebPush, testWebPush, webPushError } from '../../lib/webPush'
 import { COLORS } from '../../lib/constants'
 
 interface PRMap { squat: number; bench: number; deadlift: number }
@@ -69,7 +69,19 @@ export default function ProfileScreen() {
     const result = await enableWebPush(profile.id)
     setNotifPermission(webPushPermission())
     setNotifBusy(false)
-    if (result === 'error') showAlert(t('common.error'))
+    if (result === 'error') showAlert(t('common.error'), webPushError() || undefined)
+  }
+
+  async function handleNotifTest() {
+    if (!profile || notifBusy) return
+    setNotifBusy(true)
+    const r = await testWebPush(profile.id)
+    setNotifBusy(false)
+    if (r.error) { showAlert(t('notif.testFailed'), r.error); return }
+    const ok = r.results.filter(x => x.ok).length
+    if (ok > 0) { showAlert(t('notif.testSent'), t('notif.testSentBody', { n: ok })); return }
+    const detail = r.results.map(x => [x.host, x.status, x.detail].filter(Boolean).join(' ')).join(' | ')
+    showAlert(t('notif.testFailed'), r.subscriptions === 0 ? t('notif.noSubscription') : detail)
   }
 
   async function handleNotifDisable() {
@@ -459,6 +471,15 @@ export default function ProfileScreen() {
                         : t('notif.off')}
                 </Text>
               </View>
+              {notifSupport === 'supported' && notifPermission === 'granted' && (
+                <TouchableOpacity
+                  onPress={handleNotifTest}
+                  disabled={notifBusy}
+                  style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 14, borderRadius: 10, backgroundColor: COLORS.accent, opacity: notifBusy ? 0.6 : 1 }}
+                >
+                  <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{t('notif.test')}</Text>
+                </TouchableOpacity>
+              )}
               {notifSupport === 'supported' && notifPermission !== 'denied' && (
                 <TouchableOpacity
                   onPress={notifPermission === 'granted' ? handleNotifDisable : handleNotifEnable}

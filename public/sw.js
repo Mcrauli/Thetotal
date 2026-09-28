@@ -1,4 +1,4 @@
-self.addEventListener('install', (event) => {
+self.addEventListener('install', () => {
   self.skipWaiting()
 })
 
@@ -7,7 +7,12 @@ self.addEventListener('activate', (event) => {
 })
 
 self.addEventListener('push', (event) => {
-  const d = event.data ? event.data.json() : {}
+  let d = {}
+  try {
+    d = event.data ? event.data.json() : {}
+  } catch (e) {
+    d = { body: event.data ? event.data.text() : '' }
+  }
   event.waitUntil(
     self.registration.showNotification(d.title || 'TheTotal', {
       body: d.body || '',
@@ -20,17 +25,17 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  const url = event.notification.data?.url || '/'
+  const url = (event.notification.data && event.notification.data.url) || '/'
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      for (const client of clientList) {
-        if ('focus' in client) {
-          client.focus()
-          if ('navigate' in client) return client.navigate(url)
-          return
-        }
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      const client = clientList[0]
+      if (client) {
+        return client.focus().then(() => {
+          if ('navigate' in client) return client.navigate(url).catch(() => undefined)
+          return undefined
+        })
       }
-      return clients.openWindow(url)
+      return self.clients.openWindow(url)
     })
   )
 })
