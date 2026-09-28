@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, memo } from 'react'
 import { View, Text, TouchableOpacity } from 'react-native'
 import { showAlert } from '../../lib/alert'
 import { useWorkoutStore, type WorkoutExercise } from '../../store/workoutStore'
@@ -14,10 +14,12 @@ interface ExerciseBlockProps {
   onMount?: () => void
 }
 
-export function ExerciseBlock({ exercise, lastBest, defaultWeight, defaultReps, prWeight, onMount }: ExerciseBlockProps) {
+function ExerciseBlockImpl({ exercise, lastBest, defaultWeight, defaultReps, prWeight, onMount }: ExerciseBlockProps) {
   useEffect(() => { onMount?.() }, [])
   const t = useT()
-  const { addSet, copyLastSet, removeExercise } = useWorkoutStore()
+  const addSet = useWorkoutStore(s => s.addSet)
+  const copyLastSet = useWorkoutStore(s => s.copyLastSet)
+  const removeExercise = useWorkoutStore(s => s.removeExercise)
   const isCardio = exercise.muscleGroup === 'Kardio'
 
   function handleRemove() {
@@ -82,3 +84,12 @@ export function ExerciseBlock({ exercise, lastBest, defaultWeight, defaultReps, 
     </View>
   )
 }
+
+// onMount ajetaan vain kerran, joten sen vaihtuminen ei vaadi uutta piirtoa.
+export const ExerciseBlock = memo(ExerciseBlockImpl, (a, b) =>
+  a.exercise === b.exercise &&
+  a.lastBest === b.lastBest &&
+  a.defaultWeight === b.defaultWeight &&
+  a.defaultReps === b.defaultReps &&
+  a.prWeight === b.prWeight
+)

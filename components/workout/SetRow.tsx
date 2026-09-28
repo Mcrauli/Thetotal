@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, memo } from 'react'
 import { View, Text, TextInput, TouchableOpacity, Modal, Animated, Platform } from 'react-native'
 import * as Haptics from 'expo-haptics'
 import { useWorkoutStore, type WorkoutSet } from '../../store/workoutStore'
@@ -18,9 +18,11 @@ function rpeColor(rpe: number) {
   return '#ef4444'
 }
 
-export function SetRow({ set, exerciseId, isCardio, prWeight }: SetRowProps) {
+function SetRowImpl({ set, exerciseId, isCardio, prWeight }: SetRowProps) {
   const t = useT()
-  const { updateSet, removeSet, toggleSetDone } = useWorkoutStore()
+  const updateSet = useWorkoutStore(s => s.updateSet)
+  const removeSet = useWorkoutStore(s => s.removeSet)
+  const toggleSetDone = useWorkoutStore(s => s.toggleSetDone)
   const [rpePickerOpen, setRpePickerOpen] = useState(false)
   const weightStep = isCardio ? 5 : 0.5
   const repsStep = 1
@@ -187,3 +189,5 @@ export function SetRow({ set, exerciseId, isCardio, prWeight }: SetRowProps) {
     </Animated.View>
   )
 }
+
+export const SetRow = memo(SetRowImpl)
