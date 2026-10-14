@@ -24,6 +24,7 @@ function SetRowImpl({ set, exerciseId, isCardio, prWeight }: SetRowProps) {
   const removeSet = useWorkoutStore(s => s.removeSet)
   const toggleSetDone = useWorkoutStore(s => s.toggleSetDone)
   const [rpePickerOpen, setRpePickerOpen] = useState(false)
+  const [weightText, setWeightText] = useState<string | null>(null)
   const weightStep = isCardio ? 5 : 0.5
   const repsStep = 1
 
@@ -71,7 +72,7 @@ function SetRowImpl({ set, exerciseId, isCardio, prWeight }: SetRowProps) {
   }
 
   return (
-    <Animated.View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8, borderRadius: 10, backgroundColor: bg, opacity: set.done ? 0.55 : 1, borderLeftWidth: isNewPR ? 3 : 0, borderLeftColor: COLORS.gold, paddingLeft: isNewPR ? 4 : 0 }}>
+    <Animated.View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8, borderRadius: 10, backgroundColor: bg, opacity: set.done ? 0.55 : 1 }}>
       <TouchableOpacity
         onPress={handleToggleDone}
         hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
@@ -88,17 +89,23 @@ function SetRowImpl({ set, exerciseId, isCardio, prWeight }: SetRowProps) {
       </TouchableOpacity>
 
       <View style={{ flex: 1.2, flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.bg, borderRadius: 10 }}>
-        <TouchableOpacity onPress={() => stepWeight(-weightStep)} style={{ paddingHorizontal: 8, paddingVertical: 8 }}>
+        <TouchableOpacity onPress={() => { setWeightText(null); stepWeight(-weightStep) }} style={{ paddingHorizontal: 8, paddingVertical: 8 }}>
           <Text style={{ color: COLORS.muted, fontSize: 16, lineHeight: 18 }}>−</Text>
         </TouchableOpacity>
         <TextInput
           style={{ flex: 1, color: '#fff', textAlign: 'center', paddingVertical: 6, fontSize: 15 }}
-          value={String(set.weightKg)}
-          onChangeText={v => updateSet(exerciseId, set.id, 'weightKg', parseFloat(v) || 0)}
+          value={weightText ?? String(set.weightKg).replace('.', ',')}
+          onChangeText={v => {
+            const clean = v.replace(/[^0-9.,]/g, '')
+            setWeightText(clean)
+            updateSet(exerciseId, set.id, 'weightKg', parseFloat(clean.replace(',', '.')) || 0)
+          }}
+          onBlur={() => setWeightText(null)}
+          inputMode="decimal"
           keyboardType="decimal-pad"
           selectTextOnFocus
         />
-        <TouchableOpacity onPress={() => stepWeight(weightStep)} style={{ paddingHorizontal: 8, paddingVertical: 8 }}>
+        <TouchableOpacity onPress={() => { setWeightText(null); stepWeight(weightStep) }} style={{ paddingHorizontal: 8, paddingVertical: 8 }}>
           <Text style={{ color: COLORS.muted, fontSize: 16, lineHeight: 18 }}>+</Text>
         </TouchableOpacity>
       </View>
