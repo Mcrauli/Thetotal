@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { COLORS } from '../../lib/constants'
 import { estimateOneRepMax, shouldShowEstimatedOneRepMax } from '../../lib/pr'
 import { useT } from '../../lib/i18n'
+import { BodyMap, type MuscleShare } from './BodyMap'
 
 export interface ImprovementResult {
   exerciseName: string
@@ -19,6 +20,13 @@ export interface ChallengeResult {
   xp: number
 }
 
+export interface WorkoutSummary {
+  totalKg: number
+  sets: number
+  minutes: number
+  muscles: MuscleShare[]
+}
+
 interface XPBreakdown {
   base: number
   prBonus: number
@@ -32,6 +40,7 @@ interface Props {
   xpBreakdown: XPBreakdown
   improvements: ImprovementResult[]
   challenges: ChallengeResult[]
+  summary?: WorkoutSummary
   onDismiss: () => void
   onShare?: () => void
 }
@@ -46,7 +55,7 @@ function XPChip({ label, accent }: { label: string; accent?: boolean }) {
   )
 }
 
-export function WorkoutResults({ visible, xpGain, xpBreakdown, improvements, challenges, onDismiss, onShare }: Props) {
+export function WorkoutResults({ visible, xpGain, xpBreakdown, improvements, challenges, summary, onDismiss, onShare }: Props) {
   const t = useT()
   const translateY = useRef(new Animated.Value(80)).current
   const hasAllTimePR = improvements.some(i => i.isAllTimePR)
@@ -93,7 +102,7 @@ export function WorkoutResults({ visible, xpGain, xpBreakdown, improvements, cha
             borderRadius: 16,
             padding: 16,
             alignItems: 'center',
-            marginBottom: hasContent ? 20 : 0,
+            marginBottom: hasContent || summary ? 20 : 0,
             borderWidth: 1,
             borderColor: COLORS.gold,
           }}>
@@ -106,6 +115,29 @@ export function WorkoutResults({ visible, xpGain, xpBreakdown, improvements, cha
               {xpBreakdown.challengeBonus > 0 && <XPChip label={`+${xpBreakdown.challengeBonus} ${t('results.challenges')}`} accent />}
             </View>
           </View>
+
+          {summary && (
+            <View style={{ marginBottom: hasContent ? 20 : 0 }}>
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+                {[
+                  [Math.round(summary.totalKg).toLocaleString('fi-FI'), t('results.totalKg')],
+                  [String(summary.sets), t('results.sets')],
+                  [String(summary.minutes), t('results.minutes')],
+                ].map(([v, l]) => (
+                  <View key={l} style={{ flex: 1, backgroundColor: COLORS.bg, borderRadius: 14, paddingVertical: 12, alignItems: 'center' }}>
+                    <Text style={{ color: '#fff', fontSize: 20, fontWeight: '900' }}>{v}</Text>
+                    <Text style={{ color: COLORS.muted, fontSize: 11, marginTop: 2 }}>{l}</Text>
+                  </View>
+                ))}
+              </View>
+              {summary.muscles.length > 0 && (
+                <>
+                  <Text style={{ color: COLORS.accent, fontSize: 11, letterSpacing: 2, fontWeight: '700', marginBottom: 12 }}>{t('results.muscles')}</Text>
+                  <BodyMap shares={summary.muscles} />
+                </>
+              )}
+            </View>
+          )}
 
           {improvements.length > 0 && (
             <View style={{ marginBottom: challenges.length > 0 ? 20 : 0 }}>

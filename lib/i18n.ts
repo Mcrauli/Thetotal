@@ -163,6 +163,11 @@ const STRINGS = {
   'results.improvements':     { fi: 'KEHITYSTÄ', en: 'IMPROVEMENTS' },
   'results.challengesDone':   { fi: 'HAASTEET SUORITETTU', en: 'CHALLENGES DONE' },
   'results.continue':         { fi: 'JATKA', en: 'CONTINUE' },
+  'results.summary':          { fi: 'YHTEENVETO', en: 'SUMMARY' },
+  'results.totalKg':          { fi: 'kg liikutettu', en: 'kg lifted' },
+  'results.sets':             { fi: 'sarjaa', en: 'sets' },
+  'results.minutes':          { fi: 'min', en: 'min' },
+  'results.muscles':          { fi: 'TREENATUT ALUEET', en: 'MUSCLES TRAINED' },
   'results.repsMore':         { fi: 'toistoa', en: 'reps' },
 
   // Workouts tab

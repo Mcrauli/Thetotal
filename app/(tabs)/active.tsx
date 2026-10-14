@@ -9,7 +9,7 @@ import { useWorkoutStore } from '../../store/workoutStore'
 import { useUserStore } from '../../store/userStore'
 import { ExerciseBlock } from '../../components/workout/ExerciseBlock'
 import { ExercisePicker } from '../../components/workout/ExercisePicker'
-import { WorkoutResults, type ImprovementResult, type ChallengeResult } from '../../components/workout/WorkoutResults'
+import { WorkoutResults, type ImprovementResult, type ChallengeResult, type WorkoutSummary } from '../../components/workout/WorkoutResults'
 import { PRShareModal, type PRShareItem } from '../../components/workout/PRShareModal'
 import { PlateModal } from '../../components/workout/PlateModal'
 import { supabase } from '../../lib/supabase'
@@ -31,7 +31,7 @@ export default function ActiveWorkoutScreen() {
   const [saving, setSaving] = useState(false)
   const savingRef = useRef(false)
   const [elapsed, setElapsed] = useState(0)
-  const [results, setResults] = useState<{ xpGain: number; xpBreakdown: { base: number; prBonus: number; streakBonus: number; challengeBonus: number }; improvements: ImprovementResult[]; challenges: ChallengeResult[] } | null>(null)
+  const [results, setResults] = useState<{ xpGain: number; xpBreakdown: { base: number; prBonus: number; streakBonus: number; challengeBonus: number }; improvements: ImprovementResult[]; challenges: ChallengeResult[]; summary: WorkoutSummary } | null>(null)
   const [prShare, setPrShare] = useState<{ prs: PRShareItem[]; dateLabel: string } | null>(null)
   const [shareVisible, setShareVisible] = useState(false)
   const [plateVisible, setPlateVisible] = useState(false)
@@ -449,13 +449,33 @@ export default function ActiveWorkoutScreen() {
     }
 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {})
-    setResults({ xpGain: displayXPGain, xpBreakdown: { base: xpBase, prBonus, streakBonus, challengeBonus }, improvements, challenges: challengeResults })
+    setResults({ xpGain: displayXPGain, xpBreakdown: { base: xpBase, prBonus, streakBonus, challengeBonus }, improvements, challenges: challengeResults, summary: buildSummary() })
     } catch (e: any) {
       scheduleSaveRetry(e?.message)
     } finally {
       setSaving(false)
       savingRef.current = false
     }
+  }
+
+  function buildSummary(): WorkoutSummary {
+    const counts: Record<string, number> = {}
+    let sets = 0
+    let totalKg = 0
+    for (const e of exercises) {
+      const valid = e.sets.filter(s => s.reps > 0)
+      if (e.muscleGroup !== 'Kardio') totalKg += valid.reduce((sum, s) => sum + s.weightKg * s.reps, 0)
+      sets += valid.length
+      if (valid.length === 0 || e.muscleGroup === 'Kardio') continue
+      const g = e.muscleGroup || 'Muut'
+      counts[g] = (counts[g] ?? 0) + valid.length
+    }
+    const total = Object.values(counts).reduce((a, b) => a + b, 0)
+    const muscles = Object.entries(counts)
+      .map(([group, n]) => ({ group, pct: Math.round((n / total) * 100) }))
+      .sort((a, b) => b.pct - a.pct)
+    const minutes = startedAt ? Math.max(1, Math.round((Date.now() - startedAt) / 60000)) : 0
+    return { totalKg, sets, minutes, muscles }
   }
 
   function scheduleSaveRetry(message?: string) {
@@ -474,6 +494,7 @@ export default function ActiveWorkoutScreen() {
         xpBreakdown={results?.xpBreakdown ?? { base: 0, prBonus: 0, streakBonus: 0, challengeBonus: 0 }}
         improvements={results?.improvements ?? []}
         challenges={results?.challenges ?? []}
+        summary={results?.summary}
         onShare={prShare ? () => setShareVisible(true) : undefined}
         onDismiss={() => { clearWorkout(); setResults(null); router.replace('/(tabs)/') }}
       />
