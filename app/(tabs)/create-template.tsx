@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { showAlert } from '../../lib/alert'
-import { router } from 'expo-router'
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../lib/supabase'
 import { useUserStore } from '../../store/userStore'
@@ -17,19 +17,45 @@ export default function CreateTemplateScreen() {
   const [exercises, setExercises] = useState<{ id: string; name: string }[]>([])
   const [pickerVisible, setPickerVisible] = useState(false)
   const [saving, setSaving] = useState(false)
+  const { id: editId } = useLocalSearchParams<{ id?: string }>()
+
+  useFocusEffect(useCallback(() => {
+    setName('')
+    setExercises([])
+    setSaving(false)
+    if (!editId) return
+    supabase
+      .from('workout_templates')
+      .select('name, template_exercises(exercise_id, order_index, exercises(name))')
+      .eq('id', editId)
+      .single()
+      .then(({ data }) => {
+        if (!data) return
+        setName((data as any).name ?? '')
+        setExercises(((data as any).template_exercises ?? [])
+          .sort((a: any, b: any) => a.order_index - b.order_index)
+          .map((te: any) => ({ id: te.exercise_id, name: te.exercises?.name ?? '' })))
+      })
+  }, [editId]))
 
   async function save() {
     if (!profile || !name.trim()) return
     setSaving(true)
-    const { data: tmpl, error } = await supabase
-      .from('workout_templates')
-      .insert({ user_id: profile.id, name: name.trim() })
-      .select()
-      .single()
+    const { data: tmpl, error } = editId
+      ? await supabase.from('workout_templates').update({ name: name.trim() }).eq('id', editId).select().single()
+      : await supabase.from('workout_templates').insert({ user_id: profile.id, name: name.trim() }).select().single()
     if (error || !tmpl) {
       setSaving(false)
       showAlert(t('common.error'), error?.message ?? t('template.saveFailed'))
       return
+    }
+    if (editId) {
+      const { error: delError } = await supabase.from('template_exercises').delete().eq('template_id', tmpl.id)
+      if (delError) {
+        setSaving(false)
+        showAlert(t('template.exerciseError'), delError.message)
+        return
+      }
     }
     if (exercises.length > 0) {
       const { error: exError } = await supabase.from('template_exercises').insert(
@@ -76,7 +102,7 @@ export default function CreateTemplateScreen() {
             placeholderTextColor="#333"
             value={name}
             onChangeText={setName}
-            autoFocus
+            autoFocus={!editId}
             returnKeyType="done"
           />
           <View style={{ height: 2, backgroundColor: COLORS.accent, width: 48, marginBottom: 28 }} />

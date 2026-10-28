@@ -45,7 +45,7 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
     return (
       <TouchableOpacity
         key={route.key}
-        className="flex-1 items-center justify-center pt-3 pb-2"
+        className="flex-1 items-center justify-center pt-2 pb-1"
         onPress={() => go(route.name)}
         activeOpacity={0.7}
       >
@@ -86,7 +86,7 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   }
 
   return (
-    <View style={{ backgroundColor: '#0a0a14', paddingBottom: Platform.OS === 'web' ? ('max(0px, calc(env(safe-area-inset-bottom) - var(--tt-gap, 0px)))' as unknown as number) : insets.bottom }}>
+    <View style={{ backgroundColor: '#0a0a14', paddingBottom: Platform.OS === 'web' ? ('max(0px, calc(env(safe-area-inset-bottom) - var(--tt-gap, 0px) - 12px))' as unknown as number) : insets.bottom }}>
       <LinearGradient
         colors={[COLORS.card, '#0a0a14']}
         start={{ x: 0, y: 0 }}
@@ -94,7 +94,7 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
       />
       <View style={{ height: 1, backgroundColor: COLORS.cardEdge, opacity: 0.6 }} />
-      <View className="flex-row items-end" style={{ height: 64 }}>
+      <View className="flex-row items-end" style={{ height: 58 }}>
         {leftTabs.map(renderTab)}
 
         <View className="items-center justify-center" style={{ width: 72 }}>

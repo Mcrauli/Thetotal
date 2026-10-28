@@ -212,7 +212,7 @@ export default function StartWorkoutScreen() {
         {templates.length === 0 && (
           <TouchableOpacity
             className="flex-row items-center gap-3 py-3 mb-4"
-            onPress={() => { router.back(); router.push('/(tabs)/create-template') }}
+            onPress={() => { router.back(); router.push({ pathname: '/(tabs)/create-template', params: { id: '' } }) }}
           >
             <Ionicons name="add-circle-outline" size={22} color={COLORS.muted} />
             <Text className="text-muted text-sm">Luo treeniohjelma</Text>

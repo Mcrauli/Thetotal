@@ -103,7 +103,7 @@ export default function LogScreen() {
             <Text className="text-white text-xl font-black">{t('workouts.programs')}</Text>
             <TouchableOpacity
               className="flex-row items-center gap-1.5"
-              onPress={() => router.push('/(tabs)/create-template')}
+              onPress={() => router.push({ pathname: '/(tabs)/create-template', params: { id: '' } })}
             >
               <View style={{
                 width: 24, height: 24, borderRadius: 12,
@@ -120,7 +120,7 @@ export default function LogScreen() {
             <TouchableOpacity
               className="mx-4 mb-6 rounded-2xl py-8 items-center"
               style={{ borderWidth: 1, borderStyle: 'dashed', borderColor: COLORS.cardEdge }}
-              onPress={() => router.push('/(tabs)/create-template')}
+              onPress={() => router.push({ pathname: '/(tabs)/create-template', params: { id: '' } })}
             >
               <Ionicons name="barbell-outline" size={28} color={COLORS.muted} />
               <Text className="text-muted text-sm mt-2">{t('workouts.noPrograms')}</Text>
@@ -143,6 +143,9 @@ export default function LogScreen() {
                       <Text className="text-white font-black text-base flex-1" numberOfLines={1}>
                         {t.name}
                       </Text>
+                      <TouchableOpacity onPress={() => router.push({ pathname: '/(tabs)/create-template', params: { id: t.id } })} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} style={{ marginRight: 16 }}>
+                        <Ionicons name="create-outline" size={17} color={COLORS.muted} />
+                      </TouchableOpacity>
                       <TouchableOpacity onPress={() => deleteTemplate(t.id)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                         <Ionicons name="trash-outline" size={16} color={COLORS.muted} />
                       </TouchableOpacity>

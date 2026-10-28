@@ -206,9 +206,9 @@ export default function HomeScreen() {
     for (const pr of data as any[]) {
       if (!pr.exercises?.is_sbd) continue
       const name: string = pr.exercises.name.toLowerCase()
-      if (name.includes('squat')) totals.squat = pr.weight_kg
-      else if (name.includes('bench')) totals.bench = pr.weight_kg
-      else if (name.includes('deadlift')) totals.deadlift = pr.weight_kg
+      if (name.includes('squat')) totals.squat = Math.max(totals.squat, pr.weight_kg)
+      else if (name.includes('bench')) totals.bench = Math.max(totals.bench, pr.weight_kg)
+      else if (name.includes('deadlift')) totals.deadlift = Math.max(totals.deadlift, pr.weight_kg)
     }
     setSBD(totals)
   }

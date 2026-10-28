@@ -71,9 +71,9 @@ export default function UserProfileScreen() {
         for (const pr of prData as any[]) {
           if (!pr.exercises?.is_sbd) continue
           const name: string = pr.exercises.name.toLowerCase()
-          if (name.includes('squat'))    { totals.squat = pr.weight_kg;    reps.squat = pr.reps;    meta.squat = { id: pr.id, verified: pr.verified } }
-          else if (name.includes('bench')) { totals.bench = pr.weight_kg;    reps.bench = pr.reps;    meta.bench = { id: pr.id, verified: pr.verified } }
-          else if (name.includes('deadlift')) { totals.deadlift = pr.weight_kg; reps.deadlift = pr.reps; meta.deadlift = { id: pr.id, verified: pr.verified } }
+          if (name.includes('squat') && pr.weight_kg >= totals.squat)    { totals.squat = pr.weight_kg;    reps.squat = pr.reps;    meta.squat = { id: pr.id, verified: pr.verified } }
+          else if (name.includes('bench') && pr.weight_kg >= totals.bench) { totals.bench = pr.weight_kg;    reps.bench = pr.reps;    meta.bench = { id: pr.id, verified: pr.verified } }
+          else if (name.includes('deadlift') && pr.weight_kg >= totals.deadlift) { totals.deadlift = pr.weight_kg; reps.deadlift = pr.reps; meta.deadlift = { id: pr.id, verified: pr.verified } }
         }
         setSBD(totals)
         setSbdReps(reps)
