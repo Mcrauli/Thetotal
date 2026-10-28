@@ -1,26 +1,37 @@
-import { useEffect, memo } from 'react'
-import { View, Text, TouchableOpacity } from 'react-native'
+import { useEffect, useState, memo } from 'react'
+import { View, Text, TouchableOpacity, TextInput } from 'react-native'
 import { showAlert } from '../../lib/alert'
 import { useWorkoutStore, type WorkoutExercise } from '../../store/workoutStore'
 import { SetRow } from './SetRow'
 import { useT } from '../../lib/i18n'
+import { COLORS } from '../../lib/constants'
+import { setKind } from '../../lib/strongman'
+import { isSbdLift } from '../../lib/sbd'
+import type { PRPoint } from '../../lib/pr'
 
 interface ExerciseBlockProps {
   exercise: WorkoutExercise
   lastBest: string | null
+  lastNote?: string | null
   defaultWeight?: number
   defaultReps?: number
-  prHistory?: { weight: number; reps: number }[]
+  defaultDurationS?: number
+  defaultDistanceM?: number
+  prHistory?: PRPoint[]
   onMount?: () => void
 }
 
-function ExerciseBlockImpl({ exercise, lastBest, defaultWeight, defaultReps, prHistory, onMount }: ExerciseBlockProps) {
+function ExerciseBlockImpl({ exercise, lastBest, lastNote, defaultWeight, defaultReps, defaultDurationS, defaultDistanceM, prHistory, onMount }: ExerciseBlockProps) {
   useEffect(() => { onMount?.() }, [])
   const t = useT()
   const addSet = useWorkoutStore(s => s.addSet)
   const copyLastSet = useWorkoutStore(s => s.copyLastSet)
   const removeExercise = useWorkoutStore(s => s.removeExercise)
-  const isCardio = exercise.muscleGroup === 'Kardio'
+  const setExerciseNote = useWorkoutStore(s => s.setExerciseNote)
+  const [noteOpen, setNoteOpen] = useState(!!exercise.note)
+  const kind = setKind(exercise.exerciseName, exercise.muscleGroup)
+  const isCardio = kind === 'cardio'
+  const isSbd = isSbdLift(exercise.exerciseName)
 
   function handleRemove() {
     showAlert(t('active.removeExercise'), t('active.removeExerciseBody', { name: exercise.exerciseName }), [
@@ -32,13 +43,22 @@ function ExerciseBlockImpl({ exercise, lastBest, defaultWeight, defaultReps, prH
   function handleAddSet() {
     const lastSet = exercise.sets[exercise.sets.length - 1]
     const fallbackWeight = isCardio ? 30 : 20
-    const fallbackReps = isCardio ? 5 : 5
     addSet(
       exercise.exerciseId,
       lastSet?.weightKg ?? defaultWeight ?? fallbackWeight,
-      lastSet?.reps ?? defaultReps ?? fallbackReps
+      kind === 'hold' || kind === 'carry' ? 1 : lastSet?.reps ?? defaultReps ?? 5,
+      {
+        durationS: lastSet?.durationS ?? defaultDurationS ?? (kind === 'hold' ? 30 : undefined),
+        distanceM: lastSet?.distanceM ?? defaultDistanceM ?? (kind === 'carry' ? 20 : undefined),
+      },
     )
   }
+
+  const headers =
+    kind === 'cardio' ? ['min', 'km'] :
+    kind === 'hold' ? [t('set.kg'), t('set.seconds')] :
+    kind === 'carry' ? [t('set.kg'), t('set.meters'), t('set.time')] :
+    [t('set.kg'), t('set.reps')]
 
   return (
     <View className="bg-card rounded-2xl p-4 mb-4">
@@ -49,21 +69,37 @@ function ExerciseBlockImpl({ exercise, lastBest, defaultWeight, defaultReps, prH
         </TouchableOpacity>
       </View>
       {lastBest && (
-        <Text className="text-muted text-xs mb-3">{lastBest}</Text>
+        <Text className="text-muted text-xs mb-1">{lastBest}</Text>
       )}
+      {lastNote && (
+        <Text style={{ color: COLORS.gold, fontSize: 12, marginBottom: 4 }} numberOfLines={3}>{t('notes.last')} {lastNote}</Text>
+      )}
+      <View style={{ height: 8 }} />
 
       {exercise.sets.length > 0 && (
-        <View className="flex-row mb-1 px-1">
-          <Text className="text-muted text-xs w-6" />
-          <Text className="flex-1 text-muted text-xs text-center">{isCardio ? 'min' : 'kg'}</Text>
-          <Text className="flex-1 text-muted text-xs text-center">{isCardio ? 'km' : 'reps'}</Text>
-          <View className="w-16" />
+        <View className="flex-row mb-1 px-1" style={{ gap: 6 }}>
+          <View style={{ width: 26 }} />
+          {headers.map((h, i) => (
+            <Text key={h} className="text-muted text-xs text-center" style={{ flex: kind === 'carry' ? (i === 0 ? 1.2 : 0.8) : i === 0 ? 1.2 : 1 }}>{h}</Text>
+          ))}
+          <View style={{ width: kind === 'reps' ? 80 : 30 }} />
         </View>
       )}
 
       {exercise.sets.map(set => (
-        <SetRow key={set.id} set={set} exerciseId={exercise.exerciseId} isCardio={isCardio} prHistory={prHistory} />
+        <SetRow key={set.id} set={set} exerciseId={exercise.exerciseId} kind={kind} isSbd={isSbd} prHistory={prHistory} />
       ))}
+
+      {noteOpen && (
+        <TextInput
+          value={exercise.note ?? ''}
+          onChangeText={v => setExerciseNote(exercise.exerciseId, v.slice(0, 500))}
+          placeholder={t('notes.placeholder')}
+          placeholderTextColor="#555"
+          multiline
+          style={{ backgroundColor: COLORS.bg, color: '#fff', borderRadius: 10, padding: 10, marginTop: 4, minHeight: 44, fontSize: 14 }}
+        />
+      )}
 
       <View className="flex-row gap-2 mt-2">
         <TouchableOpacity
@@ -80,6 +116,11 @@ function ExerciseBlockImpl({ exercise, lastBest, defaultWeight, defaultReps, prH
             <Text className="text-muted text-sm">{t('active.copyLast')}</Text>
           </TouchableOpacity>
         )}
+        {!noteOpen && (
+          <TouchableOpacity className="bg-card2 rounded-lg py-2 px-3 items-center" onPress={() => setNoteOpen(true)}>
+            <Text className="text-muted text-sm">📝</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   )
@@ -89,7 +130,10 @@ function ExerciseBlockImpl({ exercise, lastBest, defaultWeight, defaultReps, prH
 export const ExerciseBlock = memo(ExerciseBlockImpl, (a, b) =>
   a.exercise === b.exercise &&
   a.lastBest === b.lastBest &&
+  a.lastNote === b.lastNote &&
   a.defaultWeight === b.defaultWeight &&
   a.defaultReps === b.defaultReps &&
+  a.defaultDurationS === b.defaultDurationS &&
+  a.defaultDistanceM === b.defaultDistanceM &&
   a.prHistory === b.prHistory
 )

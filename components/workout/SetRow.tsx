@@ -4,13 +4,15 @@ import * as Haptics from 'expo-haptics'
 import { useWorkoutStore, type WorkoutSet } from '../../store/workoutStore'
 import { COLORS } from '../../lib/constants'
 import { useT } from '../../lib/i18n'
-import { isRepPR } from '../../lib/pr'
+import { isSetPR, type PRPoint } from '../../lib/pr'
+import type { SetKind } from '../../lib/strongman'
 
 interface SetRowProps {
   set: WorkoutSet
   exerciseId: string
-  isCardio?: boolean
-  prHistory?: { weight: number; reps: number }[]
+  kind: SetKind
+  isSbd?: boolean
+  prHistory?: PRPoint[]
 }
 
 function rpeColor(rpe: number) {
@@ -19,17 +21,69 @@ function rpeColor(rpe: number) {
   return '#ef4444'
 }
 
-function SetRowImpl({ set, exerciseId, isCardio, prHistory }: SetRowProps) {
+export function formColor(form: number) {
+  if (form >= 4) return '#4ade80'
+  if (form === 3) return '#fb923c'
+  return '#ef4444'
+}
+
+const fieldText = { flex: 1, minWidth: 0, color: '#fff', textAlign: 'center' as const, paddingVertical: 6, fontSize: 15 }
+
+function DecimalField({ value, onChange, integer }: { value: number | undefined; onChange: (v: number) => void; integer?: boolean }) {
+  const [text, setText] = useState<string | null>(null)
+  return (
+    <TextInput
+      style={fieldText}
+      value={text ?? (value == null ? '' : String(value).replace('.', ','))}
+      onChangeText={v => {
+        const clean = integer ? v.replace(/[^0-9]/g, '') : v.replace(/[^0-9.,]/g, '')
+        setText(clean)
+        onChange(parseFloat(clean.replace(',', '.')) || 0)
+      }}
+      onBlur={() => setText(null)}
+      keyboardType={integer ? 'number-pad' : 'decimal-pad'}
+      inputMode={integer ? 'numeric' : 'decimal'}
+      selectTextOnFocus
+    />
+  )
+}
+
+function Stepper({ value, step, onChange, integer, flex }: { value: number; step: number; onChange: (v: number) => void; integer?: boolean; flex: number }) {
+  const [key, setKey] = useState(0)
+  const bump = (d: number) => {
+    const next = Math.round((value + d) * 10) / 10
+    if (next >= 0) { onChange(next); setKey(k => k + 1) }
+  }
+  return (
+    <View style={{ flex, flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.bg, borderRadius: 10 }}>
+      <TouchableOpacity onPress={() => bump(-step)} style={{ paddingHorizontal: 8, paddingVertical: 8 }}>
+        <Text style={{ color: COLORS.muted, fontSize: 16, lineHeight: 18 }}>−</Text>
+      </TouchableOpacity>
+      <DecimalField key={key} value={value} onChange={onChange} integer={integer} />
+      <TouchableOpacity onPress={() => bump(step)} style={{ paddingHorizontal: 8, paddingVertical: 8 }}>
+        <Text style={{ color: COLORS.muted, fontSize: 16, lineHeight: 18 }}>+</Text>
+      </TouchableOpacity>
+    </View>
+  )
+}
+
+function PlainField({ value, onChange }: { value: number | undefined; onChange: (v: number) => void }) {
+  return (
+    <View style={{ flex: 0.8, flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.bg, borderRadius: 10, paddingHorizontal: 4 }}>
+      <DecimalField value={value} onChange={onChange} />
+    </View>
+  )
+}
+
+function SetRowImpl({ set, exerciseId, kind, isSbd, prHistory }: SetRowProps) {
   const t = useT()
   const updateSet = useWorkoutStore(s => s.updateSet)
   const removeSet = useWorkoutStore(s => s.removeSet)
   const toggleSetDone = useWorkoutStore(s => s.toggleSetDone)
-  const [rpePickerOpen, setRpePickerOpen] = useState(false)
-  const [weightText, setWeightText] = useState<string | null>(null)
-  const weightStep = isCardio ? 5 : 0.5
-  const repsStep = 1
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const isCardio = kind === 'cardio'
 
-  const isNewPR = !isCardio && isRepPR({ weight: set.weightKg, reps: set.reps }, prHistory ?? [])
+  const isNewPR = isSetPR(kind, { weight: set.weightKg, reps: set.reps, durationS: set.durationS, distanceM: set.distanceM }, prHistory ?? [])
   const flash = useRef(new Animated.Value(0)).current
   const wasPR = useRef(false)
 
@@ -56,21 +110,11 @@ function SetRowImpl({ set, exerciseId, isCardio, prHistory }: SetRowProps) {
   }
 
   const bg = flash.interpolate({ inputRange: [0, 1], outputRange: ['transparent', COLORS.gold + '40'] })
+  const update = (field: 'weightKg' | 'reps' | 'rpe' | 'durationS' | 'distanceM' | 'form') => (v: number | undefined) => updateSet(exerciseId, set.id, field, v)
 
-  function stepWeight(delta: number) {
-    const next = Math.round((set.weightKg + delta) * 10) / 10
-    if (next >= 0) updateSet(exerciseId, set.id, 'weightKg', next)
-  }
-
-  function stepReps(delta: number) {
-    const next = set.reps + delta
-    if (next >= 0) updateSet(exerciseId, set.id, 'reps', next)
-  }
-
-  function setRpe(value: number | undefined) {
-    updateSet(exerciseId, set.id, 'rpe', value)
-    setRpePickerOpen(false)
-  }
+  const showChip = kind === 'reps'
+  const chipColor = set.rpe ? rpeColor(set.rpe) : set.form ? formColor(set.form) : null
+  const chipLabel = [set.rpe ? `RPE ${set.rpe}` : null, isSbd && set.form ? `F${set.form}` : null].filter(Boolean).join(' · ') || (isSbd ? 'RPE/F' : 'RPE')
 
   return (
     <Animated.View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8, borderRadius: 10, backgroundColor: bg, opacity: set.done ? 0.55 : 1 }}>
@@ -89,75 +133,44 @@ function SetRowImpl({ set, exerciseId, isCardio, prHistory }: SetRowProps) {
         </Text>
       </TouchableOpacity>
 
-      <View style={{ flex: 1.2, flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.bg, borderRadius: 10 }}>
-        <TouchableOpacity onPress={() => { setWeightText(null); stepWeight(-weightStep) }} style={{ paddingHorizontal: 8, paddingVertical: 8 }}>
-          <Text style={{ color: COLORS.muted, fontSize: 16, lineHeight: 18 }}>−</Text>
-        </TouchableOpacity>
-        <TextInput
-          style={{ flex: 1, color: '#fff', textAlign: 'center', paddingVertical: 6, fontSize: 15 }}
-          value={weightText ?? String(set.weightKg).replace('.', ',')}
-          onChangeText={v => {
-            const clean = v.replace(/[^0-9.,]/g, '')
-            setWeightText(clean)
-            updateSet(exerciseId, set.id, 'weightKg', parseFloat(clean.replace(',', '.')) || 0)
-          }}
-          onBlur={() => setWeightText(null)}
-          inputMode="decimal"
-          keyboardType="decimal-pad"
-          selectTextOnFocus
-        />
-        <TouchableOpacity onPress={() => { setWeightText(null); stepWeight(weightStep) }} style={{ paddingHorizontal: 8, paddingVertical: 8 }}>
-          <Text style={{ color: COLORS.muted, fontSize: 16, lineHeight: 18 }}>+</Text>
-        </TouchableOpacity>
-      </View>
+      <Stepper flex={1.2} value={set.weightKg} step={isCardio ? 5 : 0.5} onChange={update('weightKg')} />
 
-      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.bg, borderRadius: 10 }}>
-        <TouchableOpacity onPress={() => stepReps(-repsStep)} style={{ paddingHorizontal: 8, paddingVertical: 8 }}>
-          <Text style={{ color: COLORS.muted, fontSize: 16, lineHeight: 18 }}>−</Text>
-        </TouchableOpacity>
-        <TextInput
-          style={{ flex: 1, color: '#fff', textAlign: 'center', paddingVertical: 6, fontSize: 15 }}
-          value={String(set.reps)}
-          onChangeText={v => updateSet(exerciseId, set.id, 'reps', isCardio ? (parseFloat(v) || 0) : (parseInt(v) || 0))}
-          keyboardType={isCardio ? 'decimal-pad' : 'number-pad'}
-          selectTextOnFocus
-        />
-        <TouchableOpacity onPress={() => stepReps(repsStep)} style={{ paddingHorizontal: 8, paddingVertical: 8 }}>
-          <Text style={{ color: COLORS.muted, fontSize: 16, lineHeight: 18 }}>+</Text>
-        </TouchableOpacity>
-      </View>
+      {kind === 'hold' && <Stepper flex={1} value={set.durationS ?? 0} step={5} onChange={update('durationS')} />}
+      {kind === 'carry' && <PlainField value={set.distanceM} onChange={update('distanceM')} />}
+      {kind === 'carry' && <PlainField value={set.durationS} onChange={update('durationS')} />}
+      {(kind === 'reps' || kind === 'cardio') && (
+        <Stepper flex={1} value={set.reps} step={1} onChange={update('reps')} integer={kind === 'reps'} />
+      )}
 
       {(set.isPR || isNewPR) && <Text style={{ color: COLORS.gold, fontSize: 11, fontWeight: '700' }}>PR!</Text>}
-      {!isCardio && (
+      {showChip && (
         <TouchableOpacity
-          onPress={() => setRpePickerOpen(true)}
+          onPress={() => setPickerOpen(true)}
           style={{
-            backgroundColor: set.rpe ? rpeColor(set.rpe) + '30' : 'transparent',
+            backgroundColor: chipColor ? chipColor + '30' : 'transparent',
             borderWidth: 1,
-            borderColor: set.rpe ? rpeColor(set.rpe) : COLORS.cardEdge,
+            borderColor: chipColor ?? COLORS.cardEdge,
             borderRadius: 8,
             paddingHorizontal: 6,
             paddingVertical: 2,
-            minWidth: 38,
+            minWidth: isSbd ? 64 : 38,
             alignItems: 'center',
           }}
         >
-          <Text style={{ color: set.rpe ? rpeColor(set.rpe) : COLORS.muted, fontSize: 10, fontWeight: '700' }}>
-            {set.rpe ? `RPE ${set.rpe}` : 'RPE'}
-          </Text>
+          <Text style={{ color: chipColor ?? COLORS.muted, fontSize: 10, fontWeight: '700' }}>{chipLabel}</Text>
         </TouchableOpacity>
       )}
       <TouchableOpacity onPress={() => removeSet(exerciseId, set.id)}>
         <Text style={{ color: COLORS.muted, fontSize: 18, paddingHorizontal: 4 }}>×</Text>
       </TouchableOpacity>
 
-      <Modal visible={rpePickerOpen} transparent animationType="fade" onRequestClose={() => setRpePickerOpen(false)}>
+      <Modal visible={pickerOpen} transparent animationType="fade" onRequestClose={() => setPickerOpen(false)}>
         <TouchableOpacity
           style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center' }}
           activeOpacity={1}
-          onPress={() => setRpePickerOpen(false)}
+          onPress={() => setPickerOpen(false)}
         >
-          <View style={{ backgroundColor: COLORS.card, borderRadius: 16, padding: 20, width: '85%', maxWidth: 360 }}>
+          <TouchableOpacity activeOpacity={1} style={{ backgroundColor: COLORS.card, borderRadius: 16, padding: 20, width: '85%', maxWidth: 360 }}>
             <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16, marginBottom: 4, textAlign: 'center' }}>{t('rpe.title')}</Text>
             <Text style={{ color: COLORS.muted, fontSize: 11, marginBottom: 16, textAlign: 'center' }}>
               {t('rpe.subtitle')}
@@ -168,7 +181,7 @@ function SetRowImpl({ set, exerciseId, isCardio, prHistory }: SetRowProps) {
                 return (
                   <TouchableOpacity
                     key={n}
-                    onPress={() => setRpe(n)}
+                    onPress={() => { update('rpe')(selected ? undefined : n); if (!isSbd) setPickerOpen(false) }}
                     style={{
                       backgroundColor: selected ? rpeColor(n) : COLORS.card2,
                       borderRadius: 10,
@@ -178,20 +191,46 @@ function SetRowImpl({ set, exerciseId, isCardio, prHistory }: SetRowProps) {
                       alignItems: 'center',
                     }}
                   >
-                    <Text style={{ color: selected ? '#fff' : '#fff', fontWeight: '700', fontSize: 14 }}>{n}</Text>
+                    <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>{n}</Text>
                   </TouchableOpacity>
                 )
               })}
             </View>
-            {set.rpe !== undefined && (
-              <TouchableOpacity
-                onPress={() => setRpe(undefined)}
-                style={{ marginTop: 16, alignItems: 'center' }}
-              >
+
+            {isSbd && (
+              <>
+                <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16, marginTop: 20, marginBottom: 4, textAlign: 'center' }}>{t('form.title')}</Text>
+                <Text style={{ color: COLORS.muted, fontSize: 11, marginBottom: 12, textAlign: 'center' }}>{t('form.subtitle')}</Text>
+                <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'center' }}>
+                  {[1, 2, 3, 4, 5].map(n => {
+                    const selected = set.form === n
+                    return (
+                      <TouchableOpacity
+                        key={n}
+                        onPress={() => update('form')(selected ? undefined : n)}
+                        style={{ backgroundColor: selected ? formColor(n) : COLORS.card2, borderRadius: 10, paddingVertical: 10, flex: 1, alignItems: 'center' }}
+                      >
+                        <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>{n}</Text>
+                      </TouchableOpacity>
+                    )
+                  })}
+                </View>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
+                  <Text style={{ color: COLORS.muted, fontSize: 10 }}>{t('form.low')}</Text>
+                  <Text style={{ color: COLORS.muted, fontSize: 10 }}>{t('form.high')}</Text>
+                </View>
+                <TouchableOpacity onPress={() => setPickerOpen(false)} style={{ marginTop: 16, backgroundColor: COLORS.accent, borderRadius: 10, paddingVertical: 10, alignItems: 'center' }}>
+                  <Text style={{ color: '#fff', fontWeight: '700' }}>{t('common.done')}</Text>
+                </TouchableOpacity>
+              </>
+            )}
+
+            {!isSbd && set.rpe !== undefined && (
+              <TouchableOpacity onPress={() => { update('rpe')(undefined); setPickerOpen(false) }} style={{ marginTop: 16, alignItems: 'center' }}>
                 <Text style={{ color: COLORS.muted, fontSize: 13 }}>{t('rpe.remove')}</Text>
               </TouchableOpacity>
             )}
-          </View>
+          </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
     </Animated.View>

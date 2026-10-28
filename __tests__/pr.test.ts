@@ -1,4 +1,4 @@
-import { detectPRs, isBetterSet, isRepPR, detectRepPRs } from '../lib/pr'
+import { detectPRs, isBetterSet, isRepPR, detectRepPRs, isSetPR } from '../lib/pr'
 
 describe('isBetterSet', () => {
   it('higher weight at same reps is a PR', () => {
@@ -92,5 +92,29 @@ describe('detectRepPRs', () => {
       { a: [{ weight: 100, reps: 5 }], b: [{ weight: 50, reps: 5 }] },
     )
     expect(result).toEqual([{ exerciseId: 'a', weight: 102.5, reps: 5 }])
+  })
+})
+
+describe('isSetPR', () => {
+  it('hold: longer time at same weight is a PR', () => {
+    expect(isSetPR('hold', { weight: 100, reps: 1, durationS: 31 }, [{ weight: 100, reps: 1, durationS: 30 }])).toBe(true)
+  })
+  it('hold: shorter time at same weight is not', () => {
+    expect(isSetPR('hold', { weight: 100, reps: 1, durationS: 29 }, [{ weight: 100, reps: 1, durationS: 30 }])).toBe(false)
+  })
+  it('carry: faster over same distance and weight is a PR', () => {
+    expect(isSetPR('carry', { weight: 120, reps: 1, distanceM: 20, durationS: 11.5 }, [{ weight: 120, reps: 1, distanceM: 20, durationS: 12 }])).toBe(true)
+  })
+  it('carry: longer distance with same weight is a PR when time is not slower', () => {
+    expect(isSetPR('carry', { weight: 120, reps: 1, distanceM: 25, durationS: 0 }, [{ weight: 120, reps: 1, distanceM: 20, durationS: 0 }])).toBe(true)
+  })
+  it('carry: slower over same distance is not', () => {
+    expect(isSetPR('carry', { weight: 120, reps: 1, distanceM: 20, durationS: 13 }, [{ weight: 120, reps: 1, distanceM: 20, durationS: 12 }])).toBe(false)
+  })
+  it('reps behaves like isRepPR', () => {
+    expect(isSetPR('reps', { weight: 100, reps: 6 }, [{ weight: 100, reps: 5 }])).toBe(true)
+  })
+  it('cardio never PRs', () => {
+    expect(isSetPR('cardio', { weight: 60, reps: 10 }, [{ weight: 30, reps: 5 }])).toBe(false)
   })
 })

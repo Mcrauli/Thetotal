@@ -10,6 +10,9 @@ export interface WorkoutSet {
   weightKg: number
   reps: number
   rpe?: number
+  durationS?: number
+  distanceM?: number
+  form?: number
   isPR: boolean
   done?: boolean
 }
@@ -18,6 +21,7 @@ export interface WorkoutExercise {
   exerciseId: string
   exerciseName: string
   muscleGroup?: string
+  note?: string
   sets: WorkoutSet[]
   defaultWeight?: number
   defaultReps?: number
@@ -33,11 +37,12 @@ interface WorkoutState {
   startFromTemplate: (name: string, exercises: { exerciseId: string; exerciseName: string; muscleGroup?: string }[], lastWeights?: Record<string, { weight: number; reps: number }>) => void
   setWorkoutName: (name: string) => void
   addExercise: (exerciseId: string, exerciseName: string, muscleGroup?: string) => void
-  addSet: (exerciseId: string, weightKg: number, reps: number) => void
+  addSet: (exerciseId: string, weightKg: number, reps: number, extra?: { durationS?: number; distanceM?: number }) => void
   copyLastSet: (exerciseId: string) => void
   removeExercise: (exerciseId: string) => void
   removeSet: (exerciseId: string, setId: string) => void
-  updateSet: (exerciseId: string, setId: string, field: 'weightKg' | 'reps' | 'rpe', value: number | undefined) => void
+  updateSet: (exerciseId: string, setId: string, field: 'weightKg' | 'reps' | 'rpe' | 'durationS' | 'distanceM' | 'form', value: number | undefined) => void
+  setExerciseNote: (exerciseId: string, note: string) => void
   toggleSetDone: (exerciseId: string, setId: string) => void
   clearWorkout: () => void
 }
@@ -74,7 +79,7 @@ export const useWorkoutStore = create<WorkoutState>()(
         exercises: [...state.exercises, { exerciseId, exerciseName, muscleGroup, sets: [] }],
       })),
 
-      addSet: (exerciseId, weightKg, reps) => set(state => ({
+      addSet: (exerciseId, weightKg, reps, extra) => set(state => ({
         exercises: state.exercises.map(ex => {
           if (ex.exerciseId !== exerciseId) return ex
           const setNumber = ex.sets.length + 1
@@ -85,6 +90,8 @@ export const useWorkoutStore = create<WorkoutState>()(
             setNumber,
             weightKg,
             reps,
+            durationS: extra?.durationS,
+            distanceM: extra?.distanceM,
             isPR: false,
           }
           return { ...ex, sets: [...ex.sets, newSet] }
@@ -95,7 +102,7 @@ export const useWorkoutStore = create<WorkoutState>()(
         const ex = get().exercises.find(e => e.exerciseId === exerciseId)
         if (!ex || ex.sets.length === 0) return
         const last = ex.sets[ex.sets.length - 1]
-        get().addSet(exerciseId, last.weightKg, last.reps)
+        get().addSet(exerciseId, last.weightKg, last.reps, { durationS: last.durationS, distanceM: last.distanceM })
       },
 
       removeExercise: (exerciseId) => set(state => ({
@@ -118,6 +125,10 @@ export const useWorkoutStore = create<WorkoutState>()(
             sets: ex.sets.map(s => s.id !== setId ? s : { ...s, [field]: value }),
           }
         ),
+      })),
+
+      setExerciseNote: (exerciseId, note) => set(state => ({
+        exercises: state.exercises.map(ex => ex.exerciseId !== exerciseId ? ex : { ...ex, note }),
       })),
 
       toggleSetDone: (exerciseId, setId) => set(state => ({

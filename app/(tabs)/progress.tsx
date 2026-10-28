@@ -12,6 +12,7 @@ import { ScreenBackground } from '../../components/ui/ScreenBackground'
 import { LeaderboardSkeleton } from '../../components/ui/Skeleton'
 import { useT } from '../../lib/i18n'
 import { calcDOTS } from '../../lib/dots'
+import { StrengthSeason } from '../../components/progress/StrengthSeason'
 
 const CHART_WIDTH = Dimensions.get('window').width - 64
 
@@ -179,6 +180,7 @@ export default function ProgressScreen() {
 
         {tab === 'progress' ? (
           <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 32 }}>
+            {profile && <StrengthSeason userId={profile.id} />}
             {exercises.length === 0 ? (
               <View style={{ backgroundColor: COLORS.card, borderRadius: 16, padding: 24, alignItems: 'center', margin: 16 }}>
                 <Text style={{ color: COLORS.muted }}>{t('progress.noWorkouts')}</Text>

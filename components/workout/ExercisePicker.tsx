@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { supabase } from '../../lib/supabase'
 import { useT, useLocaleStore } from '../../lib/i18n'
 import { muscleLabel } from '../../lib/muscleGroups'
+import { strongmanCategory } from '../../lib/strongman'
 
 const CACHE_KEY = 'cached_exercises'
 
@@ -49,14 +50,15 @@ export function ExercisePicker({ visible, onSelect, onClose }: ExercisePickerPro
   )
 
   const grouped = filtered.reduce<Record<string, Exercise[]>>((acc, e) => {
-    const group = e.muscle_group ?? 'Muut'
+    const cat = e.muscle_group === 'Voimamies' ? strongmanCategory(e.name) : null
+    const group = cat ? 'strongman.' + cat : e.muscle_group ?? 'Muut'
     if (!acc[group]) acc[group] = []
     acc[group].push(e)
     return acc
   }, {})
 
   const sections = Object.keys(grouped)
-    .map(key => ({ title: muscleLabel(key, locale), data: grouped[key] }))
+    .map(key => ({ title: key.startsWith('strongman.') ? t(key as any) : muscleLabel(key, locale), data: grouped[key] }))
     .sort((a, b) => a.title.localeCompare(b.title))
 
   return (

@@ -13,7 +13,8 @@ import { WorkoutResults, type ImprovementResult, type ChallengeResult, type Work
 import { PRShareModal, type PRShareItem } from '../../components/workout/PRShareModal'
 import { PlateModal } from '../../components/workout/PlateModal'
 import { supabase } from '../../lib/supabase'
-import { detectRepPRs } from '../../lib/pr'
+import { detectSetPRs, type PRPoint } from '../../lib/pr'
+import { setKind, formatSet } from '../../lib/strongman'
 import { calculateXPGain, getRankForXP, getSBDRank } from '../../lib/xp'
 import { getNewlyCompleted } from '../../lib/challenges'
 import { withTimeout } from '../../lib/withTimeout'
@@ -39,8 +40,9 @@ export default function ActiveWorkoutScreen() {
   const [saveMessage, setSaveMessage] = useState('')
   const workoutIdRef = useRef<string | null>(null)
   const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const [lastSets, setLastSets] = useState<Record<string, { text: string; weight: number; reps: number } | null>>({})
-  const [prHistory, setPrHistory] = useState<Record<string, { weight: number; reps: number }[]>>({})
+  const [lastSets, setLastSets] = useState<Record<string, { text: string; weight: number; reps: number; durationS?: number; distanceM?: number } | null>>({})
+  const [lastNotes, setLastNotes] = useState<Record<string, string | null>>({})
+  const [prHistory, setPrHistory] = useState<Record<string, PRPoint[]>>({})
   const exerciseIdsKey = exercises.map(e => e.exerciseId).sort().join(',')
 
   useEffect(() => {
@@ -50,31 +52,43 @@ export default function ActiveWorkoutScreen() {
     fetchPRHistory(missing).then(h => setPrHistory(prev => ({ ...prev, ...h }))).catch(() => undefined)
   }, [profile?.id, exerciseIdsKey])
 
-  async function fetchPRHistory(ids: string[]): Promise<Record<string, { weight: number; reps: number }[]>> {
+  async function fetchPRHistory(ids: string[]): Promise<Record<string, PRPoint[]>> {
     const [{ data: sets, error }, { data: records }] = await Promise.all([
       supabase
         .from('workout_sets')
-        .select('exercise_id, weight_kg, reps, workout_id, workouts!inner(user_id)')
+        .select('exercise_id, weight_kg, reps, duration_s, distance_m, workout_id, workouts!inner(user_id)')
         .eq('workouts.user_id', profile!.id)
         .in('exercise_id', ids),
       supabase.from('personal_records').select('exercise_id, weight_kg, reps').eq('user_id', profile!.id).in('exercise_id', ids),
     ])
     if (error) throw error
-    const out: Record<string, { weight: number; reps: number }[]> = {}
+    const out: Record<string, PRPoint[]> = {}
     for (const id of ids) out[id] = []
     for (const r of [...(sets ?? []), ...(records ?? [])] as any[]) {
       if (r.workout_id && r.workout_id === workoutIdRef.current) continue
-      if (!(r.weight_kg > 0) || !(r.reps > 0)) continue
-      out[r.exercise_id]?.push({ weight: Number(r.weight_kg), reps: Number(r.reps) })
+      out[r.exercise_id]?.push({
+        weight: Number(r.weight_kg ?? 0),
+        reps: Number(r.reps ?? 0),
+        durationS: r.duration_s == null ? null : Number(r.duration_s),
+        distanceM: r.distance_m == null ? null : Number(r.distance_m),
+      })
     }
     return out
   }
 
   async function fetchLastSets(exerciseId: string) {
     if (!profile || exerciseId in lastSets) return
+    supabase
+      .from('exercise_notes')
+      .select('note')
+      .eq('user_id', profile.id)
+      .eq('exercise_id', exerciseId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .then(({ data: n }) => setLastNotes(prev => ({ ...prev, [exerciseId]: (n?.[0] as any)?.note ?? null })), () => undefined)
     const { data } = await supabase
       .from('workouts')
-      .select('started_at, workout_sets!inner(weight_kg, reps, set_number, exercise_id)')
+      .select('started_at, workout_sets!inner(weight_kg, reps, duration_s, distance_m, set_number, exercise_id)')
       .eq('user_id', profile.id)
       .eq('workout_sets.exercise_id', exerciseId)
       .order('started_at', { ascending: false })
@@ -85,13 +99,16 @@ export default function ActiveWorkoutScreen() {
     const best = recent.reduce((b: any, s: any) =>
       s.weight_kg > b.weight_kg || (s.weight_kg === b.weight_kg && s.reps > b.reps) ? s : b
     , recent[0])
-    const isCardio = exercises.find(e => e.exerciseId === exerciseId)?.muscleGroup === 'Kardio'
+    const ex = exercises.find(e => e.exerciseId === exerciseId)
+    const kind = setKind(ex?.exerciseName ?? '', ex?.muscleGroup)
     setLastSets(prev => ({
       ...prev,
       [exerciseId]: {
-        text: t('active.lastTime') + ' ' + recent.map((s: any) => isCardio ? `${s.weight_kg}min ${s.reps}km` : `${s.weight_kg}×${s.reps}`).join('  '),
+        text: t('active.lastTime') + ' ' + recent.map((s: any) => formatSet(kind, { weight: s.weight_kg, reps: s.reps, durationS: s.duration_s, distanceM: s.distance_m })).join('  '),
         weight: best.weight_kg,
         reps: best.reps,
+        durationS: best.duration_s ?? undefined,
+        distanceM: best.distance_m ?? undefined,
       },
     }))
   }
@@ -190,6 +207,9 @@ export default function ActiveWorkoutScreen() {
         weight_kg: s.weightKg,
         reps: s.reps,
         rpe: s.rpe ?? null,
+        duration_s: s.durationS ?? null,
+        distance_m: s.distanceM ?? null,
+        form: s.form ?? null,
         is_pr: false,
       }))
     )
@@ -211,16 +231,18 @@ export default function ActiveWorkoutScreen() {
       return
     }
 
+    const kindById: Record<string, ReturnType<typeof setKind>> = {}
+    for (const ex of exercises) kindById[ex.exerciseId] = setKind(ex.exerciseName, ex.muscleGroup)
     const strengthSets = exercises
-      .filter(ex => ex.muscleGroup !== 'Kardio')
-      .flatMap(ex => ex.sets.map(s => ({ exerciseId: s.exerciseId, weight: s.weightKg, reps: s.reps })))
-    const prs = detectRepPRs(strengthSets, history as Record<string, { weight: number; reps: number }[]>)
+      .filter(ex => kindById[ex.exerciseId] !== 'cardio')
+      .flatMap(ex => ex.sets.map(s => ({ exerciseId: s.exerciseId, kind: kindById[ex.exerciseId], weight: s.weightKg, reps: s.reps, durationS: s.durationS, distanceM: s.distanceM })))
+    const prs = detectSetPRs(strengthSets, history as Record<string, PRPoint[]>)
 
     const recordByExercise: Record<string, { weight: number; reps: number }> = {}
     for (const r of (existingPRData ?? []) as any[]) recordByExercise[r.exercise_id] = { weight: Number(r.weight_kg), reps: Number(r.reps) }
     const heaviest = new Map<string, { exerciseId: string; weight: number; reps: number }>()
     for (const s of strengthSets) {
-      if (s.weight <= 0 || s.reps <= 0) continue
+      if (s.kind !== 'reps' || s.weight <= 0 || s.reps <= 0) continue
       const cur = heaviest.get(s.exerciseId)
       if (!cur || s.weight > cur.weight || (s.weight === cur.weight && s.reps > cur.reps)) heaviest.set(s.exerciseId, s)
     }
@@ -305,7 +327,7 @@ export default function ActiveWorkoutScreen() {
           await sendPushToUsers({
             toUserIds: friendIds,
             title: prs.length > 1 ? `${profile.username} löi ${prs.length} ennätystä! 💪` : `${profile.username} löi ennätyksen! 💪`,
-            body: prs.slice(0, 3).map(pr => `${exerciseNameById[pr.exerciseId] ?? ''} ${pr.weight}×${pr.reps}`).join(' · '),
+            body: prs.slice(0, 3).map(pr => `${exerciseNameById[pr.exerciseId] ?? ''} ${formatSet(pr.kind, pr)}`).join(' · '),
             url: '/',
           })
         }
@@ -399,7 +421,7 @@ export default function ActiveWorkoutScreen() {
 
     for (const ex of exercises) {
       if (ex.sets.length === 0) continue
-      if (ex.muscleGroup === 'Kardio') continue
+      if (kindById[ex.exerciseId] !== 'reps') continue
       const last = lastSets[ex.exerciseId]
       if (!last) continue
       const bestSet = ex.sets.reduce((b, s) =>
@@ -420,6 +442,7 @@ export default function ActiveWorkoutScreen() {
     }
 
     for (const pr of prs) {
+      if (pr.kind !== 'reps') continue
       if (!listedExerciseIds.has(pr.exerciseId)) {
         improvements.push({
           exerciseName: exerciseNameById[pr.exerciseId] ?? pr.exerciseId,
@@ -433,6 +456,16 @@ export default function ActiveWorkoutScreen() {
     }
 
     const challengeResults: ChallengeResult[] = newChallenges.map(c => ({ name: c.name, xp: c.xp }))
+
+    try {
+      const notes = exercises
+        .filter(ex => ex.note?.trim())
+        .map(ex => ({ user_id: profile.id, exercise_id: ex.exerciseId, workout_id: workout.id, note: ex.note!.trim().slice(0, 500) }))
+      if (notes.length > 0) {
+        await supabase.from('exercise_notes').delete().eq('workout_id', workout.id)
+        await supabase.from('exercise_notes').insert(notes)
+      }
+    } catch {}
 
     // Update volume/workouts duel challenges (non-critical)
     try {
@@ -569,6 +602,9 @@ export default function ActiveWorkoutScreen() {
             lastBest={lastSets[ex.exerciseId]?.text ?? null}
             defaultWeight={lastSets[ex.exerciseId]?.weight ?? ex.defaultWeight}
             defaultReps={lastSets[ex.exerciseId]?.reps ?? ex.defaultReps}
+            defaultDurationS={lastSets[ex.exerciseId]?.durationS}
+            defaultDistanceM={lastSets[ex.exerciseId]?.distanceM}
+            lastNote={lastNotes[ex.exerciseId]}
             prHistory={prHistory[ex.exerciseId]}
             onMount={() => fetchLastSets(ex.exerciseId)}
           />

@@ -1,3 +1,4 @@
+import type { SetKind } from './strongman'
 interface SetRecord {
   exerciseId: string
   weight: number
@@ -59,6 +60,41 @@ export function detectRepPRs(
     if (!isRepPR(s, history[s.exerciseId] ?? [])) continue
     const current = best.get(s.exerciseId)
     if (!current || s.weight > current.weight || (s.weight === current.weight && s.reps > current.reps)) best.set(s.exerciseId, s)
+  }
+  return [...best.values()]
+}
+
+export interface PRPoint {
+  weight: number
+  reps: number
+  durationS?: number | null
+  distanceM?: number | null
+}
+
+function prVector(kind: SetKind, s: PRPoint): number[] | null {
+  if (kind === 'reps') return s.weight > 0 && s.reps > 0 ? [s.weight, s.reps] : null
+  if (kind === 'hold') return s.weight >= 0 && (s.durationS ?? 0) > 0 ? [s.weight, s.durationS!] : null
+  if (kind === 'carry') return s.weight >= 0 && (s.distanceM ?? 0) > 0 ? [s.weight, s.distanceM!, s.durationS ? -s.durationS : -Infinity] : null
+  return null
+}
+
+export function isSetPR(kind: SetKind, candidate: PRPoint, history: PRPoint[]): boolean {
+  const c = prVector(kind, candidate)
+  if (!c) return false
+  const past = history.map(h => prVector(kind, h)).filter((v): v is number[] => v !== null)
+  if (past.length === 0) return false
+  return !past.some(h => h.every((v, i) => v >= c[i]))
+}
+
+export function detectSetPRs<T extends PRPoint & { exerciseId: string; kind: SetKind }>(
+  newSets: T[],
+  history: Record<string, PRPoint[]>,
+): T[] {
+  const best = new Map<string, T>()
+  for (const s of newSets) {
+    if (!isSetPR(s.kind, s, history[s.exerciseId] ?? [])) continue
+    const cur = best.get(s.exerciseId)
+    if (!cur || s.weight > cur.weight || (s.weight === cur.weight && (s.reps > cur.reps || (s.durationS ?? 0) > (cur.durationS ?? 0) || (s.distanceM ?? 0) > (cur.distanceM ?? 0)))) best.set(s.exerciseId, s)
   }
   return [...best.values()]
 }
