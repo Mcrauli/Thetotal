@@ -3,8 +3,8 @@ alter table public.workout_sets
   add column if not exists distance_m numeric check (distance_m is null or distance_m >= 0),
   add column if not exists form smallint check (form is null or form between 1 and 5);
 
-insert into public.exercises (name, muscle_group, is_sbd)
-select v.name, 'Voimamies', false
+insert into public.exercises (name, category, muscle_group, is_sbd)
+select v.name, 'accessory', 'Voimamies', false
 from (values
   ('Super Yoke'), ('Truck Pull'), ('Arm Over Arm Pull'),
   ('Farmers Hold'), ('Frame Hold'), ('Axle Hold'), ('Dinnie Stones Hold'),
