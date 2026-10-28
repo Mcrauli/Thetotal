@@ -13,7 +13,7 @@ import { WorkoutResults, type ImprovementResult, type ChallengeResult, type Work
 import { PRShareModal, type PRShareItem } from '../../components/workout/PRShareModal'
 import { PlateModal } from '../../components/workout/PlateModal'
 import { supabase } from '../../lib/supabase'
-import { detectPRs } from '../../lib/pr'
+import { detectRepPRs } from '../../lib/pr'
 import { calculateXPGain, getRankForXP, getSBDRank } from '../../lib/xp'
 import { getNewlyCompleted } from '../../lib/challenges'
 import { withTimeout } from '../../lib/withTimeout'
@@ -40,16 +40,35 @@ export default function ActiveWorkoutScreen() {
   const workoutIdRef = useRef<string | null>(null)
   const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [lastSets, setLastSets] = useState<Record<string, { text: string; weight: number; reps: number } | null>>({})
-  const [prWeights, setPrWeights] = useState<Record<string, number>>({})
+  const [prHistory, setPrHistory] = useState<Record<string, { weight: number; reps: number }[]>>({})
+  const exerciseIdsKey = exercises.map(e => e.exerciseId).sort().join(',')
 
   useEffect(() => {
     if (!profile) return
-    supabase.from('personal_records').select('exercise_id, weight_kg').eq('user_id', profile.id).then(({ data }) => {
-      const map: Record<string, number> = {}
-      for (const r of (data ?? []) as any[]) map[r.exercise_id] = r.weight_kg
-      setPrWeights(map)
-    })
-  }, [profile?.id])
+    const missing = exerciseIdsKey.split(',').filter(id => id && !(id in prHistory))
+    if (missing.length === 0) return
+    fetchPRHistory(missing).then(h => setPrHistory(prev => ({ ...prev, ...h }))).catch(() => undefined)
+  }, [profile?.id, exerciseIdsKey])
+
+  async function fetchPRHistory(ids: string[]): Promise<Record<string, { weight: number; reps: number }[]>> {
+    const [{ data: sets, error }, { data: records }] = await Promise.all([
+      supabase
+        .from('workout_sets')
+        .select('exercise_id, weight_kg, reps, workout_id, workouts!inner(user_id)')
+        .eq('workouts.user_id', profile!.id)
+        .in('exercise_id', ids),
+      supabase.from('personal_records').select('exercise_id, weight_kg, reps').eq('user_id', profile!.id).in('exercise_id', ids),
+    ])
+    if (error) throw error
+    const out: Record<string, { weight: number; reps: number }[]> = {}
+    for (const id of ids) out[id] = []
+    for (const r of [...(sets ?? []), ...(records ?? [])] as any[]) {
+      if (r.workout_id && r.workout_id === workoutIdRef.current) continue
+      if (!(r.weight_kg > 0) || !(r.reps > 0)) continue
+      out[r.exercise_id]?.push({ weight: Number(r.weight_kg), reps: Number(r.reps) })
+    }
+    return out
+  }
 
   async function fetchLastSets(exerciseId: string) {
     if (!profile || exerciseId in lastSets) return
@@ -175,12 +194,14 @@ export default function ActiveWorkoutScreen() {
       }))
     )
 
-    const [{ error: setsError }, { data: existingPRData }, { count: workoutCount }, { data: doneData }] =
+    const strengthIds = [...new Set(exercises.filter(ex => ex.muscleGroup !== 'Kardio').map(ex => ex.exerciseId))]
+    const [{ error: setsError }, { data: existingPRData }, { count: workoutCount }, { data: doneData }, history] =
       await withTimeout(Promise.all([
         supabase.from('workout_sets').insert(allSets),
         supabase.from('personal_records').select('exercise_id, weight_kg, reps, exercises(name, is_sbd)').eq('user_id', profile.id),
         supabase.from('workouts').select('id', { count: 'exact', head: true }).eq('user_id', profile.id),
         supabase.from('user_challenges').select('challenge_id').eq('user_id', profile.id),
+        strengthIds.length > 0 ? fetchPRHistory(strengthIds).catch(() => prHistory) : Promise.resolve({}),
       ]), 15000)
 
     if (setsError) {
@@ -190,18 +211,26 @@ export default function ActiveWorkoutScreen() {
       return
     }
 
-    const existingPRs = (existingPRData ?? []).map((r: any) => ({
-      exerciseId: r.exercise_id, weight: r.weight_kg, reps: r.reps,
-    }))
-    const prs = detectPRs(
-      exercises
-        .filter(ex => ex.muscleGroup !== 'Kardio')
-        .flatMap(ex => ex.sets.map(s => ({ exerciseId: s.exerciseId, weight: s.weightKg, reps: s.reps }))),
-      existingPRs
-    )
+    const strengthSets = exercises
+      .filter(ex => ex.muscleGroup !== 'Kardio')
+      .flatMap(ex => ex.sets.map(s => ({ exerciseId: s.exerciseId, weight: s.weightKg, reps: s.reps })))
+    const prs = detectRepPRs(strengthSets, history as Record<string, { weight: number; reps: number }[]>)
 
-    if (prs.length > 0) {
-      const prExerciseIds = prs.map(pr => pr.exerciseId)
+    const recordByExercise: Record<string, { weight: number; reps: number }> = {}
+    for (const r of (existingPRData ?? []) as any[]) recordByExercise[r.exercise_id] = { weight: Number(r.weight_kg), reps: Number(r.reps) }
+    const heaviest = new Map<string, { exerciseId: string; weight: number; reps: number }>()
+    for (const s of strengthSets) {
+      if (s.weight <= 0 || s.reps <= 0) continue
+      const cur = heaviest.get(s.exerciseId)
+      if (!cur || s.weight > cur.weight || (s.weight === cur.weight && s.reps > cur.reps)) heaviest.set(s.exerciseId, s)
+    }
+    const recordUpdates = [...heaviest.values()].filter(s => {
+      const rec = recordByExercise[s.exerciseId]
+      return !rec || s.weight > rec.weight || (s.weight === rec.weight && s.reps > rec.reps)
+    })
+
+    if (recordUpdates.length > 0) {
+      const prExerciseIds = recordUpdates.map(pr => pr.exerciseId)
       const { data: exMeta } = await supabase
         .from('exercises')
         .select('id, is_sbd')
@@ -210,7 +239,7 @@ export default function ActiveWorkoutScreen() {
       for (const e of (exMeta ?? []) as any[]) isSbdMap[e.id] = !!e.is_sbd
 
       await supabase.from('personal_records').upsert(
-        prs.map(pr => ({
+        recordUpdates.map(pr => ({
           user_id: profile.id,
           exercise_id: pr.exerciseId,
           weight_kg: pr.weight,
@@ -226,7 +255,7 @@ export default function ActiveWorkoutScreen() {
     for (const r of (existingPRData ?? []) as any[]) {
       prMap[r.exercise_id] = { weight: r.weight_kg, isSBD: r.exercises?.is_sbd ?? false, name: r.exercises?.name?.toLowerCase() ?? '' }
     }
-    for (const pr of prs) {
+    for (const pr of recordUpdates) {
       if (prMap[pr.exerciseId]) prMap[pr.exerciseId].weight = pr.weight
     }
 
@@ -264,9 +293,8 @@ export default function ActiveWorkoutScreen() {
     const exerciseNameById: Record<string, string> = {}
     exercises.forEach(e => { exerciseNameById[e.exerciseId] = e.exerciseName })
 
-    const sbdPRs = prs.filter(pr => existingPRData?.some((r: any) => r.exercise_id === pr.exerciseId && r.exercises?.is_sbd))
     try {
-      if (sbdPRs.length > 0) {
+      if (prs.length > 0) {
         const { data: friends } = await supabase
           .from('friendships')
           .select('user_id, friend_id')
@@ -274,11 +302,10 @@ export default function ActiveWorkoutScreen() {
           .eq('status', 'accepted')
         if (friends && friends.length > 0) {
           const friendIds = friends.map((f: any) => f.user_id === profile.id ? f.friend_id : f.user_id)
-          const prName = exerciseNameById[sbdPRs[0].exerciseId] ?? 'SBD'
           await sendPushToUsers({
             toUserIds: friendIds,
-            title: `${profile.username} löi ennätyksen! 💪`,
-            body: `${prName}: ${sbdPRs[0].weight} kg`,
+            title: prs.length > 1 ? `${profile.username} löi ${prs.length} ennätystä! 💪` : `${profile.username} löi ennätyksen! 💪`,
+            body: prs.slice(0, 3).map(pr => `${exerciseNameById[pr.exerciseId] ?? ''} ${pr.weight}×${pr.reps}`).join(' · '),
             url: '/',
           })
         }
@@ -341,7 +368,7 @@ export default function ActiveWorkoutScreen() {
       if (pendingChallenges) {
         for (const ch of pendingChallenges as any[]) {
           const exerciseName: string = ch.exercise_name.toLowerCase()
-          const beatingPR = prs.find(pr => {
+          const beatingPR = recordUpdates.find(pr => {
             const name = (exerciseNameById[pr.exerciseId] ?? '').toLowerCase()
             return name.includes(exerciseName) || exerciseName.includes(name.split(' ')[0])
           })
@@ -542,7 +569,7 @@ export default function ActiveWorkoutScreen() {
             lastBest={lastSets[ex.exerciseId]?.text ?? null}
             defaultWeight={lastSets[ex.exerciseId]?.weight ?? ex.defaultWeight}
             defaultReps={lastSets[ex.exerciseId]?.reps ?? ex.defaultReps}
-            prWeight={prWeights[ex.exerciseId]}
+            prHistory={prHistory[ex.exerciseId]}
             onMount={() => fetchLastSets(ex.exerciseId)}
           />
         ))}

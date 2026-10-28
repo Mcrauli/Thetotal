@@ -4,12 +4,13 @@ import * as Haptics from 'expo-haptics'
 import { useWorkoutStore, type WorkoutSet } from '../../store/workoutStore'
 import { COLORS } from '../../lib/constants'
 import { useT } from '../../lib/i18n'
+import { isRepPR } from '../../lib/pr'
 
 interface SetRowProps {
   set: WorkoutSet
   exerciseId: string
   isCardio?: boolean
-  prWeight?: number
+  prHistory?: { weight: number; reps: number }[]
 }
 
 function rpeColor(rpe: number) {
@@ -18,7 +19,7 @@ function rpeColor(rpe: number) {
   return '#ef4444'
 }
 
-function SetRowImpl({ set, exerciseId, isCardio, prWeight }: SetRowProps) {
+function SetRowImpl({ set, exerciseId, isCardio, prHistory }: SetRowProps) {
   const t = useT()
   const updateSet = useWorkoutStore(s => s.updateSet)
   const removeSet = useWorkoutStore(s => s.removeSet)
@@ -28,7 +29,7 @@ function SetRowImpl({ set, exerciseId, isCardio, prWeight }: SetRowProps) {
   const weightStep = isCardio ? 5 : 0.5
   const repsStep = 1
 
-  const isNewPR = !isCardio && prWeight != null && set.weightKg > prWeight && set.weightKg > 0
+  const isNewPR = !isCardio && isRepPR({ weight: set.weightKg, reps: set.reps }, prHistory ?? [])
   const flash = useRef(new Animated.Value(0)).current
   const wasPR = useRef(false)
 

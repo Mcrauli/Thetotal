@@ -41,3 +41,24 @@ export function detectPRs(
   }
   return prs
 }
+
+export function isRepPR(
+  candidate: { weight: number; reps: number },
+  history: { weight: number; reps: number }[],
+): boolean {
+  if (candidate.weight <= 0 || candidate.reps <= 0 || history.length === 0) return false
+  return !history.some(h => h.weight >= candidate.weight && h.reps >= candidate.reps)
+}
+
+export function detectRepPRs(
+  newSets: SetRecord[],
+  history: Record<string, { weight: number; reps: number }[]>,
+): SetRecord[] {
+  const best = new Map<string, SetRecord>()
+  for (const s of newSets) {
+    if (!isRepPR(s, history[s.exerciseId] ?? [])) continue
+    const current = best.get(s.exerciseId)
+    if (!current || s.weight > current.weight || (s.weight === current.weight && s.reps > current.reps)) best.set(s.exerciseId, s)
+  }
+  return [...best.values()]
+}

@@ -10,11 +10,11 @@ interface ExerciseBlockProps {
   lastBest: string | null
   defaultWeight?: number
   defaultReps?: number
-  prWeight?: number
+  prHistory?: { weight: number; reps: number }[]
   onMount?: () => void
 }
 
-function ExerciseBlockImpl({ exercise, lastBest, defaultWeight, defaultReps, prWeight, onMount }: ExerciseBlockProps) {
+function ExerciseBlockImpl({ exercise, lastBest, defaultWeight, defaultReps, prHistory, onMount }: ExerciseBlockProps) {
   useEffect(() => { onMount?.() }, [])
   const t = useT()
   const addSet = useWorkoutStore(s => s.addSet)
@@ -62,7 +62,7 @@ function ExerciseBlockImpl({ exercise, lastBest, defaultWeight, defaultReps, prW
       )}
 
       {exercise.sets.map(set => (
-        <SetRow key={set.id} set={set} exerciseId={exercise.exerciseId} isCardio={isCardio} prWeight={prWeight} />
+        <SetRow key={set.id} set={set} exerciseId={exercise.exerciseId} isCardio={isCardio} prHistory={prHistory} />
       ))}
 
       <View className="flex-row gap-2 mt-2">
@@ -91,5 +91,5 @@ export const ExerciseBlock = memo(ExerciseBlockImpl, (a, b) =>
   a.lastBest === b.lastBest &&
   a.defaultWeight === b.defaultWeight &&
   a.defaultReps === b.defaultReps &&
-  a.prWeight === b.prWeight
+  a.prHistory === b.prHistory
 )
